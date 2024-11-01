@@ -1,5 +1,5 @@
 ---
-name: "[<타입>] <간단한 설명>"
+name: epari-이슈-템플릿
 about: Describe this issue template's purpose here.
 title: ''
 labels: ''
