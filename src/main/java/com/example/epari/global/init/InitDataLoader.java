@@ -93,8 +93,16 @@ public class InitDataLoader implements ApplicationRunner {
 				"010-9876-5432"
 		);
 
+		Instructor instructor3 = Instructor.createInstructor(
+				"instructor3@test.com",
+				"1234",
+				"이강사",
+				"010-7777-4444"
+		);
+
 		instructors.add(instructor1);
 		instructors.add(instructor2);
+		instructors.add(instructor3);
 
 		return instructorRepository.saveAll(instructors);
 	}
