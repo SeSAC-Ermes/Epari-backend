@@ -53,4 +53,24 @@ public class Lecture extends BaseTimeEntity {
 		this.instructor = instructor;
 	}
 
+	//강의 생성 메서드(강사 배정)
+	public static Lecture createLecture(String name, LocalDate startDate, LocalDate endDate,
+			String classroom, Instructor instructor) {
+		return Lecture.builder()
+				.name(name)
+				.startDate(startDate)
+				.endDate(endDate)
+				.classroom(classroom)
+				.instructor(instructor)
+				.build();
+	}
+
+	// 강의 수정 메서드
+	public void updateLecture(String name, LocalDate startDate, LocalDate endDate, String classroom) {
+		this.name = name;
+		this.startDate = startDate;
+		this.endDate = endDate;
+		this.classroom = classroom;
+	}
+
 }
