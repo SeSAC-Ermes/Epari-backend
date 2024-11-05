@@ -1,36 +1,35 @@
 package com.example.epari.global.auth.controller;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
-import software.amazon.awssdk.services.cognitoidentityprovider.model.GetUserRequest;
-import software.amazon.awssdk.services.cognitoidentityprovider.model.GetUserResponse;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
-	private final CognitoIdentityProviderClient cognitoClient;
-
 	@PostMapping("/validate")
-	public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String token) {
+	public ResponseEntity<?> validateToken(@AuthenticationPrincipal Jwt jwt) {
 		try {
-			String jwtToken = token.replace("Bearer ", "");
+			String username = jwt.getSubject();
+			List<String> groups = jwt.getClaimAsStringList("cognito:groups");
 
-			GetUserRequest getUserRequest = GetUserRequest.builder()
-					.accessToken(jwtToken)
-					.build();
+			Map<String, Object> response = new HashMap<>();
+			response.put("username", username);
+			response.put("groups", groups);
 
-			GetUserResponse userResult = cognitoClient.getUser(getUserRequest);
-
-			return ResponseEntity.ok().build();
+			return ResponseEntity.ok(response);
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
