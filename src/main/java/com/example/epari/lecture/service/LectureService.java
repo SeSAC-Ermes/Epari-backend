@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class LectureService {
 
 	private final LectureRepository lectureRepository;
+
 	private final InstructorRepository instructorRepository;
 
 	// 강의 생성
@@ -46,7 +47,7 @@ public class LectureService {
 	// 강의 수정
 	@Transactional
 	public LectureResponseDto updateLecture(Long lectureId, Long instructorId, LectureRequestDto request) {
-		Lecture lecture = lectureRepository.findByIdWithIdInstructor(lectureId)
+		Lecture lecture = lectureRepository.findById(lectureId)
 				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + lectureId));
 
 		if (!lecture.getInstructor().getId().equals(instructorId)) {
@@ -65,7 +66,7 @@ public class LectureService {
 	// 강의 삭제
 	@Transactional
 	public void deleteLecture(Long lectureId, Long instructorId) {
-		Lecture lecture = lectureRepository.findByIdWithIdInstructor(lectureId)
+		Lecture lecture = lectureRepository.findById(lectureId)
 				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + lectureId));
 
 		if (!lecture.getInstructor().getId().equals(instructorId)) {
