@@ -19,8 +19,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 강의 정보를 관리하는 엔티티
- * - 강의 기본 정보(이름, 기간, 강의실 등) 관리
+ * 강의 정보를 관리하는 Entity 클래스
+ * 강의의 기본 정보인 이름, 시작/종료일, 강의실, 담당 강사 등을 관리합니다.
  */
 @Entity
 @Table(name = "lectures")

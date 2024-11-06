@@ -7,6 +7,10 @@ import com.example.epari.lecture.domain.Lecture;
 import lombok.Builder;
 import lombok.Getter;
 
+/**
+ * 강의 응답용 DTO 클래스
+ * 강의 조회 결과를 클라이언트에 반환하기 위한 객체입니다.
+ */
 @Getter
 @Builder
 public class LectureResponseDto {

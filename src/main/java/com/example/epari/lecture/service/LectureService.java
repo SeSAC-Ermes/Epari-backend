@@ -12,6 +12,9 @@ import com.example.epari.user.repository.InstructorRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 강의 관련 비즈니스 로직을 처리하는 Service 클래스
+ */
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -21,7 +24,9 @@ public class LectureService {
 
 	private final InstructorRepository instructorRepository;
 
-	// 강의 생성
+	/**
+	 * 새로운 강의를 생성합니다.
+	 */
 	@Transactional
 	public LectureResponseDto createLecture(Long instructorId, LectureRequestDto request) {
 		Instructor instructor = instructorRepository.findById(instructorId)
@@ -37,14 +42,18 @@ public class LectureService {
 		return LectureResponseDto.from(lectureRepository.save(lecture));
 	}
 
-	// 강의 조회
+	/**
+	 * 강의 정보를 조회합니다.
+	 */
 	public LectureResponseDto getLecture(Long lectureId) {
 		Lecture lecture = lectureRepository.findById(lectureId)
 				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + lectureId));
 		return LectureResponseDto.from(lecture);
 	}
 
-	// 강의 수정
+	/**
+	 * 강의 정보를 수정합니다.
+	 */
 	@Transactional
 	public LectureResponseDto updateLecture(Long lectureId, Long instructorId, LectureRequestDto request) {
 		Lecture lecture = lectureRepository.findById(lectureId)
@@ -63,7 +72,9 @@ public class LectureService {
 		return LectureResponseDto.from(lecture);
 	}
 
-	// 강의 삭제
+	/**
+	 * 강의를 삭제합니다.
+	 */
 	@Transactional
 	public void deleteLecture(Long lectureId, Long instructorId) {
 		Lecture lecture = lectureRepository.findById(lectureId)
