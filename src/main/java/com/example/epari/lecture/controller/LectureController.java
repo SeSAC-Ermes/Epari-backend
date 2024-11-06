@@ -48,7 +48,7 @@ public class LectureController {
 	/**
 	 * 사용자 역할에 따른 강의 목록 조회
 	 */
-	@GetMapping("/my-lectures")
+	@GetMapping("/userlectures")
 	public ResponseEntity<List<LectureResponseDto>> getMyLectures(
 			@RequestParam UserRole role,
 			@RequestParam Long userId) {
