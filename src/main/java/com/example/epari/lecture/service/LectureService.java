@@ -1,5 +1,8 @@
 package com.example.epari.lecture.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +52,24 @@ public class LectureService {
 		Lecture lecture = lectureRepository.findById(lectureId)
 				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + lectureId));
 		return LectureResponseDto.from(lecture);
+	}
+
+	/**
+	 * 학생이 수강 중인 강의 목록을 조회합니다.
+	 */
+	public List<LectureResponseDto> getStudentLectures(Long studentId) {
+		return lectureRepository.findAllByStudentId(studentId).stream()
+				.map(LectureResponseDto::from)
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * 강사가 담당하는 강의 목록을 조회합니다.
+	 */
+	public List<LectureResponseDto> getInstructorLectures(Long instructorId) {
+		return lectureRepository.findAllByInstructorId(instructorId).stream()
+				.map(LectureResponseDto::from)
+				.collect(Collectors.toList());
 	}
 
 	/**
