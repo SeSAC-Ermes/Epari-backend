@@ -27,7 +27,6 @@ import com.example.epari.user.domain.Student;
 import com.example.epari.user.repository.InstructorRepository;
 import com.example.epari.user.repository.StudentRepository;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -289,6 +288,7 @@ public class InitDataLoader implements ApplicationRunner {
 
 		return topics;
 	}
+
 	private Map<LocalDate, CurriculumInfo> getFullstackLectureCurriculum() {
 		Map<LocalDate, CurriculumInfo> topics = new HashMap<>();
 
@@ -382,7 +382,7 @@ public class InitDataLoader implements ApplicationRunner {
 
 	private boolean isWeekend(LocalDate date) {
 		return date.getDayOfWeek() == java.time.DayOfWeek.SATURDAY
-				|| date.getDayOfWeek() == java.time.DayOfWeek.SUNDAY;
+			   || date.getDayOfWeek() == java.time.DayOfWeek.SUNDAY;
 	}
 
 	private static class CurriculumInfo {
