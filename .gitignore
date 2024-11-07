@@ -39,3 +39,5 @@ out/
 ### Dev Profile ###
 src/main/resources/application-dev.properties
 
+### Test Profile ###
+src/test/resources/application-test.properties
