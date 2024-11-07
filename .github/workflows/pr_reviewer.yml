@@ -41,6 +41,8 @@ jobs:
           payload: >
             {
               "text": "pr review request",
+              "unfurl_links": false,
+              "unfurl_media": false,
               "blocks": [
                 {
                   "type": "section",
