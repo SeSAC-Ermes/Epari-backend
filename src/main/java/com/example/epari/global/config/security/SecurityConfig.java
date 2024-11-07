@@ -23,9 +23,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/**
- * 스프링 시큐리티 설정 클래스
- */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -42,9 +39,8 @@ public class SecurityConfig {
 						session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 				)
 				.authorizeHttpRequests(authorize -> authorize
-						.requestMatchers("/api/instructor/**").hasRole("INSTRUCTOR")
-						.requestMatchers("/api/student/**").hasRole("STUDENT")
-						.anyRequest().authenticated()
+						.anyRequest().permitAll() // TODO: 추후 권한별 엔드포인트 설정하기
+
 				)
 				.oauth2ResourceServer(oauth2 -> oauth2
 						.jwt(jwt -> jwt
