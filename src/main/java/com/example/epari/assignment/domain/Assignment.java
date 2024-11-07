@@ -38,8 +38,7 @@ public class Assignment {
 	@Column
 	private String title;           // 과제 제목
 
-	@Column
-	@Lob
+	@Column(columnDefinition = "LONGTEXT")
 	private String description;     // 과제 설명
 
 	@Column

@@ -2,8 +2,6 @@ package com.example.epari.assignment.dto.assignment;
 
 import java.time.LocalDateTime;
 
-import org.springframework.format.annotation.DateTimeFormat;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,7 +18,6 @@ public class AssignmentRequestDto {
 
 	private String description;     // 과제 설명
 
-	@DateTimeFormat(pattern = "yyyy-mm-dd")
 	private LocalDateTime deadline; // 마감기한
 
 	private Integer score = 0;          // 배점
