@@ -19,7 +19,5 @@ public class AssignmentRequestDto {
 	private String description;     // 과제 설명
 
 	private LocalDateTime deadline; // 마감기한
-
-	private Integer score = 0;          // 배점
-
+	
 }

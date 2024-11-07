@@ -45,7 +45,7 @@ public class AssignmentService {
 	@Transactional
 	public AssignmentResponseDto addAssignment(AssignmentRequestDto requestDto) {
 		Assignment assignment = Assignment.createAssignment(requestDto.getTitle(), requestDto.getDescription(),
-				requestDto.getDeadline(), requestDto.getScore(), null  // 강의 정보는 별도의 메서드로 처리
+				requestDto.getDeadline(), null  // 강의 정보는 별도의 메서드로 처리
 		);
 
 		return new AssignmentResponseDto(assignmentRepository.save(assignment));
@@ -76,8 +76,7 @@ public class AssignmentService {
 		Assignment assignment = assignmentRepository.findById(id)
 				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
 
-		assignment.updateAssignment(requestDto.getTitle(), requestDto.getDescription(), requestDto.getDeadline(),
-				requestDto.getScore());
+		assignment.updateAssignment(requestDto.getTitle(), requestDto.getDescription(), requestDto.getDeadline(), );
 
 		return new AssignmentResponseDto(assignment);
 	}
