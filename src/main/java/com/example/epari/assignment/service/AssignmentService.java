@@ -76,7 +76,7 @@ public class AssignmentService {
 		Assignment assignment = assignmentRepository.findById(id)
 				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
 
-		assignment.updateAssignment(requestDto.getTitle(), requestDto.getDescription(), requestDto.getDeadline(), );
+		assignment.updateAssignment(requestDto.getTitle(), requestDto.getDescription(), requestDto.getDeadline());
 
 		return new AssignmentResponseDto(assignment);
 	}
