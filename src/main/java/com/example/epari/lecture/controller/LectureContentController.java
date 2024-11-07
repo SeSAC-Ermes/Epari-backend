@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +33,11 @@ public class LectureContentController {
 
 	private final LectureContentService lectureContentService;
 
+	/**
+	 * 강사가 파일 업로드
+	 */
 	@PostMapping
+	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<LectureContentResponseDto> uploadContent(
 			@PathVariable Long lectureId,
 			@RequestParam(required = true) String title,
@@ -49,20 +54,33 @@ public class LectureContentController {
 		return ResponseEntity.ok(lectureContentService.uploadContent(lectureId, request));
 	}
 
+	/**
+	 * 특정 강의 자료를 조회합니다.
+	 */
 	@GetMapping("/{contentId}")
+	@PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT')")
 	public ResponseEntity<LectureContentResponseDto> getContent(
 			@PathVariable Long lectureId,
 			@PathVariable Long contentId) {
 		return ResponseEntity.ok(lectureContentService.getContent(lectureId, contentId));
 	}
 
+	/**
+	 * 특정 강의의 모든 강의 자료를 조회합니다.
+	 */
 	@GetMapping
+	@PreAuthorize("hasAnyRole('INSTRUCTOR', 'STDENT')")
 	public ResponseEntity<List<LectureContentResponseDto>> getContents(
 			@PathVariable Long lectureId) {
 		return ResponseEntity.ok(lectureContentService.getContents(lectureId));
 	}
 
+
+	/**
+	 * 기존 강의 자료를 수정합니다.
+	 */
 	@PutMapping("/{contentId}")
+	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<LectureContentResponseDto> updateContent(
 			@PathVariable Long lectureId,
 			@PathVariable Long contentId,
@@ -70,7 +88,12 @@ public class LectureContentController {
 		return ResponseEntity.ok(lectureContentService.updateContent(lectureId, contentId, request));
 	}
 
+
+	/**
+	 * 특정 강의 자료를 삭제합니다.
+	 */
 	@DeleteMapping("/{contentId}")
+	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<Void> deleteContent(
 			@PathVariable Long lectureId,
 			@PathVariable Long contentId) {
@@ -78,7 +101,11 @@ public class LectureContentController {
 		return ResponseEntity.ok().build();
 	}
 
+	/**
+	 * 여러 강의 자료를 일괄 삭제합니다.
+	 */
 	@DeleteMapping("/batch")
+	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<Void> deleteContents(
 			@PathVariable Long lectureId,
 			@RequestParam List<Long> contentIds) {
@@ -86,7 +113,11 @@ public class LectureContentController {
 		return ResponseEntity.ok().build();
 	}
 
+	/**
+	 * 강의 자료에 첨부된 파일을 다운로드합니다.
+	 */
 	@GetMapping("/{contentId}/files/{fileId}/download")
+	@PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT')")
 	public ResponseEntity<String> downloadFile(
 			@PathVariable Long lectureId,
 			@PathVariable Long contentId,
