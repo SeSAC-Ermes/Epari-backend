@@ -6,6 +6,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.epari.global.common.base.BaseUser;
+import com.example.epari.global.common.enums.UserRole;
+import com.example.epari.global.common.repository.BaseUserRepository;
 import com.example.epari.lecture.domain.Lecture;
 import com.example.epari.lecture.dto.lecture.LectureRequestDto;
 import com.example.epari.lecture.dto.lecture.LectureResponseDto;
@@ -26,6 +29,8 @@ public class LectureService {
 	private final LectureRepository lectureRepository;
 
 	private final InstructorRepository instructorRepository;
+
+	private final BaseUserRepository baseUserRepository;
 
 	/**
 	 * 새로운 강의를 생성합니다.
@@ -56,11 +61,21 @@ public class LectureService {
 
 	/**
 	 * 학생이 수강 중인 강의 목록을 조회합니다.
+	 * 강사가 담당하는 강의 목록을 조회합니다.
 	 */
-	public List<LectureResponseDto> getStudentLectures(Long studentId) {
-		return lectureRepository.findAllByStudentId(studentId).stream()
-				.map(LectureResponseDto::from)
-				.collect(Collectors.toList());
+	public List<LectureResponseDto> getMyLectures(String email) {
+		BaseUser user = baseUserRepository.findByEmail(email)
+				.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+		if (user.getRole() == UserRole.INSTRUCTOR) {
+			return lectureRepository.findAllByInstructorId(user.getId()).stream()
+					.map(LectureResponseDto::from)
+					.collect(Collectors.toList());
+		} else {
+			return lectureRepository.findAllByStudentId(user.getId()).stream()
+					.map(LectureResponseDto::from)
+					.collect(Collectors.toList());
+		}
 	}
 
 	/**
