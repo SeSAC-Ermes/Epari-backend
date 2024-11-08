@@ -10,6 +10,6 @@ import com.example.epari.assignment.domain.AssignmentFile;
 @Repository
 public interface AssignmentFileRepository extends JpaRepository<AssignmentFile, Long> {
 
-	List<AssignmentFile> findByAssignmentId(Long assignmentId);
+	List<AssignmentFile> findFileByAssignmentId(Long assignmentId);
 
 }
