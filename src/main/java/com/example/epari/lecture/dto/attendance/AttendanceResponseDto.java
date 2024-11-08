@@ -1,6 +1,5 @@
 package com.example.epari.lecture.dto.attendance;
 
-import com.example.epari.global.common.enums.AttendanceStatus;
 import com.example.epari.lecture.domain.Attendance;
 
 import lombok.Builder;
@@ -16,10 +15,10 @@ public class AttendanceResponseDto {
 
 	private final String name;
 
-	private final AttendanceStatus status;
+	private final String status;
 
 	@Builder
-	private AttendanceResponseDto(Long studentId, String name, AttendanceStatus status) {
+	private AttendanceResponseDto(Long studentId, String name, String status) {
 		this.studentId = studentId;
 		this.name = name;
 		this.status = status;
@@ -29,7 +28,7 @@ public class AttendanceResponseDto {
 		return AttendanceResponseDto.builder()
 				.studentId(attendance.getLectureStudent().getStudent().getId())
 				.name(attendance.getLectureStudent().getStudent().getName())
-				.status(attendance.getStatus())
+				.status(attendance.getStatus().getDescription())
 				.build();
 	}
 
