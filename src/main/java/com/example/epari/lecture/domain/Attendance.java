@@ -52,9 +52,8 @@ public class Attendance extends BaseTimeEntity {
 		this.status = AttendanceStatus.ABSENT;
 	}
 
-	public void updateStatus(AttendanceStatus status, String note) {
+	public void updateStatus(AttendanceStatus status) {
 		this.status = status;
-		this.note = note;
 	}
 
 }
