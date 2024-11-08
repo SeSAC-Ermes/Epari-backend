@@ -37,10 +37,10 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 			SELECT a
 			FROM Attendance a
 			JOIN FETCH a.lectureStudent ls
-			JOIN FETCH ls.student
+			JOIN FETCH ls.student s
 			WHERE ls.lecture.id = :lectureId
 			AND a.date = :date
-			AND a.lectureStudent.id IN :studentIds
+			AND s.id IN :studentIds
 			""")
 	List<Attendance> findByLectureIdAndDateAndStudentIds(
 			@Param("lectureId") Long lectureId,
