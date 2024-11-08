@@ -43,8 +43,6 @@ public class Attendance extends BaseTimeEntity {
 	@Column(nullable = false)
 	private AttendanceStatus status;
 
-	private String note; // 비고(사유 등)
-
 	@Builder
 	private Attendance(LectureStudent lectureStudent, LocalDate date) {
 		this.lectureStudent = lectureStudent;
