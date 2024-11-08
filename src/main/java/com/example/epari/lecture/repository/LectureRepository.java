@@ -29,4 +29,17 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
 		   + "WHERE l.instructor.id = :instructorId")
 	List<Lecture> findAllByInstructorId(@Param("instructorId") Long instructorId);
 
+	/**
+	 * 주어진 강의 ID와 강사 이메일로 해당 강의가 해당 강사의 강의인지 확인합니다.
+	 */
+	@Query("""
+			SELECT EXISTS (
+			    SELECT 1
+			    FROM Lecture l
+			    WHERE l.id = :lectureId
+			    AND l.instructor.email = :instructorEmail
+			)
+			""")
+	boolean existsByLectureIdAndInstructorEmail(Long lectureId, String instructorEmail);
+
 }
