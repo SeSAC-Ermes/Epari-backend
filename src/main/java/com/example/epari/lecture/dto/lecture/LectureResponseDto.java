@@ -36,10 +36,16 @@ public class LectureResponseDto {
 
 		private String name;
 
+		private String email;
+
+		private String phoneNumber;
+
 		public static InstructorInfo from(Instructor instructor) {
 			return InstructorInfo.builder()
 					.id(instructor.getId())
 					.name(instructor.getName())
+					.email(instructor.getEmail())
+					.phoneNumber(instructor.getPhoneNumber())
 					.build();
 		}
 
