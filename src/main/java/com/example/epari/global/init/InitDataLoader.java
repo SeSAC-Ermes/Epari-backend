@@ -14,11 +14,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.epari.lecture.domain.Attendance;
 import com.example.epari.lecture.domain.Curriculum;
 import com.example.epari.lecture.domain.Lecture;
 import com.example.epari.lecture.domain.LectureStudent;
-import com.example.epari.lecture.repository.AttendanceRepository;
 import com.example.epari.lecture.repository.CurriculumRepository;
 import com.example.epari.lecture.repository.LectureRepository;
 import com.example.epari.lecture.repository.LectureStudentRepository;
@@ -41,8 +39,6 @@ public class InitDataLoader implements ApplicationRunner {
 	private final LectureRepository lectureRepository;
 
 	private final CurriculumRepository curriculumRepository;
-
-	private final AttendanceRepository attendanceRepository;
 
 	private final LectureStudentRepository lectureStudentRepository;
 
@@ -70,9 +66,6 @@ public class InitDataLoader implements ApplicationRunner {
 		List<LectureStudent> lectureStudents2 = createLectureStudents(lectures.get(1),
 				students.subList(0, students.size() / 2));
 
-		// 6. 출석 데이터 초기화
-		initializeAttendances(lectureStudents1);
-		initializeAttendances(lectureStudents2);
 	}
 
 	// 강사 추가를 위해 list로 반환
@@ -362,27 +355,9 @@ public class InitDataLoader implements ApplicationRunner {
 		}
 	}
 
-	private void initializeAttendances(List<LectureStudent> lectureStudents) {
-		for (LectureStudent lectureStudent : lectureStudents) {
-			LocalDate currentDate = lectureStudent.getLecture().getStartDate();
-			LocalDate endDate = lectureStudent.getLecture().getEndDate();
-
-			while (!currentDate.isAfter(endDate)) {
-				if (!isWeekend(currentDate)) {
-					Attendance attendance = Attendance.builder()
-							.lectureStudent(lectureStudent)
-							.date(currentDate)
-							.build();
-					attendanceRepository.save(attendance);
-				}
-				currentDate = currentDate.plusDays(1);
-			}
-		}
-	}
-
 	private boolean isWeekend(LocalDate date) {
 		return date.getDayOfWeek() == java.time.DayOfWeek.SATURDAY
-			   || date.getDayOfWeek() == java.time.DayOfWeek.SUNDAY;
+				|| date.getDayOfWeek() == java.time.DayOfWeek.SUNDAY;
 	}
 
 	private static class CurriculumInfo {

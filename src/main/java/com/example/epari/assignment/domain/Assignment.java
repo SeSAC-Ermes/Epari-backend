@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Assignment extends BaseTimeEntity {
+public class Assignment {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,15 +38,11 @@ public class Assignment extends BaseTimeEntity {
 	@Column
 	private String title;           // 과제 제목
 
-	@Column
-	@Lob
+	@Column(columnDefinition = "LONGTEXT")
 	private String description;     // 과제 설명
 
 	@Column
 	private LocalDateTime deadline; // 마감기한
-
-	@Column
-	private Integer score;          // 배점
 
 	private String feedback;        // 전체 피드백
 
@@ -58,35 +54,25 @@ public class Assignment extends BaseTimeEntity {
 	private List<AssignmentFile> files = new ArrayList<>();  // 과제 첨부파일
 
 	@Builder
-	private Assignment(String title, String description, LocalDateTime deadline,
-			Integer score, String feedback, Lecture lecture) {
+	private Assignment(String title, String description, LocalDateTime deadline, String feedback, Lecture lecture) {
 		this.title = title;
 		this.description = description;
 		this.deadline = deadline;
-		this.score = score;
 		this.feedback = feedback;
 		this.lecture = lecture;
 	}
 
 	// 과제 생성
-	public static Assignment createAssignment(String title, String description,
-			LocalDateTime deadline, Integer score, Lecture lecture) {
-		return Assignment.builder()
-				.title(title)
-				.description(description)
-				.deadline(deadline)
-				.score(score)
-				.lecture(lecture)
-				.build();
+	public static Assignment createAssignment(String title, String description, LocalDateTime deadline,
+			Lecture lecture) {
+		return Assignment.builder().title(title).description(description).deadline(deadline).lecture(lecture).build();
 	}
 
 	// 과제 정보 수정
-	public void updateAssignment(String title, String description,
-			LocalDateTime deadline, Integer score) {
+	public void updateAssignment(String title, String description, LocalDateTime deadline) {
 		this.title = title;
 		this.description = description;
 		this.deadline = deadline;
-		this.score = score;
 	}
 
 	// 파일 추가

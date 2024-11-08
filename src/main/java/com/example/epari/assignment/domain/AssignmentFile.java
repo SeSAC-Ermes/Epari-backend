@@ -26,19 +26,16 @@ public class AssignmentFile extends BaseFile {
 	@JoinColumn(name = "assignment_id")
 	private Assignment assignment;
 
-	public static AssignmentFile createAssignmentFile(String originalFileName, String storedFileName,
-			String fileUrl, Long fileSize, Assignment assignment) {
-		AssignmentFile file = new AssignmentFile(originalFileName, storedFileName, fileUrl, fileSize);
-		file.setAssignment(assignment);
-		return file;
-	}
-
-	private AssignmentFile(String originalFileName, String storedFileName, String fileUrl, Long fileSize) {
+	private AssignmentFile(String originalFileName, String storedFileName, String fileUrl, Long fileSize,
+			Assignment assignment) {
 		super(originalFileName, storedFileName, fileUrl, fileSize);
+		this.assignment = assignment;
 	}
 
-	private void setAssignment(Assignment assignment) {
-		this.assignment = assignment;
+	// 정적 팩토리 메서드로 생성
+	public static AssignmentFile createAssignmentFile(String originalFileName, String storedFileName, String fileUrl,
+			Long fileSize, Assignment assignment) {
+		return new AssignmentFile(originalFileName, storedFileName, fileUrl, fileSize, assignment);
 	}
 
 }
