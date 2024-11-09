@@ -4,8 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.epari.global.common.base.BaseTimeEntity;
-import com.example.epari.lecture.domain.Lecture;
+import com.example.epari.course.domain.Course;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -15,7 +14,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import lombok.AccessLevel;
@@ -45,27 +43,27 @@ public class Assignment {
 	private LocalDateTime deadline; // 마감기한
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "lecture_id")
-	private Lecture lecture;        // 강의
+	@JoinColumn(name = "course_id")
+	private Course course;        // 강의
 
 	@OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<AssignmentFile> files = new ArrayList<>();  // 과제 첨부파일
 
 	@Builder
-	private Assignment(String title, String description, LocalDateTime deadline, Lecture lecture) {
+	private Assignment(String title, String description, LocalDateTime deadline, Course course) {
 		this.title = title;
 		this.description = description;
 		this.deadline = deadline;
-		this.lecture = lecture;
+		this.course = course;
 	}
 
 	// 과제 생성
 	public static Assignment createAssignment(String title, String description, LocalDateTime deadline,
-			Lecture lecture) {
+			Course course) {
 		return Assignment.builder().title(title)
 				.description(description)
 				.deadline(deadline)
-				.lecture(lecture)
+				.course(course)
 				.build();
 	}
 
