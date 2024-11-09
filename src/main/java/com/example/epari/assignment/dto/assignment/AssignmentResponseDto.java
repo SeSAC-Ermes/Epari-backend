@@ -25,8 +25,6 @@ public class AssignmentResponseDto {
 
 	private LocalDateTime deadline; // 마감기한
 
-	private String feedback;        // 전체 피드백
-
 	private List<AssignmentFileResponseDto> files; // 첨부파일 목록
 
 	public AssignmentResponseDto(Assignment assignment) {
@@ -34,7 +32,6 @@ public class AssignmentResponseDto {
 		this.title = assignment.getTitle();
 		this.description = assignment.getDescription();
 		this.deadline = assignment.getDeadline();
-		this.feedback = assignment.getFeedback();
 		this.files = assignment.getFiles().stream().map(AssignmentFileResponseDto::new).collect(Collectors.toList());
 	}
 
