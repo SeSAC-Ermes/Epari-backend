@@ -36,42 +36,27 @@ public class AssignmentController {
 	@PostMapping
 	public ResponseEntity<AssignmentResponseDto> addAssignment(@RequestBody AssignmentRequestDto requestDto) {
 		log.info("과제 생성 요청: 제목 = {}", requestDto.getTitle());
-		try {
-			AssignmentResponseDto responseDto = assignmentService.addAssignment(requestDto);
-			log.info("과제 생성 완료: ID = {}", responseDto.getId());
-			return ResponseEntity.ok(responseDto);
-		} catch (Exception e) {
-			log.error("과제 생성 실패: {}", e.getMessage(), e);
-			throw e;
-		}
+		AssignmentResponseDto responseDto = assignmentService.addAssignment(requestDto);
+		log.info("과제 생성 완료: ID = {}", responseDto.getId());
+		return ResponseEntity.ok(responseDto);
 	}
 
 	// 전체 과제 조회
 	@GetMapping
 	public ResponseEntity<List<AssignmentResponseDto>> getAllAssignments() {
 		log.info("전체 과제 목록 조회 요청");
-		try {
-			List<AssignmentResponseDto> assignments = assignmentService.getAllAssignments();
-			log.info("과제 목록 조회 완료: {} 건", assignments.size());
-			return ResponseEntity.ok(assignments);
-		} catch (Exception e) {
-			log.error("과제 목록 조회 실패: {}", e.getMessage(), e);
-			throw e;
-		}
+		List<AssignmentResponseDto> assignments = assignmentService.getAllAssignments();
+		log.info("과제 목록 조회 완료: {} 건", assignments.size());
+		return ResponseEntity.ok(assignments);
 	}
 
 	// 입력 키워드를 포함하는 과제 조회
 	@GetMapping("/search")
 	public ResponseEntity<List<AssignmentResponseDto>> getAssignmentsByTitle(@RequestParam String title) {
 		log.info("과제 검색 요청: 키워드 = {}", title);
-		try {
-			List<AssignmentResponseDto> assignments = assignmentService.getAssignmentsByTitle(title);
-			log.info("과제 검색 완료: {} 건", assignments.size());
-			return ResponseEntity.ok(assignments);
-		} catch (Exception e) {
-			log.error("과제 검색 실패: {}", e.getMessage(), e);
-			throw e;
-		}
+		List<AssignmentResponseDto> assignments = assignmentService.getAssignmentsByTitle(title);
+		log.info("과제 검색 완료: {} 건", assignments.size());
+		return ResponseEntity.ok(assignments);
 	}
 
 	// 과제 수정
@@ -80,28 +65,18 @@ public class AssignmentController {
 			@PathVariable Long id,
 			@RequestBody AssignmentRequestDto requestDto) {
 		log.info("과제 수정 요청: ID = {}, 제목 = {}", id, requestDto.getTitle());
-		try {
-			AssignmentResponseDto responseDto = assignmentService.updateAssignment(id, requestDto);
-			log.info("과제 수정 완료: ID = {}", id);
-			return ResponseEntity.ok(responseDto);
-		} catch (Exception e) {
-			log.error("과제 수정 실패: ID = {}, {}", id, e.getMessage(), e);
-			throw e;
-		}
+		AssignmentResponseDto responseDto = assignmentService.updateAssignment(id, requestDto);
+		log.info("과제 수정 완료: ID = {}", id);
+		return ResponseEntity.ok(responseDto);
 	}
 
 	// 과제 삭제
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deleteAssignment(@PathVariable Long id) {
 		log.info("과제 삭제 요청: ID = {}", id);
-		try {
-			assignmentService.deleteAssignment(id);
-			log.info("과제 삭제 완료: ID = {}", id);
-			return ResponseEntity.ok().build();
-		} catch (Exception e) {
-			log.error("과제 삭제 실패: ID = {}, {}", id, e.getMessage(), e);
-			throw e;
-		}
+		assignmentService.deleteAssignment(id);
+		log.info("과제 삭제 완료: ID = {}", id);
+		return ResponseEntity.ok().build();
 	}
 
 	// 파일 업로드
@@ -110,37 +85,23 @@ public class AssignmentController {
 			@RequestParam("files") List<MultipartFile> files,
 			@RequestParam(required = false) Long assignmentId) {
 		log.info("파일 업로드 요청: assignmentId = {}, 파일 개수 = {}", assignmentId, files.size());
+		files.forEach(file -> log.debug("업로드 파일 정보: 이름 = {}, 크기 = {}bytes, 타입 = {}",
+				file.getOriginalFilename(),
+				file.getSize(),
+				file.getContentType()));
 
-		try {
-			// 파일 정보 로깅
-			files.forEach(file ->
-					log.debug("업로드 파일 정보: 이름 = {}, 크기 = {}bytes, 타입 = {}",
-							file.getOriginalFilename(),
-							file.getSize(),
-							file.getContentType())
-			);
-
-			List<AssignmentFileResponseDto> uploadedFiles = assignmentService.uploadFiles(files, assignmentId);
-			log.info("파일 업로드 완료: {} 개 파일", uploadedFiles.size());
-			return ResponseEntity.ok(uploadedFiles);
-		} catch (Exception e) {
-			log.error("파일 업로드 실패: assignmentId = {}, {}", assignmentId, e.getMessage(), e);
-			throw e;
-		}
+		List<AssignmentFileResponseDto> uploadedFiles = assignmentService.uploadFiles(files, assignmentId);
+		log.info("파일 업로드 완료: {} 개 파일", uploadedFiles.size());
+		return ResponseEntity.ok(uploadedFiles);
 	}
 
 	// 파일 삭제
 	@DeleteMapping("/files/{fileId}")
 	public ResponseEntity<Void> deleteFile(@PathVariable Long fileId) {
 		log.info("파일 삭제 요청: fileId = {}", fileId);
-		try {
-			assignmentService.deleteFile(fileId);
-			log.info("파일 삭제 완료: fileId = {}", fileId);
-			return ResponseEntity.ok().build();
-		} catch (Exception e) {
-			log.error("파일 삭제 실패: fileId = {}, {}", fileId, e.getMessage(), e);
-			throw e;
-		}
+		assignmentService.deleteFile(fileId);
+		log.info("파일 삭제 완료: fileId = {}", fileId);
+		return ResponseEntity.ok().build();
 	}
 
 }

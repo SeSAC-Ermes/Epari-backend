@@ -42,8 +42,6 @@ public class Assignment {
 	@Column
 	private LocalDateTime deadline; // 마감기한
 
-	private String feedback;        // 전체 피드백
-
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "course_id")
 	private Course course;        // 강의
@@ -52,18 +50,21 @@ public class Assignment {
 	private List<AssignmentFile> files = new ArrayList<>();  // 과제 첨부파일
 
 	@Builder
-	private Assignment(String title, String description, LocalDateTime deadline, String feedback, Course course) {
+	private Assignment(String title, String description, LocalDateTime deadline, Course course) {
 		this.title = title;
 		this.description = description;
 		this.deadline = deadline;
-		this.feedback = feedback;
 		this.course = course;
 	}
 
 	// 과제 생성
 	public static Assignment createAssignment(String title, String description, LocalDateTime deadline,
 			Course course) {
-		return Assignment.builder().title(title).description(description).deadline(deadline).course(course).build();
+		return Assignment.builder().title(title)
+				.description(description)
+				.deadline(deadline)
+				.course(course)
+				.build();
 	}
 
 	// 과제 정보 수정

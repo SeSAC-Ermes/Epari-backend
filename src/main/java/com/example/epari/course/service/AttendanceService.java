@@ -2,6 +2,8 @@ package com.example.epari.course.service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.epari.course.domain.Attendance;
 import com.example.epari.course.domain.CourseStudent;
 import com.example.epari.course.dto.attendance.AttendanceResponseDto;
+import com.example.epari.course.dto.attendance.AttendanceUpdateDto;
 import com.example.epari.course.repository.AttendanceRepository;
 import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.course.repository.CourseStudentRepository;
@@ -46,6 +49,55 @@ public class AttendanceService {
 		return attendances.stream()
 				.map(AttendanceResponseDto::from)
 				.toList();
+	}
+
+	/**
+	 * 특정 강의, 날짜의 학생 출석 상태를 변경
+	 */
+	@Transactional
+	public void updateAttendances(
+			Long courseId,
+			String instructorEmail,
+			LocalDate date,
+			List<AttendanceUpdateDto> updates
+	) {
+		// 강사 권한 검증
+		validateInstructorAccess(courseId, instructorEmail);
+
+		// 수정할 학생 ID 목록 추출
+		List<Long> studentIds = updates.stream()
+				.map(AttendanceUpdateDto::getStudentId)
+				.toList();
+
+		// 수정할 출석 데이터만 조회
+		List<Attendance> attendances = attendanceRepository.findByCourseIdAndDateAndStudentIds(
+				courseId,
+				date,
+				studentIds
+		);
+
+		// 출석 데이터가 하나라도 없다면 해당 날짜 출석부가 없는 것
+		if (attendances.isEmpty()) {
+			throw new IllegalArgumentException("해당 날짜의 출석 데이터가 존재하지 않습니다.");
+		}
+
+		// 조회된 데이터 수와 요청된 수가 다르다면 잘못된 요청
+		if (attendances.size() != updates.size()) {
+			throw new IllegalArgumentException("일부 학생의 출석 데이터를 찾을 수 없습니다.");
+		}
+
+		// studentId를 key로 하는 Map으로 변환하여 빠른 조회 가능하도록 함
+		Map<Long, Attendance> attendanceMap = attendances.stream()
+				.collect(Collectors.toMap(
+						attendance -> attendance.getCourseStudent().getStudent().getId(),
+						attendance -> attendance
+				));
+
+		// 업데이트 수행
+		updates.forEach(update -> {
+			Attendance attendance = attendanceMap.get(update.getStudentId());
+			attendance.updateStatus(update.getStatus());
+		});
 	}
 
 	/**

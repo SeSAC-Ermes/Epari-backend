@@ -30,4 +30,22 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 			@Param("date") LocalDate date
 	);
 
+	/**
+	 * 특정 강의, 날짜의 특정 학생들의 출석 데이터 조회
+	 */
+	@Query("""
+			SELECT a
+			FROM Attendance a
+			JOIN FETCH a.courseStudent ls
+			JOIN FETCH ls.student s
+			WHERE ls.course.id = :courseId
+			AND a.date = :date
+			AND s.id IN :studentIds
+			""")
+	List<Attendance> findByCourseIdAndDateAndStudentIds(
+			@Param("courseId") Long courseId,
+			@Param("date") LocalDate date,
+			@Param("studentIds") List<Long> studentIds
+	);
+
 }
