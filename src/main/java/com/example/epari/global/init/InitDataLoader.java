@@ -14,12 +14,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.epari.lecture.domain.Curriculum;
-import com.example.epari.lecture.domain.Lecture;
-import com.example.epari.lecture.domain.LectureStudent;
-import com.example.epari.lecture.repository.CurriculumRepository;
-import com.example.epari.lecture.repository.LectureRepository;
-import com.example.epari.lecture.repository.LectureStudentRepository;
+import com.example.epari.course.domain.Course;
+import com.example.epari.course.domain.CourseStudent;
+import com.example.epari.course.domain.Curriculum;
+import com.example.epari.course.repository.CourseRepository;
+import com.example.epari.course.repository.CourseStudentRepository;
+import com.example.epari.course.repository.CurriculumRepository;
 import com.example.epari.user.domain.Instructor;
 import com.example.epari.user.domain.Student;
 import com.example.epari.user.repository.InstructorRepository;
@@ -36,11 +36,11 @@ public class InitDataLoader implements ApplicationRunner {
 
 	private final StudentRepository studentRepository;
 
-	private final LectureRepository lectureRepository;
+	private final CourseRepository courseRepository;
 
 	private final CurriculumRepository curriculumRepository;
 
-	private final LectureStudentRepository lectureStudentRepository;
+	private final CourseStudentRepository courseStudentRepository;
 
 	@Transactional
 	@Override
@@ -52,18 +52,18 @@ public class InitDataLoader implements ApplicationRunner {
 		List<Student> students = createStudents();
 
 		// 3. 강의 생성
-		List<Lecture> lectures = createLectures(instructors);
+		List<Course> courses = createCourses(instructors);
 
 		// 4. 각 강의별 커리큘럼 생성
-		for (Lecture lecture : lectures) {
-			createCurriculums(lecture);
+		for (Course course : courses) {
+			createCurriculums(course);
 		}
 
 		// 5. 수강 신청 데이터 생성
 		// 첫 번째 강의: 모든 학생 수강
-		List<LectureStudent> lectureStudents1 = createLectureStudents(lectures.get(0), students);
+		List<CourseStudent> courseStudents1 = createCourseStudents(courses.get(0), students);
 		// 두 번째 강의: 절반의 학생만 수강
-		List<LectureStudent> lectureStudents2 = createLectureStudents(lectures.get(1),
+		List<CourseStudent> courseStudents2 = createCourseStudents(courses.get(1),
 				students.subList(0, students.size() / 2));
 
 	}
@@ -113,11 +113,11 @@ public class InitDataLoader implements ApplicationRunner {
 		return studentRepository.saveAll(students);
 	}
 
-	private List<Lecture> createLectures(List<Instructor> instructors) {
-		List<Lecture> lectures = new ArrayList<>();
+	private List<Course> createCourses(List<Instructor> instructors) {
+		List<Course> courses = new ArrayList<>();
 
 		// 첫 번째 강의 (기존 강의)
-		Lecture lecture1 = Lecture.builder()
+		Course course1 = Course.builder()
 				.name("AWS 클라우드를 활용한 MSA 기반 자바 개발자 양성 과정")
 				.instructor(instructors.get(0))
 				.startDate(LocalDate.of(2024, 7, 3))
@@ -126,7 +126,7 @@ public class InitDataLoader implements ApplicationRunner {
 				.build();
 
 		// 두 번째 강의 (새로운 강의)
-		Lecture lecture2 = Lecture.builder()
+		Course course2 = Course.builder()
 				.name("스프링 부트와 리액트를 활용한 풀스택 개발자 과정")
 				.instructor(instructors.get(1))
 				.startDate(LocalDate.of(2024, 8, 5))
@@ -134,28 +134,28 @@ public class InitDataLoader implements ApplicationRunner {
 				.classroom("교육장 302호")
 				.build();
 
-		lectures.add(lecture1);
-		lectures.add(lecture2);
+		courses.add(course1);
+		courses.add(course2);
 
-		return lectureRepository.saveAll(lectures);
+		return courseRepository.saveAll(courses);
 	}
 
-	private void createCurriculums(Lecture lecture) {
+	private void createCurriculums(Course course) {
 		List<Curriculum> curriculums = new ArrayList<>();
 		Map<LocalDate, CurriculumInfo> topicsByDate;
 
-		if (lecture.getName().contains("AWS")) {
-			topicsByDate = getAwsLectureCurriculum();
+		if (course.getName().contains("AWS")) {
+			topicsByDate = getAwsCourseCurriculum();
 		} else {
-			topicsByDate = getFullstackLectureCurriculum();
+			topicsByDate = getFullstackCourseCurriculum();
 		}
 
-		LocalDate currentDate = lecture.getStartDate();
-		while (!currentDate.isAfter(lecture.getEndDate())) {
+		LocalDate currentDate = course.getStartDate();
+		while (!currentDate.isAfter(course.getEndDate())) {
 			if (topicsByDate.containsKey(currentDate)) {
 				CurriculumInfo info = topicsByDate.get(currentDate);
 				Curriculum curriculum = Curriculum.builder()
-						.lecture(lecture)
+						.course(course)
 						.date(currentDate)
 						.topic(info.topic)
 						.description(info.description)
@@ -168,16 +168,16 @@ public class InitDataLoader implements ApplicationRunner {
 		curriculumRepository.saveAll(curriculums);
 	}
 
-	private List<LectureStudent> createLectureStudents(Lecture lecture, List<Student> students) {
-		List<LectureStudent> lectureStudents = new ArrayList<>();
+	private List<CourseStudent> createCourseStudents(Course course, List<Student> students) {
+		List<CourseStudent> courseStudents = new ArrayList<>();
 		for (Student student : students) {
-			LectureStudent lectureStudent = new LectureStudent(lecture, student);
-			lectureStudents.add(lectureStudent);
+			CourseStudent courseStudent = new CourseStudent(course, student);
+			courseStudents.add(courseStudent);
 		}
-		return lectureStudentRepository.saveAll(lectureStudents);
+		return courseStudentRepository.saveAll(courseStudents);
 	}
 
-	private Map<LocalDate, CurriculumInfo> getAwsLectureCurriculum() {
+	private Map<LocalDate, CurriculumInfo> getAwsCourseCurriculum() {
 		Map<LocalDate, CurriculumInfo> topics = new HashMap<>();
 
 		// 1. 웹서비스 개발을 위한 프로그래밍 기본 다지기(JAVA & Database)
@@ -282,7 +282,7 @@ public class InitDataLoader implements ApplicationRunner {
 		return topics;
 	}
 
-	private Map<LocalDate, CurriculumInfo> getFullstackLectureCurriculum() {
+	private Map<LocalDate, CurriculumInfo> getFullstackCourseCurriculum() {
 		Map<LocalDate, CurriculumInfo> topics = new HashMap<>();
 
 		// 1. 자바스크립트 기초와 ES6+
@@ -357,7 +357,7 @@ public class InitDataLoader implements ApplicationRunner {
 
 	private boolean isWeekend(LocalDate date) {
 		return date.getDayOfWeek() == java.time.DayOfWeek.SATURDAY
-				|| date.getDayOfWeek() == java.time.DayOfWeek.SUNDAY;
+			   || date.getDayOfWeek() == java.time.DayOfWeek.SUNDAY;
 	}
 
 	private static class CurriculumInfo {

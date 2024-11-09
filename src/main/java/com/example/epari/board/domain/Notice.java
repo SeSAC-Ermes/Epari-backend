@@ -1,8 +1,8 @@
 package com.example.epari.board.domain;
 
+import com.example.epari.course.domain.Course;
 import com.example.epari.global.common.base.BaseTimeEntity;
 import com.example.epari.global.common.enums.NoticeType;
-import com.example.epari.lecture.domain.Lecture;
 import com.example.epari.user.domain.Instructor;
 
 import jakarta.persistence.Column;
@@ -50,20 +50,20 @@ public class Notice extends BaseTimeEntity {
 	private NoticeType type;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "lecture_id", nullable = false)
-	private Lecture lecture;
+	@JoinColumn(name = "course_id", nullable = false)
+	private Course course;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "instructor_id")
 	private Instructor instructor;
 
 	@Builder
-	private Notice(String title, Instructor instructor,String content, NoticeType type, Lecture lecture) {
+	private Notice(String title, Instructor instructor, String content, NoticeType type, Course course) {
 		this.title = title;
 		this.instructor = instructor;
 		this.content = content;
 		this.type = type;
-		this.lecture = lecture;
+		this.course = course;
 		this.viewCount = 0;
 	}
 

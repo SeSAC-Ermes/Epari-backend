@@ -12,6 +12,6 @@ import com.example.epari.exam.domain.Exam;
 public interface ExamRepository extends JpaRepository<Exam, Long> {
 
 	// 특정 강의에 속한 모든 시험 조회
-	List<Exam> findByLectureId(Long lectureId);
+	List<Exam> findByCourseId(Long courseId);
 
 }

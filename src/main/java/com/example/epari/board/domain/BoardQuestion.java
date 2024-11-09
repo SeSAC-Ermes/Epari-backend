@@ -3,9 +3,9 @@ package com.example.epari.board.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.epari.course.domain.Course;
 import com.example.epari.global.common.base.BaseTimeEntity;
 import com.example.epari.global.common.enums.BoardQuestionType;
-import com.example.epari.lecture.domain.Lecture;
 import com.example.epari.user.domain.Student;
 
 import jakarta.persistence.CascadeType;
@@ -58,8 +58,8 @@ public class BoardQuestion extends BaseTimeEntity {
 	private BoardQuestionType visibility = BoardQuestionType.PUBLIC; // 기본값 공개
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "lecture_id")
-	private Lecture lecture;
+	@JoinColumn(name = "course_id")
+	private Course course;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "student_id")
@@ -76,22 +76,22 @@ public class BoardQuestion extends BaseTimeEntity {
 
 	@Builder
 	private BoardQuestion(String title, String content, BoardQuestionType visibility,
-			Lecture lecture, Student student) {
+			Course course, Student student) {
 		this.title = title;
 		this.content = content;
 		this.visibility = visibility;
-		this.lecture = lecture;
+		this.course = course;
 		this.student = student;
 		this.viewCount = 0;
 	}
 
 	public static BoardQuestion createBoardQuestion(String title, String content,
-			BoardQuestionType visibility, Lecture lecture, Student student) {
+			BoardQuestionType visibility, Course course, Student student) {
 		return BoardQuestion.builder()
 				.title(title)
 				.content(content)
 				.visibility(visibility)
-				.lecture(lecture)
+				.course(course)
 				.student(student)
 				.build();
 	}

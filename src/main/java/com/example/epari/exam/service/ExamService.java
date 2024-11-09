@@ -6,12 +6,12 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.epari.course.domain.Course;
+import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.exam.domain.Exam;
 import com.example.epari.exam.dto.request.ExamRequestDto;
 import com.example.epari.exam.dto.response.ExamResponseDto;
 import com.example.epari.exam.repository.ExamRepository;
-import com.example.epari.lecture.domain.Lecture;
-import com.example.epari.lecture.repository.LectureRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,13 +25,13 @@ public class ExamService {
 
 	private final ExamRepository examRepository;
 
-	private final LectureRepository lectureRepository;
+	private final CourseRepository courseRepository;
 
 	// 시험 생성
 	@Transactional
-	public Long createExam(Long lectureId, ExamRequestDto requestDto) {
+	public Long createExam(Long courseId, ExamRequestDto requestDto) {
 		// 강의 존재여부 확인
-		Lecture lecture = lectureRepository.findById(lectureId)
+		Course course = courseRepository.findById(courseId)
 				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다."));
 
 		Exam exam = Exam.builder()
@@ -40,21 +40,21 @@ public class ExamService {
 				.duration(requestDto.getDuration())
 				.totalScore(requestDto.getTotalScore())
 				.description(requestDto.getDescription())
-				.lecture(lecture)
+				.course(course)
 				.build();
 
 		return examRepository.save(exam).getId();
 	}
 
 	// 특정 강의의 시험 조회
-	public List<ExamResponseDto> getExamByLecture(Long lectureId) {
+	public List<ExamResponseDto> getExamByCourse(Long courseId) {
 		// 강의 존재여부 확인
-		if (!lectureRepository.existsById(lectureId)) {
-			throw new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + lectureId);
+		if (!courseRepository.existsById(courseId)) {
+			throw new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + courseId);
 		}
 
 		// 시험 목록 조회 및 DTO 반환
-		return examRepository.findByLectureId(lectureId).stream()
+		return examRepository.findByCourseId(courseId).stream()
 				.map(ExamResponseDto::fromExam)
 				.collect(Collectors.toList());
 
