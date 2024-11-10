@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.epari.global.common.base.BaseTimeEntity;
-import com.example.epari.lecture.domain.Lecture;
+import com.example.epari.course.domain.Course;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -52,21 +52,21 @@ public class Exam extends BaseTimeEntity {
 	private String description;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "lecture_id")
-	private Lecture lecture;
+	@JoinColumn(name = "course_id")
+	private Course course;
 
 	@OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ExamQuestion> questions = new ArrayList<>();
 
 	@Builder
 	private Exam(String title, LocalDateTime examDateTime, Integer duration,
-			Integer totalScore, String description, Lecture lecture) {
+			Integer totalScore, String description, Course course) {
 		this.title = title;
 		this.examDateTime = examDateTime;
 		this.duration = duration;
 		this.totalScore = totalScore;
 		this.description = description;
-		this.lecture = lecture;
+		this.course = course;
 	}
 
 	public void updateExam(String title, LocalDateTime examDateTime,

@@ -1,58 +1,170 @@
 package com.example.epari.assignment.service;
 
-import java.time.LocalDateTime;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.epari.assignment.domain.Assignment;
+import com.example.epari.assignment.domain.AssignmentFile;
+import com.example.epari.assignment.dto.assignment.AssignmentRequestDto;
+import com.example.epari.assignment.dto.assignment.AssignmentResponseDto;
+import com.example.epari.assignment.dto.file.AssignmentFileResponseDto;
+import com.example.epari.assignment.repository.AssignmentFileRepository;
 import com.example.epari.assignment.repository.AssignmentRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-/*
-	과제 관련 서비스
- */
-
+//로그를 간단하게 보여주는 어노테이션
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AssignmentService {
+
+	@Value("${file.upload.path}")  // application.properties에서 설정
+	private String fileUploadPath;
 
 	private final AssignmentRepository assignmentRepository;
 
-	//과제 추가
-	public Assignment addAssignment(Assignment assignment) {
-		return assignmentRepository.save(assignment);
+	private final AssignmentFileRepository assignmentFileRepository;
+
+	/**
+	 * 과제 추가
+	 */
+	@Transactional
+	public AssignmentResponseDto addAssignment(AssignmentRequestDto requestDto) {
+		Assignment assignment = Assignment.createAssignment(
+				requestDto.getTitle(),
+				requestDto.getDescription(),
+				requestDto.getDeadline(),
+				null  // 강의 정보는 별도의 메서드로 처리
+		);
+		return new AssignmentResponseDto(assignmentRepository.save(assignment));
 	}
 
-	//전체 과제 조회
-	public List<Assignment> getAllAssignments() {
-		return assignmentRepository.findAll();
+	/**
+	 * 전체 과제 조회
+	 */
+	public List<AssignmentResponseDto> getAllAssignments() {
+		return assignmentRepository.findAll().stream()
+				.map(AssignmentResponseDto::new)
+				.collect(Collectors.toList());
 	}
 
-	//입력 키워드를 포함하는 과제 조회
-	public List<Assignment> getAssignmentsByTitle(String title) {
-		return assignmentRepository.findAssignmentByTitleContains(title);
+	/**
+	 * 입력 키워드를 포함하는 과제 조회
+	 */
+	public List<AssignmentResponseDto> getAssignmentsByTitle(String title) {
+		return assignmentRepository.findAssignmentByTitleContains(title).stream()
+				.map(AssignmentResponseDto::new)
+				.collect(Collectors.toList());
 	}
 
-	//과제 수정
-	public Assignment updateAssignment(Long id, String title, String description, LocalDateTime deadline,
-			Integer score) {
-		Optional<Assignment> optionalAssignment = assignmentRepository.findById(id);
+	/**
+	 * 과제 수정
+	 */
+	@Transactional
+	public AssignmentResponseDto updateAssignment(Long id, AssignmentRequestDto requestDto) {
+		Assignment assignment = assignmentRepository.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
 
-		if (optionalAssignment.isPresent()) {
-			Assignment existingAssignment = optionalAssignment.get();
-			existingAssignment.updateAssignment(title, description, deadline, score);
-			return assignmentRepository.save(existingAssignment);
-		} else {
-			throw new IllegalArgumentException("과제를 찾을 수 없습니다.");
+		assignment.updateAssignment(
+				requestDto.getTitle(),
+				requestDto.getDescription(),
+				requestDto.getDeadline()
+		);
+
+		return new AssignmentResponseDto(assignment);
+	}
+
+	/**
+	 * 과제 삭제
+	 */
+	@Transactional
+	public void deleteAssignment(Long id) {
+		Assignment assignment = assignmentRepository.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
+		assignmentRepository.delete(assignment);
+	}
+
+	@Transactional
+	public List<AssignmentFileResponseDto> uploadFiles(List<MultipartFile> files, Long assignmentId) {
+		Assignment assignment = null;
+		if (assignmentId != null) {
+			assignment = assignmentRepository.findById(assignmentId)
+					.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
+		}
+
+		List<AssignmentFile> uploadedFiles = new ArrayList<>();
+
+		try {
+			Path uploadPath = Paths.get(fileUploadPath);
+			if (!Files.exists(uploadPath)) {
+				Files.createDirectories(uploadPath);
+			}
+
+			for (MultipartFile file : files) {
+				if (file.isEmpty())
+					continue;
+
+				String originalFileName = file.getOriginalFilename();
+				String storedFileName = UUID.randomUUID().toString() + "_" + originalFileName;
+				Path filePath = uploadPath.resolve(storedFileName);
+
+				Files.copy(file.getInputStream(), filePath);
+
+				AssignmentFile assignmentFile = AssignmentFile.createAssignmentFile(
+						originalFileName,
+						storedFileName,
+						"/uploads/" + storedFileName,
+						file.getSize(),
+						assignment
+				);
+
+				AssignmentFile savedFile = assignmentFileRepository.save(assignmentFile);
+				if (assignment != null) {
+					assignment.addFile(savedFile);
+				}
+				uploadedFiles.add(savedFile);
+			}
+
+			return uploadedFiles.stream()
+					.map(AssignmentFileResponseDto::new)
+					.collect(Collectors.toList());
+
+		} catch (IOException e) {
+			log.error("파일 업로드 중 오류 발생", e);
+			throw new RuntimeException("파일 업로드에 실패했습니다: " + e.getMessage());
 		}
 	}
 
-	//과제 삭제
-	public void deleteAssignment(Long id) {
-		assignmentRepository.deleteById(id);
+	/**
+	 * 파일 삭제
+	 */
+	@Transactional
+	public void deleteFile(Long fileId) {
+		AssignmentFile file = assignmentFileRepository.findById(fileId)
+				.orElseThrow(() -> new IllegalArgumentException("파일을 찾을 수 없습니다."));
+
+		try {
+			Path filePath = Paths.get(fileUploadPath).resolve(file.getStoredFileName());
+			Files.deleteIfExists(filePath);
+			assignmentFileRepository.delete(file);
+		} catch (IOException e) {
+			log.error("파일 삭제 중 오류 발생", e);
+			throw new RuntimeException("파일 삭제에 실패했습니다: " + e.getMessage());
+		}
 	}
 
 }

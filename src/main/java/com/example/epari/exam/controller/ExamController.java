@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
  * 시험 관련 HTTP 요청을 처리하는 Controller 클래스
  */
 @RestController
-@RequestMapping("/api/lectures/{lectureId}/exams")
+@RequestMapping("/api/courses/{courseId}/exams")
 @RequiredArgsConstructor
 public class ExamController {
 
@@ -31,44 +31,44 @@ public class ExamController {
 	// 시험 생성
 	@PostMapping
 	public ResponseEntity<Long> createExam(
-			@PathVariable Long lectureId,
+			@PathVariable Long courseId,
 			@RequestBody ExamRequestDto examRequestDto) {
-		Long examId = examService.createExam(lectureId, examRequestDto);
+		Long examId = examService.createExam(courseId, examRequestDto);
 		return ResponseEntity.ok(examId);
 	}
 
 	// 특정 강의에 해당하는 시험 정보 조회
 	@GetMapping
-	public ResponseEntity<List<ExamResponseDto>> getExams(@PathVariable Long lectureId) {
-		List<ExamResponseDto> exams = examService.getExamsByLecture(lectureId);
+	public ResponseEntity<List<ExamResponseDto>> getExams(@PathVariable Long courseId) {
+		List<ExamResponseDto> exams = examService.getExamByCourse(courseId);
 		return ResponseEntity.ok(exams);
 	}
 
 	// 특정 강의에 속한 시험 상세 조회
 	@GetMapping("/{examId}")
 	public ResponseEntity<ExamResponseDto> getExam(
-			@PathVariable Long lectureId,
+			@PathVariable Long courseId,
 			@PathVariable("examId") Long id) {
-		ExamResponseDto exam = examService.getExam(lectureId, id);
+		ExamResponseDto exam = examService.getExam(courseId, id);
 		return ResponseEntity.ok(exam);
 	}
 
 	// 특정 강의에 속한 시험 수정
 	@PutMapping("/{examId}")
 	public ResponseEntity<ExamResponseDto> updateExam(
-			@PathVariable Long lectureId,
+			@PathVariable Long courseId,
 			@PathVariable("examId") Long id,
 			@RequestBody ExamRequestDto examRequestDto) {
-		ExamResponseDto updateExam = examService.updateExam(lectureId, id, examRequestDto);
+		ExamResponseDto updateExam = examService.updateExam(courseId, id, examRequestDto);
 		return ResponseEntity.ok(updateExam);
 	}
 
 	// 특정 강의에 속한 시험 삭제
 	@DeleteMapping("/{examId}")
 	public ResponseEntity<Void> deleteExam(
-			@PathVariable Long lectureId,
+			@PathVariable Long courseId,
 			@PathVariable("examId") Long id) {
-		examService.deleteExam(lectureId, id);
+		examService.deleteExam(courseId, id);
 		return ResponseEntity.noContent().build();
 	}
 
