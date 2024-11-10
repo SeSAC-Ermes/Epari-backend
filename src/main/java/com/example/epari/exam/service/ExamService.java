@@ -92,4 +92,16 @@ public class ExamService {
 		return ExamResponseDto.fromExam(exam);
 	}
 
+	// 특정 강의에 속한 시험 삭제
+	public void deleteExam(Long lectureId, Long id) {
+		if (!lectureRepository.existsById(lectureId)) {
+			throw new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + lectureId);
+		}
+
+		Exam exam = examRepository.findByLectureIdAndId(lectureId, id)
+				.orElseThrow(() -> new IllegalArgumentException("시험을 찾을 수 없습니다." + id));
+
+		examRepository.delete(exam);
+	}
+
 }

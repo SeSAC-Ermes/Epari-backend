@@ -3,6 +3,7 @@ package com.example.epari.exam.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,12 +55,21 @@ public class ExamController {
 
 	// 특정 강의에 속한 시험 수정
 	@PutMapping
-	public ResponseEntity<Long> updateExam(
+	public ResponseEntity<ExamResponseDto> updateExam(
 			@PathVariable Long lectureId,
 			@PathVariable("examId") Long id,
 			@RequestBody ExamRequestDto examRequestDto) {
 		ExamResponseDto updateExam = examService.updateExam(lectureId, id, examRequestDto);
-		return ResponseEntity.ok(id);
+		return ResponseEntity.ok(updateExam);
+	}
+
+	// 특정 강의에 속한 시험 삭제
+	@DeleteMapping("/{examId}")
+	public ResponseEntity<Void> deleteExam(
+			@PathVariable Long lectureId,
+			@PathVariable("examId") Long id) {
+		examService.deleteExam(lectureId, id);
+		return ResponseEntity.noContent().build();
 	}
 
 }
