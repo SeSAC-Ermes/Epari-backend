@@ -72,4 +72,22 @@ public class ExamService {
 		return ExamResponseDto.fromExam(exam);
 	}
 
+	// 특정 강의에 속한 시험 수정
+	public ExamResponseDto updateExam(Long lectureId, Long id, ExamRequestDto requestDto) {
+		if (!lectureRepository.existsById(lectureId)) {
+			throw new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + lectureId);
+		}
+
+		Exam exam = examRepository.findByLectureIdAndId(lectureId, id)
+				.orElseThrow(() -> new IllegalArgumentException("시험을 찾을 수 없습니다." + id));
+
+		exam.updateExam(
+				requestDto.getTitle(),
+				requestDto.getExamDateTime(),
+				requestDto.
+		);
+
+
+	}
+
 }
