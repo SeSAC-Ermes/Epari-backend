@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/assignments")
-@CrossOrigin(origins = "http://localhost:5173")
 public class AssignmentController {
 
 	private final AssignmentService assignmentService;
