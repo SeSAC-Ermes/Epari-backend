@@ -54,7 +54,7 @@ public class ExamController {
 	}
 
 	// 특정 강의에 속한 시험 수정
-	@PutMapping
+	@PutMapping("/{examId}")
 	public ResponseEntity<ExamResponseDto> updateExam(
 			@PathVariable Long lectureId,
 			@PathVariable("examId") Long id,
