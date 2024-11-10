@@ -84,10 +84,12 @@ public class ExamService {
 		exam.updateExam(
 				requestDto.getTitle(),
 				requestDto.getExamDateTime(),
-				requestDto.
+				requestDto.getDuration(),
+				requestDto.getTotalScore(),
+				requestDto.getDescription()
 		);
 
-
+		return ExamResponseDto.fromExam(exam);
 	}
 
 }
