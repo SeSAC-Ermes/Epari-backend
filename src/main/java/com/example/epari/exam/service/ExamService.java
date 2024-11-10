@@ -47,7 +47,7 @@ public class ExamService {
 	}
 
 	// 특정 강의의 시험 조회
-	public List<ExamResponseDto> getExamByLecture(Long lectureId) {
+	public List<ExamResponseDto> getExamsByLecture(Long lectureId) {
 		// 강의 존재여부 확인
 		if (!lectureRepository.existsById(lectureId)) {
 			throw new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + lectureId);
@@ -58,6 +58,18 @@ public class ExamService {
 				.map(ExamResponseDto::fromExam)
 				.collect(Collectors.toList());
 
+	}
+
+	// 특정 강의에 속한 시험 상세 조회
+	public ExamResponseDto getExam(Long lectureId, Long id) {
+		if (!lectureRepository.existsById(lectureId)) {
+			throw new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + lectureId);
+		}
+
+		Exam exam = examRepository.findByLectureIdAndId(lectureId, id)
+				.orElseThrow(() -> new IllegalArgumentException("시험을 찾을 수 없습니다." + id));
+
+		return ExamResponseDto.fromExam(exam);
 	}
 
 }

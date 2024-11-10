@@ -38,8 +38,17 @@ public class ExamController {
 	// 특정 강의에 해당하는 시험 정보 조회
 	@GetMapping
 	public ResponseEntity<List<ExamResponseDto>> getExams(@PathVariable Long lectureId) {
-		List<ExamResponseDto> exams = examService.getExamByLecture(lectureId);
+		List<ExamResponseDto> exams = examService.getExamsByLecture(lectureId);
 		return ResponseEntity.ok(exams);
+	}
+
+	// 특정 강의에 속한 시험 상세 조회
+	@GetMapping("/{examId}")
+	public ResponseEntity<ExamResponseDto> getExam(
+			@PathVariable Long lectureId,
+			@PathVariable("examId") Long id) {
+		ExamResponseDto exam = examService.getExam(lectureId, id);
+		return ResponseEntity.ok(exam);
 	}
 
 }
