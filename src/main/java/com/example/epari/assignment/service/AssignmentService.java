@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.example.epari.course.domain.Course;
+import com.example.epari.course.repository.CourseRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,25 +41,31 @@ public class AssignmentService {
 
 	private final AssignmentFileRepository assignmentFileRepository;
 
+	private final CourseRepository courseRepository;
+
 	/**
 	 * 과제 추가
 	 */
 	@Transactional
-	public AssignmentResponseDto addAssignment(AssignmentRequestDto requestDto) {
+	public AssignmentResponseDto addAssignment(Long courseId, AssignmentRequestDto requestDto) {
+		Course course = courseRepository.findById(courseId)
+				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다."));
+
 		Assignment assignment = Assignment.createAssignment(
 				requestDto.getTitle(),
 				requestDto.getDescription(),
 				requestDto.getDeadline(),
-				null  // 강의 정보는 별도의 메서드로 처리
+				course
 		);
+
 		return new AssignmentResponseDto(assignmentRepository.save(assignment));
 	}
 
 	/**
 	 * 전체 과제 조회
 	 */
-	public List<AssignmentResponseDto> getAllAssignments() {
-		return assignmentRepository.findAll().stream()
+	public List<AssignmentResponseDto> getAssignmentsByCourse(Long courseId) {
+		return assignmentRepository.findByCourseId(courseId).stream()
 				.map(AssignmentResponseDto::new)
 				.collect(Collectors.toList());
 	}
