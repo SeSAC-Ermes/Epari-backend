@@ -3,9 +3,11 @@ package com.example.epari.exam.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,6 +42,34 @@ public class ExamController {
 	public ResponseEntity<List<ExamResponseDto>> getExams(@PathVariable Long courseId) {
 		List<ExamResponseDto> exams = examService.getExamByCourse(courseId);
 		return ResponseEntity.ok(exams);
+	}
+
+	// 특정 강의에 속한 시험 상세 조회
+	@GetMapping("/{examId}")
+	public ResponseEntity<ExamResponseDto> getExam(
+			@PathVariable Long courseId,
+			@PathVariable("examId") Long id) {
+		ExamResponseDto exam = examService.getExam(courseId, id);
+		return ResponseEntity.ok(exam);
+	}
+
+	// 특정 강의에 속한 시험 수정
+	@PutMapping("/{examId}")
+	public ResponseEntity<ExamResponseDto> updateExam(
+			@PathVariable Long courseId,
+			@PathVariable("examId") Long id,
+			@RequestBody ExamRequestDto examRequestDto) {
+		ExamResponseDto updateExam = examService.updateExam(courseId, id, examRequestDto);
+		return ResponseEntity.ok(updateExam);
+	}
+
+	// 특정 강의에 속한 시험 삭제
+	@DeleteMapping("/{examId}")
+	public ResponseEntity<Void> deleteExam(
+			@PathVariable Long courseId,
+			@PathVariable("examId") Long id) {
+		examService.deleteExam(courseId, id);
+		return ResponseEntity.noContent().build();
 	}
 
 }

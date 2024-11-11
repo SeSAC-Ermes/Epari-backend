@@ -1,6 +1,7 @@
 package com.example.epari.exam.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,5 +14,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
 	// 특정 강의에 속한 모든 시험 조회
 	List<Exam> findByCourseId(Long courseId);
+
+	// 특정 강의에 속한 시험 상세 조회
+	Optional<Exam> findByCourseIdAndId(Long courseId, Long Id);
 
 }
