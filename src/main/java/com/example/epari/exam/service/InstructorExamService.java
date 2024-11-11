@@ -13,7 +13,7 @@ import com.example.epari.exam.repository.ExamRepository;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 강사 시험 조회 관련 비즈니스 로직을 처리하는 Service 클래스
+ * 강사의 시험 조회 관련 비즈니스 로직을 처리하는 Service 클래스
  */
 @Service
 @RequiredArgsConstructor
@@ -22,8 +22,8 @@ public class InstructorExamService {
 
 	private final ExamRepository examRepository;
 
-	public List<ExamResponseDto> getExams(Long instructorId) {
-		List<Exam> exams = examRepository.findByInstructorId(instructorId);
+	public List<ExamResponseDto> getExams(String email) {
+		List<Exam> exams = examRepository.findByInstructorEmail(email);
 		return exams.stream()
 				.map(ExamResponseDto::fromExam)
 				.collect(Collectors.toList());
