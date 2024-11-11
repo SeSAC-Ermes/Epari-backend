@@ -26,14 +26,20 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 	 * 2. 강사
 	 */
 	// 강사가 담당하는 강의의 모든 시험 조회
-	@Query("SELECT e FROM Exam e JOIN FETCH e.course c JOIN c.instructor i WHERE i.email = :email")
-	List<Exam> findByInstructorEmail(String email);
+	@Query("SELECT e FROM Exam e "
+			+ "JOIN FETCH e.course c "
+			+ "JOIN c.instructor i "
+			+ "WHERE i.email = :instructorEmail")
+	List<Exam> findByInstructorEmail(String instructorEmail);
 
 	/**
 	 * 3. 학생
 	 */
 	// 학생이 수강중인 강의의 모든 시험 조회
-	@Query("SELECT e FROM Exam e JOIN FETCH e.course c JOIN CourseStudent cs WHERE cs.student.email = :email AND cs.course = c")
-	List<Exam> findByStudentEmail(String email);
+	@Query("SELECT e FROM Exam e "
+			+ "JOIN FETCH e.course c "
+			+ "JOIN CourseStudent cs ON cs.course = c "
+			+ "WHERE cs.student.email = :studentEmail")
+	List<Exam> findByStudentEmail(String studentEmail);
 
 }
