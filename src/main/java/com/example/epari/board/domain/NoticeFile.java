@@ -27,7 +27,7 @@ public class NoticeFile extends BaseFile {
 	private Notice notice;
 
 	public static NoticeFile createNoticeFile(String originalFileName, String storedFileName,
-			String fileUrl, Long fileSize, Notice notice) {
+											  String fileUrl, Long fileSize, Notice notice) {
 		NoticeFile file = new NoticeFile(originalFileName, storedFileName, fileUrl, fileSize);
 		file.setNotice(notice);
 		return file;
@@ -37,8 +37,16 @@ public class NoticeFile extends BaseFile {
 		super(originalFileName, storedFileName, fileUrl, fileSize);
 	}
 
-	private void setNotice(Notice notice) {
+	public void setNotice(Notice notice) {
+		// 기존 관계 제거
+		if (this.notice != null) {
+			this.notice.getFiles().remove(this);
+		}
 		this.notice = notice;
+		// 새로운 관계 설정
+		if (notice != null && !notice.getFiles().contains(this)) {
+			notice.getFiles().add(this);
+		}
 	}
 
 }
