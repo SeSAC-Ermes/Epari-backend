@@ -62,12 +62,12 @@ public class ExamService {
 
 	// 특정 강의에 속한 시험 상세 조회
 	@Transactional(readOnly = true)
-	public ExamResponseDto getExam(Long lectureId, Long id) {
-		if (!courseRepository.existsById(lectureId)) {
-			throw new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + lectureId);
+	public ExamResponseDto getExam(Long courseId, Long id) {
+		if (!courseRepository.existsById(courseId)) {
+			throw new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + courseId);
 		}
 
-		Exam exam = examRepository.findByLectureIdAndId(lectureId, id)
+		Exam exam = examRepository.findByCourseIdAndId(courseId, id)
 				.orElseThrow(() -> new IllegalArgumentException("시험을 찾을 수 없습니다." + id));
 
 		return ExamResponseDto.fromExam(exam);
@@ -79,7 +79,7 @@ public class ExamService {
 			throw new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + courseId);
 		}
 
-		Exam exam = examRepository.findByLectureIdAndId(courseId, id)
+		Exam exam = examRepository.findByCourseIdAndId(courseId, id)
 				.orElseThrow(() -> new IllegalArgumentException("시험을 찾을 수 없습니다. ID:" + id));
 
 		exam.updateExam(
@@ -94,13 +94,12 @@ public class ExamService {
 	}
 
 	// 특정 강의에 속한 시험 삭제
-	@Transactional(readOnly = true)
 	public void deleteExam(Long courseId, Long id) {
 		if (!courseRepository.existsById(courseId)) {
 			throw new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + courseId);
 		}
 
-		Exam exam = examRepository.findByLectureIdAndId(courseId, id)
+		Exam exam = examRepository.findByCourseIdAndId(courseId, id)
 				.orElseThrow(() -> new IllegalArgumentException("시험을 찾을 수 없습니다. ID:" + id));
 
 		examRepository.delete(exam);
