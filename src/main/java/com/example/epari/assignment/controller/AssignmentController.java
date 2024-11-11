@@ -26,25 +26,27 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/assignments")
+@RequestMapping("/api/courses/{courseId}/assignments")
 public class AssignmentController {
 
 	private final AssignmentService assignmentService;
 
 	// 과제 추가
 	@PostMapping
-	public ResponseEntity<AssignmentResponseDto> addAssignment(@RequestBody AssignmentRequestDto requestDto) {
-		log.info("과제 생성 요청: 제목 = {}", requestDto.getTitle());
-		AssignmentResponseDto responseDto = assignmentService.addAssignment(requestDto);
+	public ResponseEntity<AssignmentResponseDto> addAssignment(
+			@PathVariable Long courseId,
+			@RequestBody AssignmentRequestDto requestDto) {
+		log.info("과제 생성 요청: courseId = {}, 제목 = {}", courseId, requestDto.getTitle());
+		AssignmentResponseDto responseDto = assignmentService.addAssignment(courseId, requestDto);
 		log.info("과제 생성 완료: ID = {}", responseDto.getId());
 		return ResponseEntity.ok(responseDto);
 	}
 
 	// 전체 과제 조회
 	@GetMapping
-	public ResponseEntity<List<AssignmentResponseDto>> getAllAssignments() {
-		log.info("전체 과제 목록 조회 요청");
-		List<AssignmentResponseDto> assignments = assignmentService.getAllAssignments();
+	public ResponseEntity<List<AssignmentResponseDto>> getAssignmentsByCourse(@PathVariable Long courseId) {
+		log.info("강의 과제 목록 조회 요청: courseId = {}", courseId);
+		List<AssignmentResponseDto> assignments = assignmentService.getAssignmentsByCourse(courseId);
 		log.info("과제 목록 조회 완료: {} 건", assignments.size());
 		return ResponseEntity.ok(assignments);
 	}
