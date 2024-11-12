@@ -26,10 +26,15 @@ import java.util.List;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class NoticeService {
+
 	private final NoticeRepository noticeRepository;
+
 	private final NoticeFileRepository noticeFileRepository;
+
 	private final CourseRepository courseRepository;
+
 	private final InstructorRepository instructorRepository;
+
 	private final FileService fileService;
 
 	@Transactional
@@ -146,4 +151,5 @@ public class NoticeService {
 		List<Notice> singletonList = Collections.singletonList(notice);
 		return NoticeResponseDto.fromNotices(singletonList).get(0);
 	}
+
 }

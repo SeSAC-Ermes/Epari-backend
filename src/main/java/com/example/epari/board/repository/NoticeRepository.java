@@ -14,6 +14,7 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
 	List<Notice> findByTypeOrderByCreatedAtDesc(NoticeType type);
 
 	List<Notice> findByCourseIdOrderByCreatedAtDesc(Long courseId);
+
 	List<Notice> findByCourseIdAndTypeOrderByCreatedAtDesc(Long courseId, NoticeType type);
 
 

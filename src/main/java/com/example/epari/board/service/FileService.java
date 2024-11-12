@@ -108,4 +108,5 @@ public class FileService {
 	private String generateFileUrl(String storedFileName) {
 		return "/api/files/notices/" + storedFileName;
 	}
+
 }

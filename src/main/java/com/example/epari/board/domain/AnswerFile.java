@@ -27,7 +27,7 @@ public class AnswerFile extends BaseFile {
 	private Answer answer;
 
 	public static AnswerFile createAnswerFile(String originalFileName, String storedFileName,
-			String fileUrl, Long fileSize, Answer answer) {
+											  String fileUrl, Long fileSize, Answer answer) {
 		AnswerFile file = new AnswerFile(originalFileName, storedFileName, fileUrl, fileSize);
 		file.setAnswer(answer);
 		return file;

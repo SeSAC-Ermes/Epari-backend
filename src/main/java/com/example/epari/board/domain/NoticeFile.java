@@ -44,4 +44,5 @@ public class NoticeFile extends BaseFile {
 			notice.getFiles().add(this);
 		}
 	}
+
 }
