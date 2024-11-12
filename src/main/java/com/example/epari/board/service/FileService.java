@@ -24,13 +24,7 @@ public class FileService {
 		String storedFileName = createStoredFileName(originalFileName);
 
 		try {
-			// 디렉토리가 없으면 생성
-			Path uploadPath = Path.of(uploadDir);
-			if (!Files.exists(uploadPath)) {
-				Files.createDirectories(uploadPath);
-			}
-
-			Path targetLocation = uploadPath.resolve(storedFileName);
+			Path targetLocation = Path.of(uploadDir).resolve(storedFileName);
 			Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 			return storedFileName;
 		} catch (IOException ex) {
