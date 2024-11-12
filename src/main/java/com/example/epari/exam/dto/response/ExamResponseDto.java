@@ -26,7 +26,7 @@ public class ExamResponseDto {
 
 	private String description;
 
-	private Long courserId;
+	private Long courseId;
 
 	public static ExamResponseDto fromExam(Exam exam) {
 		return ExamResponseDto.builder()
@@ -36,7 +36,7 @@ public class ExamResponseDto {
 				.duration(exam.getDuration())
 				.totalScore(exam.getTotalScore())
 				.description(exam.getDescription())
-				.courserId(exam.getCourse().getId())
+				.courseId(exam.getCourse().getId())
 				.build();
 	}
 
