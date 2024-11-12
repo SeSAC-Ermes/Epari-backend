@@ -83,7 +83,15 @@ public class CourseContentController {
 	public ResponseEntity<CourseContentResponseDto> updateContent(
 			@PathVariable Long courseId,
 			@PathVariable Long contentId,
-			@RequestBody CourseContentRequestDto.Update request) {
+			@RequestParam(required = true) String title,
+			@RequestParam(required = true) String content,
+			@RequestParam(required = false) List<MultipartFile> files) {
+
+		CourseContentRequestDto.Update request = new CourseContentRequestDto.Update();
+		request.setTitle(title);
+		request.setContent(content);
+		request.setFiles(files);
+
 		return ResponseEntity.ok(courseContentService.updateContent(courseId, contentId, request));
 	}
 
@@ -122,5 +130,18 @@ public class CourseContentController {
 		String fileUrl = courseContentService.downloadContent(courseId, contentId, fileId);
 		return ResponseEntity.ok(fileUrl);
 	}
+
+	/**
+	 * 강의 자료의 특정 파일을 삭제합니다.
+	 */
+	@DeleteMapping("/{contentId}/files/{fileId}")
+	@PreAuthorize("hasRole('INSTRUCTOR')")
+	public ResponseEntity<CourseContentResponseDto> deleteFile(
+			@PathVariable Long courseId,
+			@PathVariable Long contentId,
+			@PathVariable Long fileId) {
+		return ResponseEntity.ok(courseContentService.deleteFile(courseId, contentId, fileId));
+	}
+
 
 }
