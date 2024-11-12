@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.epari.exam.dto.request.ExamRequestDto;
 import com.example.epari.exam.dto.response.ExamResponseDto;
 import com.example.epari.exam.service.ExamService;
+import com.example.epari.exam.service.InstructorExamService;
+import com.example.epari.global.annotation.CurrentUserEmail;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,12 +30,15 @@ public class ExamController {
 
 	private final ExamService examService;
 
+	private final InstructorExamService instructorExamService;
+
 	// 시험 생성
 	@PostMapping
 	public ResponseEntity<Long> createExam(
 			@PathVariable Long courseId,
-			@RequestBody ExamRequestDto examRequestDto) {
-		Long examId = examService.createExam(courseId, examRequestDto);
+			@RequestBody ExamRequestDto examRequestDto,
+			@CurrentUserEmail String instructorEmail) {
+		Long examId = instructorExamService.createExam(courseId, examRequestDto, instructorEmail);
 		return ResponseEntity.ok(examId);
 	}
 
@@ -58,8 +63,9 @@ public class ExamController {
 	public ResponseEntity<ExamResponseDto> updateExam(
 			@PathVariable Long courseId,
 			@PathVariable("examId") Long id,
-			@RequestBody ExamRequestDto examRequestDto) {
-		ExamResponseDto updateExam = examService.updateExam(courseId, id, examRequestDto);
+			@RequestBody ExamRequestDto examRequestDto,
+			@CurrentUserEmail String instructorEmail) {
+		ExamResponseDto updateExam = instructorExamService.updateExam(courseId, id, examRequestDto, instructorEmail);
 		return ResponseEntity.ok(updateExam);
 	}
 
@@ -67,8 +73,9 @@ public class ExamController {
 	@DeleteMapping("/{examId}")
 	public ResponseEntity<Void> deleteExam(
 			@PathVariable Long courseId,
-			@PathVariable("examId") Long id) {
-		examService.deleteExam(courseId, id);
+			@PathVariable("examId") Long id,
+			@CurrentUserEmail String instructorEmail) {
+		instructorExamService.deleteExam(courseId, id, instructorEmail);
 		return ResponseEntity.noContent().build();
 	}
 
