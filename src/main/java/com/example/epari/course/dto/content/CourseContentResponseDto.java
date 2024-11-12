@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.example.epari.course.domain.CourseContent;
 import com.example.epari.course.domain.CourseContentFile;
+import com.example.epari.user.domain.Instructor;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -25,6 +26,8 @@ public class CourseContentResponseDto {
 	private LocalDate date;
 
 	private List<FileInfo> files;
+
+	private InstructorInfo instructor;
 
 	@Getter
 	@Builder
@@ -49,6 +52,26 @@ public class CourseContentResponseDto {
 
 	}
 
+	@Getter
+	@Builder
+	public static class InstructorInfo {
+
+		private Long id;
+
+		private String name;
+
+		private String email;
+
+		public static InstructorInfo from(Instructor instructor) {
+			return InstructorInfo.builder()
+					.id(instructor.getId())
+					.name(instructor.getName())
+					.email(instructor.getEmail())
+					.build();
+		}
+
+	}
+
 	public static CourseContentResponseDto from(CourseContent content) {
 		return CourseContentResponseDto.builder()
 				.id(content.getId())
@@ -58,6 +81,7 @@ public class CourseContentResponseDto {
 				.files(content.getFiles().stream()
 						.map(FileInfo::from)
 						.toList())
+				.instructor(InstructorInfo.from(content.getCourse().getInstructor()))
 				.build();
 	}
 

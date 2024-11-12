@@ -36,7 +36,7 @@ public class CourseContent {
 	@Column(nullable = false)
 	private String title;
 
-	@Column
+	@Column(columnDefinition = "LONGTEXT")
 	private String content;
 
 	@DateTimeFormat(pattern = "yyyy-MM-dd")

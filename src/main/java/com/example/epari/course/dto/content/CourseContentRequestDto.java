@@ -35,6 +35,8 @@ public class CourseContentRequestDto {
 
 		private String content;
 
+		private List<MultipartFile> files;
+
 	}
 
 }
