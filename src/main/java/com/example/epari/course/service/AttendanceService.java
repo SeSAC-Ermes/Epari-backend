@@ -15,6 +15,7 @@ import com.example.epari.course.dto.attendance.AttendanceUpdateDto;
 import com.example.epari.course.repository.AttendanceRepository;
 import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.course.repository.CourseStudentRepository;
+import com.example.epari.global.validator.CourseAccessValidator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,13 +33,16 @@ public class AttendanceService {
 
 	private final CourseStudentRepository courseStudentRepository;
 
+	private final CourseAccessValidator courseAccessValidator;
+
 	/**
 	 * 특정 강의의 특정 날짜 출석 현황을 조회
 	 * 해당 날짜의 출석 데이터가 없는 경우, 수강생 전체의 출석 데이터를 새로 생성
 	 */
 	@Transactional
 	public List<AttendanceResponseDto> getAttendances(Long courseId, String instructorEmail, LocalDate date) {
-		validateInstructorAccess(courseId, instructorEmail);
+
+		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
 
 		List<Attendance> attendances = attendanceRepository.findAllByCourseIdAndDate(courseId, date);
 
@@ -62,7 +66,7 @@ public class AttendanceService {
 			List<AttendanceUpdateDto> updates
 	) {
 		// 강사 권한 검증
-		validateInstructorAccess(courseId, instructorEmail);
+		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
 
 		// 수정할 학생 ID 목록 추출
 		List<Long> studentIds = updates.stream()
@@ -116,15 +120,6 @@ public class AttendanceService {
 				.toList();
 
 		return attendanceRepository.saveAll(newAttendances);
-	}
-
-	/**
-	 * 강사가 해당 강의에 대한 접근 권한이 있는지 검증
-	 */
-	private void validateInstructorAccess(Long courseId, String instructorEmail) {
-		if (!courseRepository.existsByCourseIdAndInstructorEmail(courseId, instructorEmail)) {
-			throw new IllegalArgumentException("해당 강의에 대한 접근 권한이 없습니다.");
-		}
 	}
 
 }

@@ -6,10 +6,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.epari.course.domain.Course;
 import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.exam.domain.Exam;
-import com.example.epari.exam.dto.request.ExamRequestDto;
 import com.example.epari.exam.dto.response.ExamResponseDto;
 import com.example.epari.exam.repository.ExamRepository;
 
@@ -20,33 +18,15 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class ExamService {
 
 	private final ExamRepository examRepository;
 
 	private final CourseRepository courseRepository;
 
-	// 시험 생성
-	@Transactional
-	public Long createExam(Long courseId, ExamRequestDto requestDto) {
-		// 강의 존재여부 확인
-		Course course = courseRepository.findById(courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다."));
-
-		Exam exam = Exam.builder()
-				.title(requestDto.getTitle())
-				.examDateTime(requestDto.getExamDateTime())
-				.duration(requestDto.getDuration())
-				.totalScore(requestDto.getTotalScore())
-				.description(requestDto.getDescription())
-				.course(course)
-				.build();
-
-		return examRepository.save(exam).getId();
-	}
-
 	// 특정 강의의 시험 조회
+	@Transactional(readOnly = true)
 	public List<ExamResponseDto> getExamByCourse(Long courseId) {
 		// 강의 존재여부 확인
 		if (!courseRepository.existsById(courseId)) {
@@ -58,6 +38,19 @@ public class ExamService {
 				.map(ExamResponseDto::fromExam)
 				.collect(Collectors.toList());
 
+	}
+
+	// 특정 강의에 속한 시험 상세 조회
+	@Transactional(readOnly = true)
+	public ExamResponseDto getExam(Long courseId, Long id) {
+		if (!courseRepository.existsById(courseId)) {
+			throw new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + courseId);
+		}
+
+		Exam exam = examRepository.findByCourseIdAndId(courseId, id)
+				.orElseThrow(() -> new IllegalArgumentException("시험을 찾을 수 없습니다." + id));
+
+		return ExamResponseDto.fromExam(exam);
 	}
 
 }
