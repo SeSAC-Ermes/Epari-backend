@@ -9,9 +9,13 @@ import lombok.AccessLevel;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class NoticeFileDto {
+
 	private Long id;
+
 	private String originalFileName;
+
 	private String fileUrl;
+
 	private Long fileSize;
 
 	@Builder
@@ -30,4 +34,5 @@ public class NoticeFileDto {
 				.fileSize(noticeFile.getFileSize())
 				.build();
 	}
+
 }

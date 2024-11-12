@@ -27,6 +27,8 @@ public class NoticeRequestDto {
 
 	private List<MultipartFile> files; // 파일 업로드를 위한 필드
 
+	private List<Long> deleteFileIds; // 삭제할 파일 ID 목록
+
 	@Builder
 	public NoticeRequestDto(String title, String content, NoticeType type,
 							Long courseId, Long instructorId, List<MultipartFile> files) {
