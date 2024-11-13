@@ -76,7 +76,7 @@ public class BoardQuestion extends BaseTimeEntity {
 
 	@Builder
 	private BoardQuestion(String title, String content, BoardQuestionType visibility,
-			Course course, Student student) {
+						  Course course, Student student) {
 		this.title = title;
 		this.content = content;
 		this.visibility = visibility;
@@ -86,7 +86,7 @@ public class BoardQuestion extends BaseTimeEntity {
 	}
 
 	public static BoardQuestion createBoardQuestion(String title, String content,
-			BoardQuestionType visibility, Course course, Student student) {
+													BoardQuestionType visibility, Course course, Student student) {
 		return BoardQuestion.builder()
 				.title(title)
 				.content(content)

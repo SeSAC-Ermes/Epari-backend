@@ -27,7 +27,7 @@ public class QuestionFile extends BaseFile {
 	private BoardQuestion boardQuestion;
 
 	public static QuestionFile createQuestionFile(String originalFileName, String storedFileName,
-			String fileUrl, Long fileSize, BoardQuestion boardQuestion) {
+												  String fileUrl, Long fileSize, BoardQuestion boardQuestion) {
 		QuestionFile file = new QuestionFile(originalFileName, storedFileName, fileUrl, fileSize);
 		file.setBoardQuestion(boardQuestion);
 		return file;
