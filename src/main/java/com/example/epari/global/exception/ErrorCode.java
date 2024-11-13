@@ -11,8 +11,11 @@ public enum ErrorCode {
 	BAD_REQUEST(HttpStatus.BAD_REQUEST, "CMM-001", "잘못된 요청입니다."),
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CMM-002", "서버 내부에서 오류가 발생했습니다."),
 	NOT_FOUND(HttpStatus.NOT_FOUND, "CMM-003", "요청한 리소스를 찾을 수 없습니다."),
-	FORBIDDEN(HttpStatus.FORBIDDEN, "CMM-004", "해당 리소스에 대한 접근 권한이 없습니다."),
-	INVALID_INPUT(HttpStatus.BAD_REQUEST, "CMM-005", "입력값이 올바르지 않습니다."),
+	INVALID_INPUT(HttpStatus.BAD_REQUEST, "CMM-004", "입력값이 올바르지 않습니다."),
+
+	// 인증, 인가 관련 에러 코드 (AUTH)
+	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUTH-001", "인증이 필요한 요청입니다."),
+	FORBIDDEN(HttpStatus.FORBIDDEN, "AUTH-002", "해당 리소스에 대한 접근 권한이 없습니다."),
 
 	// Course 관련 에러 코드 (CRS)
 	COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS-001", "강의를 찾을 수 없습니다."),
