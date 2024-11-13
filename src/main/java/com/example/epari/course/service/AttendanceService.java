@@ -13,7 +13,6 @@ import com.example.epari.course.domain.CourseStudent;
 import com.example.epari.course.dto.attendance.AttendanceResponseDto;
 import com.example.epari.course.dto.attendance.AttendanceUpdateDto;
 import com.example.epari.course.repository.AttendanceRepository;
-import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.course.repository.CourseStudentRepository;
 import com.example.epari.global.validator.CourseAccessValidator;
 
@@ -29,8 +28,6 @@ public class AttendanceService {
 
 	private final AttendanceRepository attendanceRepository;
 
-	private final CourseRepository courseRepository;
-
 	private final CourseStudentRepository courseStudentRepository;
 
 	private final CourseAccessValidator courseAccessValidator;
@@ -41,7 +38,6 @@ public class AttendanceService {
 	 */
 	@Transactional
 	public List<AttendanceResponseDto> getAttendances(Long courseId, String instructorEmail, LocalDate date) {
-
 		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
 
 		List<Attendance> attendances = attendanceRepository.findAllByCourseIdAndDate(courseId, date);
