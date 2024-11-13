@@ -9,10 +9,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -83,7 +83,8 @@ public class CourseContentController {
 	public ResponseEntity<CourseContentResponseDto> updateContent(
 			@PathVariable Long courseId,
 			@PathVariable Long contentId,
-			@RequestBody CourseContentRequestDto.Update request) {
+			@ModelAttribute CourseContentRequestDto.Update request) {
+
 		return ResponseEntity.ok(courseContentService.updateContent(courseId, contentId, request));
 	}
 
@@ -121,6 +122,18 @@ public class CourseContentController {
 			@PathVariable Long fileId) {
 		String fileUrl = courseContentService.downloadContent(courseId, contentId, fileId);
 		return ResponseEntity.ok(fileUrl);
+	}
+
+	/**
+	 * 강의 자료의 특정 파일을 삭제합니다.
+	 */
+	@DeleteMapping("/{contentId}/files/{fileId}")
+	@PreAuthorize("hasRole('INSTRUCTOR')")
+	public ResponseEntity<CourseContentResponseDto> deleteFile(
+			@PathVariable Long courseId,
+			@PathVariable Long contentId,
+			@PathVariable Long fileId) {
+		return ResponseEntity.ok(courseContentService.deleteFile(courseId, contentId, fileId));
 	}
 
 }

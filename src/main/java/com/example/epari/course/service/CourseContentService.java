@@ -88,6 +88,24 @@ public class CourseContentService {
 				.orElseThrow(() -> new IllegalArgumentException("강의 자료를 찾을 수 없습니다."));
 
 		content.updateContent(request.getTitle(), request.getContent());
+
+		// 새로운 파일이 있다면 업로드
+		if (request.getFiles() != null && !request.getFiles().isEmpty()) {
+			for (MultipartFile file : request.getFiles()) {
+				String fileUrl = s3FileService.uploadFile(UPLOAD_DIR, file);
+
+				CourseContentFile contentFile = CourseContentFile.createAttachment(
+						file.getOriginalFilename(),
+						extractStoredFileName(fileUrl),
+						fileUrl,
+						file.getSize(),
+						content
+				);
+
+				content.addFile(contentFile);
+			}
+		}
+
 		return CourseContentResponseDto.from(content);
 	}
 
@@ -134,6 +152,32 @@ public class CourseContentService {
 				.orElseThrow(() -> new IllegalArgumentException("파일을 찾을 수 없습니다."));
 
 		return s3FileService.generatePresignedUrl(file.getFileUrl(), Duration.ofDays(7));
+	}
+
+	/**
+	 * 특정 파일 삭제
+	 */
+	@Transactional
+	public CourseContentResponseDto deleteFile(Long courseId, Long contentId, Long fileId) {
+		CourseContent content = courseContentRepository.findByIdAndCourseId(contentId, courseId)
+				.orElseThrow(() -> new IllegalArgumentException("강의 자료를 찾을 수 없습니다."));
+
+		CourseContentFile file = content.getFiles().stream()
+				.filter(f -> f.getId().equals(fileId))
+				.findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("파일을 찾을 수 없습니다."));
+
+		// S3에서 파일 삭제
+		try {
+			s3FileService.deleteFile(file.getFileUrl());
+		} catch (Exception e) {
+			log.error("Failed to delete file from S3: {}", file.getFileUrl(), e);
+		}
+
+		// 컨텐츠에서 파일 제거
+		content.removeFile(file);
+
+		return CourseContentResponseDto.from(content);
 	}
 
 	private String extractStoredFileName(String fileUrl) {
