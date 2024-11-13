@@ -6,6 +6,9 @@ import java.util.List;
 
 import com.example.epari.course.domain.Course;
 
+import com.example.epari.global.common.base.BaseTimeEntity;
+import com.example.epari.global.common.base.BaseUser;
+import com.example.epari.user.domain.Instructor;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,43 +30,51 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Assignment {
+public class Assignment extends BaseTimeEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@Column
-	private String title;           // 과제 제목
+	private String title;
 
 	@Column(columnDefinition = "LONGTEXT")
-	private String description;     // 과제 설명
+	private String description;
 
 	@Column
-	private LocalDateTime deadline; // 마감기한
+	private LocalDateTime deadline;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "course_id")
-	private Course course;        // 강의
+	private Course course;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "instructor_id")
+	private Instructor instructor;
 
 	@OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<AssignmentFile> files = new ArrayList<>();  // 과제 첨부파일
+	private List<AssignmentFile> files = new ArrayList<>();
 
 	@Builder
-	private Assignment(String title, String description, LocalDateTime deadline, Course course) {
+	private Assignment(String title, String description, LocalDateTime deadline,
+					   Course course, Instructor instructor) {
 		this.title = title;
 		this.description = description;
 		this.deadline = deadline;
 		this.course = course;
+		this.instructor = instructor;
 	}
 
 	// 과제 생성
-	public static Assignment createAssignment(String title, String description, LocalDateTime deadline,
-			Course course) {
-		return Assignment.builder().title(title)
+	public static Assignment createAssignment(String title, String description,
+											  LocalDateTime deadline, Course course, Instructor instructor) {
+		return Assignment.builder()
+				.title(title)
 				.description(description)
 				.deadline(deadline)
 				.course(course)
+				.instructor(instructor)
 				.build();
 	}
 
@@ -73,6 +84,7 @@ public class Assignment {
 		this.description = description;
 		this.deadline = deadline;
 	}
+
 
 	// 파일 추가
 	public void addFile(AssignmentFile file) {
