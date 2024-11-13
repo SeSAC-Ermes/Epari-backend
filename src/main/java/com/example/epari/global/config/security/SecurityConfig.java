@@ -35,6 +35,10 @@ public class SecurityConfig {
 
 	private final CorsProperties corsProperties;
 
+	private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+
+	private final CustomAccessDeniedHandler accessDeniedHandler;
+
 	@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
 	private String issuerUri;
 
@@ -56,6 +60,10 @@ public class SecurityConfig {
 						.jwt(jwt -> jwt
 								.jwtAuthenticationConverter(jwtAuthenticationConverter())
 						)
+				)
+				.exceptionHandling(handling -> handling
+						.authenticationEntryPoint(authenticationEntryPoint)
+						.accessDeniedHandler(accessDeniedHandler)
 				);
 
 		return http.build();
