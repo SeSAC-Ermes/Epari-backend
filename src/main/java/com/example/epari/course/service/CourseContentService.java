@@ -183,6 +183,7 @@ public class CourseContentService {
 
 	/**
 	 * 당일 날짜의 강의 자료를 조회합니다.
+	 * TODO: 단위 테스트 코드 여기로 작성해보기!!
 	 */
 	public List<CourseContentResponseDto> getTodayContents(Long courseId) {
 		LocalDate today = LocalDate.now();
