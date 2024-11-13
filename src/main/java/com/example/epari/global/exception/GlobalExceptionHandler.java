@@ -1,10 +1,10 @@
 package com.example.epari.global.exception;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -28,18 +28,16 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	protected ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
-		BindingResult result = ex.getBindingResult();
-		StringBuilder errorMessage = new StringBuilder();
+		List<ValidationError> validationErrors = ex.getBindingResult()
+				.getFieldErrors()
+				.stream()
+				.map(error -> ValidationError.of(
+						error.getField(),
+						error.getDefaultMessage()))
+				.collect(Collectors.toList());
 
-		for (FieldError fieldError : result.getFieldErrors()) {
-			errorMessage.append(fieldError.getField())
-					.append(": ")
-					.append(fieldError.getDefaultMessage())
-					.append(", ");
-		}
-
-		log.warn("Validation failed: {}", errorMessage);
-		ErrorResponse errorResponse = ErrorResponse.of(ErrorCode.INVALID_INPUT);
+		log.warn("Validation failed: {}", validationErrors);
+		ErrorResponse errorResponse = ErrorResponse.of(ErrorCode.INVALID_INPUT, validationErrors);
 		return ResponseEntity.status(ErrorCode.INVALID_INPUT.getStatus())
 				.body(errorResponse);
 	}
