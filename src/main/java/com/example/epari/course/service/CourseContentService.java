@@ -1,6 +1,7 @@
 package com.example.epari.course.service;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -178,6 +179,16 @@ public class CourseContentService {
 		content.removeFile(file);
 
 		return CourseContentResponseDto.from(content);
+	}
+
+	/**
+	 * 당일 날짜의 강의 자료를 조회합니다.
+	 */
+	public List<CourseContentResponseDto> getTodayContents(Long courseId) {
+		LocalDate today = LocalDate.now();
+		return courseContentRepository.findByCourseIdAndDate(courseId, today).stream()
+				.map(CourseContentResponseDto::from)
+				.toList();
 	}
 
 	private String extractStoredFileName(String fileUrl) {
