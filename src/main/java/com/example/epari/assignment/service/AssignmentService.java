@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.repository.CourseRepository;
+import com.example.epari.user.domain.Instructor;
+import com.example.epari.user.repository.InstructorRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +29,7 @@ import com.example.epari.assignment.repository.AssignmentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-//로그를 간단하게 보여주는 어노테이션
+// 로그를 간단하게 보여주는 어노테이션
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -43,30 +45,41 @@ public class AssignmentService {
 
 	private final CourseRepository courseRepository;
 
+	private final InstructorRepository instructorRepository;
+
 	/**
 	 * 과제 추가
 	 */
 	@Transactional
-	public AssignmentResponseDto addAssignment(Long courseId, AssignmentRequestDto requestDto) {
+	public AssignmentResponseDto addAssignment(Long courseId, AssignmentRequestDto requestDto, Long instructorId) {
 		Course course = courseRepository.findById(courseId)
 				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다."));
+
+		Instructor instructor = instructorRepository.findById(instructorId)
+				.orElseThrow(() -> new IllegalArgumentException("강사 정보를 찾을 수 없습니다."));
+
+		// 해당 강좌의 담당 강사인지 확인
+		if (!course.getInstructor().getId().equals(instructor.getId())) {
+			throw new IllegalArgumentException("해당 강의의 담당 강사가 아닙니다.");
+		}
 
 		Assignment assignment = Assignment.createAssignment(
 				requestDto.getTitle(),
 				requestDto.getDescription(),
 				requestDto.getDeadline(),
-				course
+				course,
+				instructor
 		);
 
-		return new AssignmentResponseDto(assignmentRepository.save(assignment));
+		return AssignmentResponseDto.from(assignmentRepository.save(assignment));
 	}
 
 	/**
 	 * 전체 과제 조회
 	 */
 	public List<AssignmentResponseDto> getAssignmentsByCourse(Long courseId) {
-		return assignmentRepository.findByCourseId(courseId).stream()
-				.map(AssignmentResponseDto::new)
+		return assignmentRepository.findByCourseIdWithInstructor(courseId).stream()
+				.map(AssignmentResponseDto::from)
 				.collect(Collectors.toList());
 	}
 
@@ -75,17 +88,37 @@ public class AssignmentService {
 	 */
 	public List<AssignmentResponseDto> getAssignmentsByTitle(String title) {
 		return assignmentRepository.findAssignmentByTitleContains(title).stream()
-				.map(AssignmentResponseDto::new)
+				.map(AssignmentResponseDto::from)
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * 과제 상세 조회
+	 */
+	public AssignmentResponseDto getAssignmentById(Long courseId, Long assignmentId) {
+		Assignment assignment = assignmentRepository.findByIdWithInstructor(assignmentId)
+				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
+
+		// 해당 과제가 요청된 코스에 속하는지 확인
+		if (!assignment.getCourse().getId().equals(courseId)) {
+			throw new IllegalArgumentException("해당 강의의 과제가 아닙니다.");
+		}
+
+		return AssignmentResponseDto.from(assignment);
 	}
 
 	/**
 	 * 과제 수정
 	 */
 	@Transactional
-	public AssignmentResponseDto updateAssignment(Long id, AssignmentRequestDto requestDto) {
-		Assignment assignment = assignmentRepository.findById(id)
+	public AssignmentResponseDto updateAssignment(Long assignmentId, AssignmentRequestDto requestDto, Long instructorId) {
+		Assignment assignment = assignmentRepository.findByIdWithInstructor(assignmentId)
 				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
+
+		// 수정 권한 검증
+		if (!assignment.getInstructor().getId().equals(instructorId)) {
+			throw new IllegalArgumentException("해당 과제의 수정 권한이 없습니다.");
+		}
 
 		assignment.updateAssignment(
 				requestDto.getTitle(),
@@ -93,16 +126,23 @@ public class AssignmentService {
 				requestDto.getDeadline()
 		);
 
-		return new AssignmentResponseDto(assignment);
+		return AssignmentResponseDto.from(assignment);
 	}
+
 
 	/**
 	 * 과제 삭제
 	 */
 	@Transactional
-	public void deleteAssignment(Long id) {
-		Assignment assignment = assignmentRepository.findById(id)
+	public void deleteAssignment(Long assignmentId, Long instructorId) {
+		Assignment assignment = assignmentRepository.findByIdWithInstructor(assignmentId)
 				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
+
+		// 삭제 권한 검증
+		if (!assignment.getInstructor().getId().equals(instructorId)) {
+			throw new IllegalArgumentException("해당 과제의 삭제 권한이 없습니다.");
+		}
+
 		assignmentRepository.delete(assignment);
 	}
 
