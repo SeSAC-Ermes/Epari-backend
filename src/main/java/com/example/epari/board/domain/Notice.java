@@ -4,23 +4,14 @@ import com.example.epari.course.domain.Course;
 import com.example.epari.global.common.base.BaseTimeEntity;
 import com.example.epari.global.common.enums.NoticeType;
 import com.example.epari.user.domain.Instructor;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 강의 공지사항을 관리하는 엔티티
@@ -49,6 +40,10 @@ public class Notice extends BaseTimeEntity {
 	@Column(nullable = false)
 	private NoticeType type;
 
+	// files 필드 추가
+	@OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<NoticeFile> files = new ArrayList<>();
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "course_id", nullable = false)
 	private Course course;
@@ -74,6 +69,23 @@ public class Notice extends BaseTimeEntity {
 	public void update(String title, String content) {
 		this.title = title;
 		this.content = content;
+	}
+
+	// 파일 추가 메서드
+	public void addFile(NoticeFile file) {
+		this.files.add(file);
+		if (file.getNotice() != this) {
+			file.setNotice(this);
+		}
+	}
+
+	
+	// 공지사항 업데이트
+	public void update(String title, String content, NoticeType type, Course course) {
+		this.title = title;
+		this.content = content;
+		this.type = type;
+		this.course = course;
 	}
 
 }
