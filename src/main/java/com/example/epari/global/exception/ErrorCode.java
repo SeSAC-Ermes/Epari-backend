@@ -4,6 +4,10 @@ import org.springframework.http.HttpStatus;
 
 import lombok.Getter;
 
+/**
+ * 애플리케이션에서 사용하는 모든 에러 코드를 정의하는 열거형
+ * 각 에러의 HTTP 상태 코드, 비즈니스 코드 및 메시지를 포함
+ */
 @Getter
 public enum ErrorCode {
 

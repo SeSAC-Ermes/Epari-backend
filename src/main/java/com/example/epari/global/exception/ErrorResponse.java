@@ -5,6 +5,10 @@ import java.util.List;
 
 import lombok.Getter;
 
+/**
+ * API 에러 응답의 표준 형식을 정의하는 클래스
+ * 에러 메시지, 코드 및 상세 검증 오류 목록을 포함
+ */
 @Getter
 public class ErrorResponse {
 

@@ -15,11 +15,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * 인증되지 않은 요청(401) 발생 시 처리를 담당하는 핸들러
+ * 인증이 필요한 리소스에 인증 없이 접근 시도 시 JSON 형식의 에러 응답을 반환
+ */
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
 	private static final ObjectMapper objectMapper = new ObjectMapper();
 
+	/**
+	 * 인증 실패 시 클라이언트에게 JSON 형식의 에러 응답을 반환
+	 */
 	@Override
 	public void commence(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException authException) throws IOException {
