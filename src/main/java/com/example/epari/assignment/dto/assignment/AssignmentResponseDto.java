@@ -14,20 +14,31 @@ import lombok.Getter;
 @Getter
 @Builder
 public class AssignmentResponseDto {
+
 	private Long id;
+
 	private String title;
+
 	private String description;
+
 	private LocalDateTime deadline;
+
 	private LocalDateTime createdAt;
+
 	private List<AssignmentFileResponseDto> files;
+
 	private InstructorInfo instructor;
 
 	@Getter
 	@Builder
 	public static class InstructorInfo {
+
 		private Long id;
+
 		private String name;
+
 		private String email;
+
 		private String phoneNumber;
 
 		public static InstructorInfo from(Instructor instructor) {
@@ -38,6 +49,7 @@ public class AssignmentResponseDto {
 					.phoneNumber(instructor.getPhoneNumber())
 					.build();
 		}
+
 	}
 
 	public static AssignmentResponseDto from(Assignment assignment) {
@@ -54,4 +66,5 @@ public class AssignmentResponseDto {
 						InstructorInfo.from(assignment.getInstructor()) : null)
 				.build();
 	}
+
 }
