@@ -20,6 +20,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,10 +30,15 @@ import java.util.List;
 public class NoticeService {
 
 	private final NoticeRepository noticeRepository;
+
 	private final NoticeFileRepository noticeFileRepository;
+
 	private final CourseRepository courseRepository;
+
 	private final InstructorRepository instructorRepository;
+
 	private final S3FileService s3FileService;
+
 	private final AwsS3Properties awsS3Properties;  // S3 설정값을 가져오기 위해 추가
 
 	// 1. 공지사항 작성
@@ -79,24 +85,22 @@ public class NoticeService {
 		Course course = courseRepository.findById(requestDto.getCourseId())
 				.orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
-		// 삭제될 파일 처리
-		if (requestDto.getDeleteFileIds() != null && !requestDto.getDeleteFileIds().isEmpty()) {
-			for (Long fileId : requestDto.getDeleteFileIds()) {
-				NoticeFile fileToDelete = notice.getFiles().stream()
-						.filter(file -> file.getId().equals(fileId))
-						.findFirst()
-						.orElseThrow(() -> new EntityNotFoundException("File not found"));
-
-				// S3에서 파일 삭제
-				s3FileService.deleteFile(fileToDelete.getFileUrl());
-				notice.getFiles().remove(fileToDelete);
-			}
+		// 1. 기존 파일 전체 삭제 처리 (기존 파일을 모두 새 파일로 교체)
+		List<NoticeFile> existingFiles = new ArrayList<>(notice.getFiles());
+		for (NoticeFile existingFile : existingFiles) {
+			// S3에서 파일 삭제
+			s3FileService.deleteFile(existingFile.getFileUrl());
+			// DB에서 파일 정보 삭제
+			noticeFileRepository.delete(existingFile);
+			notice.getFiles().remove(existingFile);
 		}
 
-		// 새로운 파일 추가
+		// 2. 새로운 파일 추가
 		if (requestDto.getFiles() != null && !requestDto.getFiles().isEmpty()) {
 			for (MultipartFile file : requestDto.getFiles()) {
+				// S3에 새 파일 업로드
 				String fileUrl = s3FileService.uploadFile("notices", file);
+
 				NoticeFile noticeFile = NoticeFile.createNoticeFile(
 						file.getOriginalFilename(),
 						extractKeyFromUrl(fileUrl),
@@ -104,10 +108,13 @@ public class NoticeService {
 						file.getSize(),
 						notice
 				);
-				notice.getFiles().add(noticeFile);
+				// DB에 새 파일 정보 저장
+				NoticeFile savedFile = noticeFileRepository.save(noticeFile);
+				notice.getFiles().add(savedFile);
 			}
 		}
 
+		// 3. 공지사항 정보 업데이트
 		notice.update(
 				requestDto.getTitle(),
 				requestDto.getContent(),
@@ -115,8 +122,9 @@ public class NoticeService {
 				course
 		);
 
-		return notice.getId();
+		return noticeRepository.save(notice).getId();
 	}
+
 
 	// 3. 공지사항 삭제
 	@Transactional
@@ -185,6 +193,7 @@ public class NoticeService {
 				awsS3Properties.getBucket(), awsS3Properties.getRegion());
 		return fileUrl.substring(prefix.length());
 	}
+
 }
 
 // 클로드 코드1
