@@ -1,19 +1,15 @@
 package com.example.epari.assignment.controller;
 
-import java.util.List;
-
+import com.example.epari.assignment.dto.assignment.AssignmentRequestDto;
+import com.example.epari.assignment.dto.assignment.AssignmentResponseDto;
+import com.example.epari.assignment.service.AssignmentService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import com.example.epari.assignment.dto.assignment.AssignmentRequestDto;
-import com.example.epari.assignment.dto.assignment.AssignmentResponseDto;
-import com.example.epari.assignment.dto.file.AssignmentFileResponseDto;
-import com.example.epari.assignment.service.AssignmentService;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -29,10 +25,11 @@ public class AssignmentController {
 	public ResponseEntity<AssignmentResponseDto> addAssignment(
 			@PathVariable Long courseId,
 			@RequestParam Long instructorId,
-			@RequestBody AssignmentRequestDto requestDto) {
+			@ModelAttribute AssignmentRequestDto requestDto) {
 		log.info("과제 생성 요청: courseId = {}, 제목 = {}, instructorId = {}",
 				courseId, requestDto.getTitle(), instructorId);
 		AssignmentResponseDto responseDto = assignmentService.addAssignment(courseId, requestDto, instructorId);
+
 		log.info("과제 생성 완료: ID = {}", responseDto.getId());
 		return ResponseEntity.ok(responseDto);
 	}
@@ -77,31 +74,6 @@ public class AssignmentController {
 		log.info("과제 삭제 요청: ID = {}, instructorId = {}", assignmentId, instructorId);
 		assignmentService.deleteAssignment(assignmentId, instructorId);
 		log.info("과제 삭제 완료: ID = {}", assignmentId);
-		return ResponseEntity.ok().build();
-	}
-
-	// 파일 업로드
-	@PostMapping("/files")
-	public ResponseEntity<List<AssignmentFileResponseDto>> uploadFiles(
-			@RequestParam("files") List<MultipartFile> files,
-			@RequestParam(required = false) Long assignmentId) {
-		log.info("파일 업로드 요청: assignmentId = {}, 파일 개수 = {}", assignmentId, files.size());
-		files.forEach(file -> log.debug("업로드 파일 정보: 이름 = {}, 크기 = {}bytes, 타입 = {}",
-				file.getOriginalFilename(),
-				file.getSize(),
-				file.getContentType()));
-
-		List<AssignmentFileResponseDto> uploadedFiles = assignmentService.uploadFiles(files, assignmentId);
-		log.info("파일 업로드 완료: {} 개 파일", uploadedFiles.size());
-		return ResponseEntity.ok(uploadedFiles);
-	}
-
-	// 파일 삭제
-	@DeleteMapping("/files/{fileId}")
-	public ResponseEntity<Void> deleteFile(@PathVariable Long fileId) {
-		log.info("파일 삭제 요청: fileId = {}", fileId);
-		assignmentService.deleteFile(fileId);
-		log.info("파일 삭제 완료: fileId = {}", fileId);
 		return ResponseEntity.ok().build();
 	}
 
