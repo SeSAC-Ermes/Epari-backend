@@ -136,4 +136,13 @@ public class CourseContentController {
 		return ResponseEntity.ok(courseContentService.deleteFile(courseId, contentId, fileId));
 	}
 
+	/**
+	 * 당일 날짜의 강의 자료를 조회합니다.
+	 */
+	@GetMapping("/today")
+	public ResponseEntity<List<CourseContentResponseDto>> getTodayContents(
+			@PathVariable Long courseId) {
+		return ResponseEntity.ok(courseContentService.getTodayContents(courseId));
+	}
+
 }
