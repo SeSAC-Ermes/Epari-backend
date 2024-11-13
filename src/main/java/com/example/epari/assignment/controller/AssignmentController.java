@@ -3,16 +3,8 @@ package com.example.epari.assignment.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.epari.assignment.dto.assignment.AssignmentRequestDto;
@@ -33,11 +25,14 @@ public class AssignmentController {
 
 	// 과제 추가
 	@PostMapping
+	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<AssignmentResponseDto> addAssignment(
 			@PathVariable Long courseId,
+			@RequestParam Long instructorId,
 			@RequestBody AssignmentRequestDto requestDto) {
-		log.info("과제 생성 요청: courseId = {}, 제목 = {}", courseId, requestDto.getTitle());
-		AssignmentResponseDto responseDto = assignmentService.addAssignment(courseId, requestDto);
+		log.info("과제 생성 요청: courseId = {}, 제목 = {}, instructorId = {}",
+				courseId, requestDto.getTitle(), instructorId);
+		AssignmentResponseDto responseDto = assignmentService.addAssignment(courseId, requestDto, instructorId);
 		log.info("과제 생성 완료: ID = {}", responseDto.getId());
 		return ResponseEntity.ok(responseDto);
 	}
@@ -51,32 +46,37 @@ public class AssignmentController {
 		return ResponseEntity.ok(assignments);
 	}
 
-	// 입력 키워드를 포함하는 과제 조회
-	@GetMapping("/search")
-	public ResponseEntity<List<AssignmentResponseDto>> getAssignmentsByTitle(@RequestParam String title) {
-		log.info("과제 검색 요청: 키워드 = {}", title);
-		List<AssignmentResponseDto> assignments = assignmentService.getAssignmentsByTitle(title);
-		log.info("과제 검색 완료: {} 건", assignments.size());
-		return ResponseEntity.ok(assignments);
+	// 과제 상세 조회
+	@GetMapping("/{assignmentId}")
+	public ResponseEntity<AssignmentResponseDto> getAssignmentById(
+			@PathVariable Long courseId,
+			@PathVariable Long assignmentId) {
+		AssignmentResponseDto responseDto = assignmentService.getAssignmentById(courseId, assignmentId);
+		return ResponseEntity.ok(responseDto);
 	}
 
 	// 과제 수정
-	@PutMapping("/{id}")
+	@PutMapping("/{assignmentId}")
+	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<AssignmentResponseDto> updateAssignment(
-			@PathVariable Long id,
+			@PathVariable Long assignmentId,
+			@RequestParam Long instructorId,
 			@RequestBody AssignmentRequestDto requestDto) {
-		log.info("과제 수정 요청: ID = {}, 제목 = {}", id, requestDto.getTitle());
-		AssignmentResponseDto responseDto = assignmentService.updateAssignment(id, requestDto);
-		log.info("과제 수정 완료: ID = {}", id);
+		log.info("과제 수정 요청: ID = {}, 제목 = {}", assignmentId, requestDto.getTitle());
+		AssignmentResponseDto responseDto = assignmentService.updateAssignment(assignmentId, requestDto, instructorId);
+		log.info("과제 수정 완료: ID = {}", assignmentId);
 		return ResponseEntity.ok(responseDto);
 	}
 
 	// 과제 삭제
-	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> deleteAssignment(@PathVariable Long id) {
-		log.info("과제 삭제 요청: ID = {}", id);
-		assignmentService.deleteAssignment(id);
-		log.info("과제 삭제 완료: ID = {}", id);
+	@DeleteMapping("/{assignmentId}")
+	@PreAuthorize("hasRole('INSTRUCTOR')")
+	public ResponseEntity<Void> deleteAssignment(
+			@PathVariable Long assignmentId,
+			@RequestParam Long instructorId) {
+		log.info("과제 삭제 요청: ID = {}, instructorId = {}", assignmentId, instructorId);
+		assignmentService.deleteAssignment(assignmentId, instructorId);
+		log.info("과제 삭제 완료: ID = {}", assignmentId);
 		return ResponseEntity.ok().build();
 	}
 
