@@ -3,6 +3,7 @@ package com.example.epari.global.validator;
 import org.springframework.stereotype.Component;
 
 import com.example.epari.course.repository.CourseRepository;
+import com.example.epari.global.exception.course.CourseAccessDeniedException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,14 +19,14 @@ public class CourseAccessValidator {
 	// 강사의 강의 접근권한 검증
 	public void validateInstructorAccess(Long courseId, String instructorEmail) {
 		if (!courseRepository.existsByCourseIdAndInstructorEmail(courseId, instructorEmail)) {
-			throw new IllegalArgumentException("해당 강의에 대한 접근 권한이 없습니다.");
+			throw new CourseAccessDeniedException();
 		}
 	}
 
 	// 학생의 강의 접근권한 검증
 	public void validateStudentAccess(Long courseId, String studentEmail) {
 		if (!courseRepository.existsByCourseIdAndStudentEmail(courseId, studentEmail)) {
-			throw new IllegalArgumentException("해당 강의에 대한 접근 권한이 없습니다.");
+			throw new CourseAccessDeniedException();
 		}
 	}
 
