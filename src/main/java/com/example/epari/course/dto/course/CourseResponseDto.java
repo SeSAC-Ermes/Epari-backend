@@ -26,6 +26,8 @@ public class CourseResponseDto {
 
 	private String classroom;
 
+	private String imageUrl;
+
 	private InstructorInfo instructor;
 
 	@Getter
@@ -53,6 +55,7 @@ public class CourseResponseDto {
 				.startDate(course.getStartDate())
 				.endDate(course.getEndDate())
 				.classroom(course.getClassroom())
+				.imageUrl(course.getImageUrl())
 				.instructor(InstructorInfo.from(course.getInstructor()))
 				.build();
 	}

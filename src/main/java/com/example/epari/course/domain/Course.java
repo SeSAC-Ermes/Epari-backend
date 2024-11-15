@@ -40,6 +40,8 @@ public class Course extends BaseTimeEntity {
 
 	private String classroom;
 
+	private String imageUrl;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "instructor_id")
 	private Instructor instructor;
@@ -71,6 +73,10 @@ public class Course extends BaseTimeEntity {
 		this.startDate = startDate;
 		this.endDate = endDate;
 		this.classroom = classroom;
+	}
+
+	public void updateCourseImage(String imageUrl) {
+		this.imageUrl = imageUrl;
 	}
 
 }
