@@ -40,7 +40,7 @@ public class S3FileService {
 	));
 
 	// 최대 파일 크기 (10MB)
-	private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
+	private static final long MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 	/**
 	 * 파일 업로드
