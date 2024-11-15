@@ -66,4 +66,16 @@ public class NoticeController {
 	}
 
 
+	// 조회수 증가 엔드포인트
+	@PutMapping("/{id}/view-count")
+	public ResponseEntity<Void> increaseViewCount(@PathVariable Long id) {
+		try {
+			noticeService.increaseViewCount(id);
+			return ResponseEntity.ok().build();
+		} catch (RuntimeException e) {
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+
 }
