@@ -1,5 +1,6 @@
 package com.example.epari.global.config.aws;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import lombok.Getter;
@@ -14,12 +15,16 @@ import lombok.Setter;
 @ConfigurationProperties(prefix = "aws.s3")
 public class AwsS3Properties {
 
+	@Value("${AWS_S3_ACCESSKEY:${s3.accesskey}}")
 	private String accessKey;
 
+	@Value("${AWS_S3_SECRETKEY:${s3.secretkey}}")
 	private String secretKey;
 
+	@Value("${AWS_S3_BUCKET:${s3.bucket}}")
 	private String bucket;
 
+	@Value("${AWS_S3_REGION:${s3.region}}")
 	private String region;
 
 }
