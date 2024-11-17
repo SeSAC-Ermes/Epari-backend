@@ -125,6 +125,8 @@ public class InitDataLoader implements ApplicationRunner {
 				.classroom("교육장 301호")
 				.build();
 
+		course1.updateCourseImage("https://epari-dev.s3.ap-northeast-2.amazonaws.com/course-images/AWS_클라우드.jpg");
+
 		// 두 번째 강의 (새로운 강의)
 		Course course2 = Course.builder()
 				.name("스프링 부트와 리액트를 활용한 풀스택 개발자 과정")
@@ -133,6 +135,8 @@ public class InitDataLoader implements ApplicationRunner {
 				.endDate(LocalDate.of(2025, 2, 28))
 				.classroom("교육장 302호")
 				.build();
+
+		course2.updateCourseImage("https://epari-dev.s3.ap-northeast-2.amazonaws.com/course-images/스프링부트_리액트.jpg");
 
 		courses.add(course1);
 		courses.add(course2);

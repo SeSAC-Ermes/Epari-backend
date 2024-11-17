@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.epari.global.common.base.BaseTimeEntity;
 import com.example.epari.course.domain.Course;
+import com.example.epari.global.common.base.BaseTimeEntity;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -59,8 +59,8 @@ public class Exam extends BaseTimeEntity {
 	private List<ExamQuestion> questions = new ArrayList<>();
 
 	@Builder
-	private Exam(String title, LocalDateTime examDateTime, Integer duration,
-			Integer totalScore, String description, Course course) {
+	private Exam(String title, LocalDateTime examDateTime,
+			Integer duration, Integer totalScore, String description, Course course) {
 		this.title = title;
 		this.examDateTime = examDateTime;
 		this.duration = duration;
@@ -81,6 +81,44 @@ public class Exam extends BaseTimeEntity {
 	public void addQuestion(ExamQuestion question) {
 		this.questions.add(question);
 		question.setExam(this);
+	}
+
+	public void reorderQuestions(Long questionId, int newNumber) {
+		// 1. 이동할 문제 찾기
+		ExamQuestion targetQuestion = questions.stream()
+				.filter(q -> q.getId().equals(questionId))
+				.findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("문제를 찾을 수 없습니다. ID: " + questionId));
+
+		// 2. 현재 문제 번호
+		int currentNumber = targetQuestion.getExamNumber();
+
+		// 3. 유효성 검사
+		if (newNumber < 1 || newNumber > questions.size()) {
+			throw new IllegalArgumentException("유효하지 않은 문제 번호입니다: " + newNumber);
+		}
+
+		// 4. 문제 번호 재정렬
+		if (currentNumber < newNumber) {
+			// 현재 위치에서 뒤로 이동하는 경우
+			questions.stream()
+					.filter(q -> q.getExamNumber() > currentNumber && q.getExamNumber() <= newNumber)
+					.forEach(q -> q.updateExamNumber(q.getExamNumber() - 1));
+		} else if (currentNumber > newNumber) {
+			// 현재 위치에서 앞으로 이동하는 경우
+			questions.stream()
+					.filter(q -> q.getExamNumber() >= newNumber && q.getExamNumber() < currentNumber)
+					.forEach(q -> q.updateExamNumber(q.getExamNumber() + 1));
+		}
+
+		// 5. 대상 문제의 번호 업데이트
+		targetQuestion.updateExamNumber(newNumber);
+	}
+
+	public void reorderQuestionsAfterDelete(int deletedNumber) {
+		questions.stream()
+				.filter(q -> q.getExamNumber() > deletedNumber)
+				.forEach(q -> q.updateExamNumber(q.getExamNumber() - 1));
 	}
 
 }

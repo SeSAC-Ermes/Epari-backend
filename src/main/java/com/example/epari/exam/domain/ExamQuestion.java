@@ -5,6 +5,7 @@ import com.example.epari.global.common.enums.ExamQuestionType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -30,7 +31,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "exam_questions")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "question_type")
+@DiscriminatorColumn(name = "question_type", discriminatorType = DiscriminatorType.STRING)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class ExamQuestion extends BaseTimeEntity {
@@ -52,6 +53,9 @@ public abstract class ExamQuestion extends BaseTimeEntity {
 	@Column(nullable = false)
 	private ExamQuestionType type;
 
+	@Column(name = "correct_answer", nullable = false)  // 단일 정답 필드
+	private String correctAnswer;
+
 	@Embedded
 	private QuestionImage image;
 
@@ -60,13 +64,17 @@ public abstract class ExamQuestion extends BaseTimeEntity {
 	private Exam exam;
 
 	protected ExamQuestion(String questionText, int examNumber, int score,
-			ExamQuestionType type, Exam exam) {
+			ExamQuestionType type, Exam exam, String correctAnswer) {  // 생성자 수정
 		this.questionText = questionText;
 		this.examNumber = examNumber;
 		this.score = score;
 		this.type = type;
 		this.exam = exam;
+		this.correctAnswer = correctAnswer;
 	}
+
+	// 정답 검증을 위한 추상 메소드
+	public abstract boolean validateAnswer(String studentAnswer);
 
 	public void setImage(QuestionImage image) {
 		this.image = image;
@@ -74,6 +82,16 @@ public abstract class ExamQuestion extends BaseTimeEntity {
 
 	void setExam(Exam exam) {
 		this.exam = exam;
+	}
+
+	public void updateExamNumber(int newNumber) {
+		this.examNumber = newNumber;
+	}
+
+	public void updateQuestion(String questionText, int score, String correctAnswer) {
+		this.questionText = questionText;
+		this.score = score;
+		this.correctAnswer = correctAnswer;
 	}
 
 }
