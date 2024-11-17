@@ -129,6 +129,9 @@ public class ExamQuestionService {
 		// 접근 권한 검증
 		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
 
+		// 시험 존재 여부 확인
+		Exam exam = examFinder.findExam(courseId, examId);
+
 		// 문제 존재 여부 확인
 		ExamQuestion question = examQuestionRepository.findById(questionId)
 				.orElseThrow(() -> new IllegalArgumentException("문제를 찾을 수 없습니다."));
@@ -138,11 +141,25 @@ public class ExamQuestionService {
 			throw new IllegalArgumentException("해당 시험에 속한 문제가 아닙니다.");
 		}
 
+		// 삭제할 문제의 번호 저장
+		int deletedQuestionNumber = question.getExamNumber();
+
+		// exam의 questions 리스트에서 제거
+		exam.getQuestions().remove(question);
+
 		// 문제 삭제
 		examQuestionRepository.delete(question);
 
 		// 남은 문제들의 번호 재정렬
-		question.getExam().reorderQuestionsAfterDelete(questionId);
+		exam.getQuestions().stream()
+				.filter(q -> q.getExamNumber() > deletedQuestionNumber)
+				.forEach(q -> q.updateExamNumber(q.getExamNumber() - 1));
+	}
+
+	private void validateDeletable(ExamQuestion question) {
+		// TODO: 답안 제출 여부 등 검증 로직 추가 예정
+		// 현재는 임시로 true 반환
+		return;
 	}
 
 }

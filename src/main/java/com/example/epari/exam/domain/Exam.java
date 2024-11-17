@@ -123,14 +123,7 @@ public class Exam extends BaseTimeEntity {
 		targetQuestion.updateExamNumber(newNumber);
 	}
 
-	public void reorderQuestionsAfterDelete(Long deletedQuestionId) {
-		ExamQuestion deletedQuestion = questions.stream()
-				.filter(q -> q.getId().equals(deletedQuestionId))
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("삭제된 문제를 찾을 수 없습니다."));
-
-		int deletedNumber = deletedQuestion.getExamNumber();
-
+	public void reorderQuestionsAfterDelete(int deletedNumber) {
 		questions.stream()
 				.filter(q -> q.getExamNumber() > deletedNumber)
 				.forEach(q -> q.updateExamNumber(q.getExamNumber() - 1));
