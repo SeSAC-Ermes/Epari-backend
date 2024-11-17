@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.epari.global.auth.dto.ErrorResponse;
 import com.example.epari.global.auth.dto.SignUpRequestDto;
-import com.example.epari.global.auth.dto.VerificationRequest;
+import com.example.epari.global.auth.dto.VerificationRequestDto;
 
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
@@ -55,7 +55,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/send-verification")
-	public ResponseEntity<?> sendVerificationCode(@RequestBody VerificationRequest request) {
+	public ResponseEntity<?> sendVerificationCode(@RequestBody VerificationRequestDto request) {
 		try {
 			String username = request.getEmail().split("@")[0];
 
@@ -88,7 +88,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/verify-code")
-	public ResponseEntity<?> verifyCode(@RequestBody VerificationRequest request) {
+	public ResponseEntity<?> verifyCode(@RequestBody VerificationRequestDto request) {
 		try {
 			ConfirmSignUpRequest confirmRequest = ConfirmSignUpRequest.builder()
 					.clientId(clientId)
