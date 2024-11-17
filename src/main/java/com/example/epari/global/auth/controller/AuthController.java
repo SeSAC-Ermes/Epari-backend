@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.epari.global.auth.dto.ErrorResponse;
 import com.example.epari.global.auth.dto.SignUpRequestDto;
+import com.example.epari.global.auth.dto.SuccessResponseDto;
 import com.example.epari.global.auth.dto.VerificationRequestDto;
 
 import lombok.RequiredArgsConstructor;
@@ -59,10 +60,43 @@ public class AuthController {
 		try {
 			String username = request.getEmail().split("@")[0];
 
+			try {
+				// 기존 사용자 확인
+				AdminGetUserRequest getUserRequest = AdminGetUserRequest.builder()
+						.userPoolId(userPoolId)
+						.username(username)
+						.build();
+				AdminGetUserResponse userResponse = cognitoClient.adminGetUser(getUserRequest);
+
+				// 사용자가 존재하면 인증 코드 재발송
+				ResendConfirmationCodeRequest resendRequest = ResendConfirmationCodeRequest.builder()
+						.clientId(clientId)
+						.username(username)
+						.build();
+
+				cognitoClient.resendConfirmationCode(resendRequest);
+				return ResponseEntity.ok().body(new SuccessResponseDto("인증 코드가 재발송되었습니다."));
+
+			} catch (UserNotFoundException e) {
+				// 사용자가 없는 경우에만 새로 가입 진행
+				return createNewUser(username, request.getEmail());
+			}
+
+		} catch (Exception e) {
+			logger.error("Failed to send verification code", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ErrorResponse("인증 코드 전송에 실패했습니다.: " + e.getMessage()));
+		}
+	}
+
+	private ResponseEntity<?> createNewUser(String username, String email) {
+		try {
+			logger.debug("Creating new user with username: {}", username);  // 로그 추가
+
 			List<AttributeType> attributes = Arrays.asList(
 					AttributeType.builder()
 							.name("email")
-							.value(request.getEmail())
+							.value(email)
 							.build(),
 					AttributeType.builder()
 							.name("name")
@@ -78,12 +112,31 @@ public class AuthController {
 					.build();
 
 			cognitoClient.signUp(signUpRequest);
+			logger.debug("Successfully created new user and sent verification code");  // 로그 추가
 
-			return ResponseEntity.ok().build();
+			return ResponseEntity.ok().body(new SuccessResponseDto("인증 코드가 발송되었습니다."));
 		} catch (Exception e) {
-			logger.error("Failed to send verification code", e);
+			logger.error("Failed to create new user", e);  // 로그 추가
+			throw e;
+		}
+	}
+
+	// 인증 코드 재발송을 위한 별도 엔드포인트 추가
+	@PostMapping("/resend-verification")
+	public ResponseEntity<?> resendVerificationCode(@RequestBody VerificationRequestDto request) {
+		try {
+			ResendConfirmationCodeRequest resendRequest = ResendConfirmationCodeRequest.builder()
+					.clientId(clientId)
+					.username(request.getEmail().split("@")[0])
+					.build();
+
+			cognitoClient.resendConfirmationCode(resendRequest);
+
+			return ResponseEntity.ok().body(new SuccessResponseDto("인증 코드가 재발송되었습니다."));
+		} catch (Exception e) {
+			logger.error("Failed to resend verification code", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(new ErrorResponse("인증 코드 전송에 실패했습니다.: " + e.getMessage()));
+					.body(new ErrorResponse("인증 코드 재발송에 실패했습니다.: " + e.getMessage()));
 		}
 	}
 
@@ -98,7 +151,10 @@ public class AuthController {
 
 			cognitoClient.confirmSignUp(confirmRequest);
 
-			return ResponseEntity.ok().build();
+			return ResponseEntity.ok().body(new SuccessResponseDto("인증이 완료되었습니다."));
+		} catch (CodeMismatchException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ErrorResponse("잘못된 인증 코드입니다. 다시 시도해주세요."));
 		} catch (Exception e) {
 			logger.error("Failed to verify code", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -142,7 +198,7 @@ public class AuthController {
 
 			cognitoClient.adminAddUserToGroup(groupRequest);
 
-			return ResponseEntity.ok().build();
+			return ResponseEntity.ok().body(new SuccessResponseDto("회원가입이 완료되었습니다."));
 		} catch (Exception e) {
 			logger.error("Failed to process signup", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
