@@ -51,7 +51,15 @@ public class SecurityConfig {
 						session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 				)
 				.authorizeHttpRequests(authorize -> authorize
-						.requestMatchers("/actuator/health/**").permitAll() // Actuator 헬스체크 엔드포인트 허용
+						// 기존 허용 엔드포인트
+						.requestMatchers("/actuator/health/**").permitAll()
+						// 회원가입 관련 엔드포인트 추가
+						.requestMatchers(
+								"/api/auth/signup",
+								"/api/auth/send-verification",
+								"/api/auth/verify-code"
+						).permitAll()
+						// 기존 역할 기반 접근 제어
 						.requestMatchers("/api/instructor/**").hasRole("INSTRUCTOR")
 						.requestMatchers("/api/student/**").hasRole("STUDENT")
 						.anyRequest().authenticated()
