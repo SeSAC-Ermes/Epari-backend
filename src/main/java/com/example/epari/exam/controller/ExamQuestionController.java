@@ -32,7 +32,7 @@ public class ExamQuestionController {
 
 	// 시험 문제 생성
 	@PostMapping
-	@PreAuthorize("hasRole('INSTRUCTOR')")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<Long> createQuestion(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -44,7 +44,7 @@ public class ExamQuestionController {
 
 	// 시험 문제 재정렬
 	@PutMapping("/{questionId}/order")
-	@PreAuthorize("hasRole('INSTRUCTOR')")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<Void> reorderQuestion(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -57,6 +57,7 @@ public class ExamQuestionController {
 
 	// 시험 문제 수정
 	@PutMapping("/{questionId}")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<ExamQuestionResponseDto> updateQuestion(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -71,6 +72,7 @@ public class ExamQuestionController {
 
 	// 시험 문제 삭제
 	@DeleteMapping("/{questionId}")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<Void> deleteQuestion(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,

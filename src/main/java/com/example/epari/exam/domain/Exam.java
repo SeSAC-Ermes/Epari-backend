@@ -59,22 +59,14 @@ public class Exam extends BaseTimeEntity {
 	private List<ExamQuestion> questions = new ArrayList<>();
 
 	@Builder
-	public static Exam createExam(
-			String title,
-			LocalDateTime examDateTime,
-			Integer duration,
-			Integer totalScore,
-			String description,
-			Course course) {
-		Exam exam = new Exam();
-		exam.title = title;
-		exam.examDateTime = examDateTime;
-		exam.duration = duration;
-		exam.totalScore = totalScore;
-		exam.description = description;
-		exam.course = course;
-		exam.questions = new ArrayList<>();
-		return exam;
+	private Exam(String title, LocalDateTime examDateTime,
+			Integer duration, Integer totalScore, String description, Course course) {
+		this.title = title;
+		this.examDateTime = examDateTime;
+		this.duration = duration;
+		this.totalScore = totalScore;
+		this.description = description;
+		this.course = course;
 	}
 
 	public void updateExam(String title, LocalDateTime examDateTime,
