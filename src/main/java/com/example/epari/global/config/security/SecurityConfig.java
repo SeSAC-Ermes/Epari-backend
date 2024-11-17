@@ -57,7 +57,8 @@ public class SecurityConfig {
 						.requestMatchers(
 								"/api/auth/signup",
 								"/api/auth/send-verification",
-								"/api/auth/verify-code"
+								"/api/auth/verify-code",
+								"/api/auth/resend-verification"
 						).permitAll()
 						// 기존 역할 기반 접근 제어
 						.requestMatchers("/api/instructor/**").hasRole("INSTRUCTOR")
