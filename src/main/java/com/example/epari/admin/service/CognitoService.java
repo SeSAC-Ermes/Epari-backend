@@ -16,10 +16,14 @@ import com.example.epari.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminAddUserToGroupRequest;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminDeleteUserRequest;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminRemoveUserFromGroupRequest;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AttributeType;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.CognitoIdentityProviderException;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUsersInGroupRequest;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUsersInGroupResponse;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.UserNotFoundException;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.UserType;
 
 /**
@@ -57,6 +61,54 @@ public class CognitoService {
 		} catch (CognitoIdentityProviderException ex) {
 			log.error("Failed to fetch users from Cognito group: {}", groupName, ex);
 			throw new CognitoException(ErrorCode.COGNITO_USER_FETCH_ERROR);
+		}
+	}
+
+	/**
+	 * 사용자 그룹을 변경
+	 */
+	public void changeUserGroup(String email, String groupName) {
+		// 1. 현재 그룹에서 제거
+		AdminRemoveUserFromGroupRequest removeRequest = AdminRemoveUserFromGroupRequest.builder()
+				.userPoolId(userPoolId)
+				.username(email)
+				.groupName("PENDING_ROLES")
+				.build();
+
+		cognitoClient.adminRemoveUserFromGroup(removeRequest);
+
+		// 2. 새 그룹에 추가
+		AdminAddUserToGroupRequest addRequest = AdminAddUserToGroupRequest.builder()
+				.userPoolId(userPoolId)
+				.username(email)
+				.groupName(groupName)
+				.build();
+
+		cognitoClient.adminAddUserToGroup(addRequest);
+	}
+
+	/**
+	 * 사용자 풀에서 특정 사용자를 삭제하는 메서드
+	 */
+	@Transactional
+	public void deleteUser(String email) {
+		try {
+			// AdminDeleteUserRequest 생성
+			AdminDeleteUserRequest deleteRequest = AdminDeleteUserRequest.builder()
+					.userPoolId(userPoolId)
+					.username(email)
+					.build();
+
+			// Cognito API를 통해 사용자 삭제 요청
+			cognitoClient.adminDeleteUser(deleteRequest);
+
+			log.info("Successfully deleted user from Cognito: {}", email);
+		} catch (UserNotFoundException ex) {
+			log.error("User not found in Cognito: {}", email, ex);
+			throw new CognitoException(ErrorCode.COGNITO_USER_NOT_FOUND);
+		} catch (CognitoIdentityProviderException ex) {
+			log.error("Failed to delete user from Cognito: {}", email, ex);
+			throw new CognitoException(ErrorCode.COGNITO_USER_DELETE_ERROR);
 		}
 	}
 
