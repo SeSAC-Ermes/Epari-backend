@@ -17,7 +17,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import lombok.AccessLevel;
@@ -39,11 +38,7 @@ public class Submission extends BaseTimeEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column
-	private String title;
-
-	@Column
-	@Lob
+	@Column(columnDefinition = "LONGTEXT")
 	private String description;
 
 	@Column
@@ -67,8 +62,7 @@ public class Submission extends BaseTimeEntity {
 	private SubmissionStatus status = SubmissionStatus.SUBMITTED;
 
 	@Builder
-	private Submission(String title, String description, Assignment assignment, Student student) {
-		this.title = title;
+	private Submission(String description, Assignment assignment, Student student) {
 		this.description = description;
 		this.assignment = assignment;
 		this.student = student;
@@ -76,14 +70,17 @@ public class Submission extends BaseTimeEntity {
 		this.status = SubmissionStatus.SUBMITTED;
 	}
 
-	public static Submission createSubmission(String title, String description,
+	public static Submission createSubmission(String description,
 			Assignment assignment, Student student) {
 		return Submission.builder()
-				.title(title)
 				.description(description)
 				.assignment(assignment)
 				.student(student)
 				.build();
+	}
+
+	public void updateSubmission(String description) {
+		this.description = description;
 	}
 
 	public void updateGrade(String grade, String feedback) {
@@ -98,7 +95,7 @@ public class Submission extends BaseTimeEntity {
 	}
 
 	// 파일 제거
-	public void removeFile(Submission file) {
+	public void removeFile(SubmissionFile file) {
 		this.files.remove(file);
 	}
 
