@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 /**
  * 과제 첨부파일 관리 엔티티
  */
+
 @Entity
 @DiscriminatorValue("ASSIGNMENT_FILE")
 @PrimaryKeyJoinColumn(name = "assignment_file_id")
@@ -33,9 +34,9 @@ public class AssignmentFile extends BaseFile {
 		assignment.getFiles().add(this);
 	}
 
-	public static AssignmentFile createAssignmentFile(String originalFileName, String storedFileName, String fileUrl,
-			Long fileSize, Assignment assignment) {
-		
+	public static AssignmentFile createAssignmentFile(String originalFileName, String storedFileName,
+			String fileUrl, Long fileSize, Assignment assignment) {
+
 		return new AssignmentFile(originalFileName, storedFileName, fileUrl, fileSize, assignment);
 	}
 
