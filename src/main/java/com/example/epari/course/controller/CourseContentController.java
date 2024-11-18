@@ -42,17 +42,9 @@ public class CourseContentController {
 	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<CourseContentResponseDto> uploadContent(
 			@PathVariable Long courseId,
-			@RequestParam(required = true) String title,
-			@RequestParam(required = true) String content,
-			@RequestParam(required = true) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
-			@RequestParam(required = false) List<MultipartFile> files) {
+			@ModelAttribute CourseContentRequestDto.Upload request) {
 
-		CourseContentRequestDto.Upload request = new CourseContentRequestDto.Upload();
-		request.setTitle(title);
-		request.setContent(content);
-		request.setDate(date);
-		request.setFiles(files);
-
+		request.setDate(LocalDate.now());
 		return ResponseEntity.ok(courseContentService.uploadContent(courseId, request));
 	}
 
