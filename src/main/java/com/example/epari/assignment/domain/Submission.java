@@ -35,7 +35,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Submission extends BaseTimeEntity {
 
-	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@Column
@@ -46,7 +47,7 @@ public class Submission extends BaseTimeEntity {
 	private String description;
 
 	@Column
-	private int score;
+	private String grade;
 
 	private String feedback;
 
@@ -71,10 +72,9 @@ public class Submission extends BaseTimeEntity {
 		this.description = description;
 		this.assignment = assignment;
 		this.student = student;
-		this.score = 0;
+		this.grade = "F";
 		this.status = SubmissionStatus.SUBMITTED;
 	}
-
 
 	public static Submission createSubmission(String title, String description,
 			Assignment assignment, Student student) {
@@ -86,9 +86,8 @@ public class Submission extends BaseTimeEntity {
 				.build();
 	}
 
-
-	public void updateScore(Integer score, String feedback) {
-		this.score = score;
+	public void updateGrade(String grade, String feedback) {
+		this.grade = grade;
 		this.feedback = feedback;
 		this.status = SubmissionStatus.GRADED;
 	}
@@ -96,6 +95,11 @@ public class Submission extends BaseTimeEntity {
 	// 파일 추가
 	public void addFile(SubmissionFile file) {
 		this.files.add(file);
+	}
+
+	// 파일 제거
+	public void removeFile(Submission file) {
+		this.files.remove(file);
 	}
 
 }
