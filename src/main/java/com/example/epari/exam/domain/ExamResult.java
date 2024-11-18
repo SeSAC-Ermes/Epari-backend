@@ -54,15 +54,18 @@ public class ExamResult extends BaseTimeEntity {
 	@Column(nullable = false)
 	private ExamStatus status;
 
-	@OneToMany(mappedBy = "examResult", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "examResult", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ExamScore> scores = new ArrayList<>();
 
 	@Builder
-	private ExamResult(Exam exam, Student student) {
+	private ExamResult(Exam exam, Student student, LocalDateTime submitTime, ExamStatus status) {
+		validateExam(exam);
+		validateStudent(student);
 		this.exam = exam;
 		this.student = student;
-		this.submitTime = LocalDateTime.now();
-		this.status = ExamStatus.SUBMITTED;
+		this.submitTime = submitTime != null ? submitTime : LocalDateTime.now();
+		this.status = status != null ? status : ExamStatus.IN_PROGRESS;
+		this.scores = new ArrayList<>();
 	}
 
 	public void updateStatus(ExamStatus status) {
@@ -70,7 +73,77 @@ public class ExamResult extends BaseTimeEntity {
 	}
 
 	public void addScore(ExamScore score) {
-		this.scores.add(score);
+		validateScoreAddable();
+		scores.add(score);
 		score.setExamResult(this);
 	}
+
+	public void submit(boolean force) {
+		if (!force) {
+			validateSubmittable();
+		}
+		this.submitTime = LocalDateTime.now();
+		this.status = ExamStatus.SUBMITTED;
+		scores.forEach(ExamScore::markAsSubmitted);
+	}
+
+	public int getEarnedScore() {
+		return scores.stream()
+				.filter(score -> !score.isTemporary())
+				.mapToInt(ExamScore::getEarnedScore)
+				.sum();
+	}
+
+	private void validateExam(Exam exam) {
+		if (exam == null) {
+			throw new IllegalArgumentException("시험 정보는 필수입니다.");
+		}
+		if (exam.isAfterExam()) {
+			throw new IllegalStateException("종료된 시험입니다.");
+		}
+	}
+
+	private void validateStudent(Student student) {
+		if (student == null) {
+			throw new IllegalArgumentException("학생 정보는 필수입니다.");
+		}
+	}
+
+	private void validateScoreAddable() {
+		if (status == ExamStatus.SUBMITTED || status == ExamStatus.COMPLETED) {
+			throw new IllegalStateException("이미 제출된 시험에는 답안을 추가할 수 없습니다.");
+		}
+	}
+
+	private void validateSubmittable() {
+		if (status != ExamStatus.IN_PROGRESS) {
+			throw new IllegalStateException("진행 중인 시험만 제출할 수 있습니다.");
+		}
+		validateAllQuestionsAnswered();
+	}
+
+	private void validateAllQuestionsAnswered() {
+		int totalQuestions = exam.getQuestions().size();
+		long answeredQuestions = scores.stream()
+				.filter(score -> !score.isTemporary())
+				.count();
+		if (answeredQuestions < totalQuestions) {
+			throw new IllegalStateException("모든 문제에 답해야 제출할 수 있습니다.");
+		}
+	}
+
+	public int getSubmittedQuestionCount() {
+		return (int)scores.stream()
+				.filter(score -> !score.isTemporary())
+				.count();
+	}
+
+	public boolean hasTemporaryAnswer(Long questionId) {
+		return scores.stream()
+				.anyMatch(score ->
+						score.getQuestion().getId().equals(questionId) &&
+								score.isTemporary()
+				);
+	}
+
 }
