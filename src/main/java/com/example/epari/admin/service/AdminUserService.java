@@ -15,7 +15,7 @@ import com.example.epari.user.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 관리자기 사용자를 관리하는 비즈니스 로직을 처리하는 서비스 클래스
+ * 관리자가 사용자를 관리하는 비즈니스 로직을 처리하는 서비스 클래스
  */
 @Service
 @RequiredArgsConstructor

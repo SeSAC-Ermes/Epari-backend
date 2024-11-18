@@ -11,7 +11,7 @@ import com.example.epari.course.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 관리자기 강의를 관리하는 비즈니스 로직을 처리하는 서비스 클래스
+ * 관리자가 강의를 관리하는 비즈니스 로직을 처리하는 서비스 클래스
  */
 @Service
 @RequiredArgsConstructor
