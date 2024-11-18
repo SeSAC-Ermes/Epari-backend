@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 관리자를 위한 REST API 컨트롤러
+ * 사용자 관리
  */
 @RestController
 @RequestMapping("/api/admin/users")
@@ -55,7 +56,7 @@ public class AdminUserManagementController {
 		adminUserService.approveUser(email, request);
 
 		// 2. Cognito 그룹 변경
-		cognitoService.changeUserGroup(email, "STUDENT");
+		cognitoService.changeUserGroup(request.getUsername(), "STUDENT");
 
 		// 3. TODO 이메일 발송
 

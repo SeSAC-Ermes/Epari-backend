@@ -12,8 +12,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ApprovalRequestDTO {
 
+	private String username; // Cognito username
+
 	private Long courseId;
 
-	private String name;
+	private String name; // Username
 
 }

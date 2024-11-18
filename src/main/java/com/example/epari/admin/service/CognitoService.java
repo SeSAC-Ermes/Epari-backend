@@ -67,11 +67,11 @@ public class CognitoService {
 	/**
 	 * 사용자 그룹을 변경
 	 */
-	public void changeUserGroup(String email, String groupName) {
+	public void changeUserGroup(String username, String groupName) {
 		// 1. 현재 그룹에서 제거
 		AdminRemoveUserFromGroupRequest removeRequest = AdminRemoveUserFromGroupRequest.builder()
 				.userPoolId(userPoolId)
-				.username(email)
+				.username(username)
 				.groupName("PENDING_ROLES")
 				.build();
 
@@ -80,7 +80,7 @@ public class CognitoService {
 		// 2. 새 그룹에 추가
 		AdminAddUserToGroupRequest addRequest = AdminAddUserToGroupRequest.builder()
 				.userPoolId(userPoolId)
-				.username(email)
+				.username(username)
 				.groupName(groupName)
 				.build();
 
