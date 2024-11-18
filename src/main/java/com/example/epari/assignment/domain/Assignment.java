@@ -91,4 +91,8 @@ public class Assignment extends BaseTimeEntity {
 		this.files.add(file);
 	}
 
+	// 파일 제거
+	public void removeFile(AssignmentFile file) {
+		this.files.remove(file);
+	}
 }

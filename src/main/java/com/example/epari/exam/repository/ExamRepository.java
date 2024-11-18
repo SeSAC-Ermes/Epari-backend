@@ -13,18 +13,12 @@ import com.example.epari.exam.domain.Exam;
  */
 public interface ExamRepository extends JpaRepository<Exam, Long> {
 
-	/**
-	 * 1. 강의
-	 */
 	// 특정 강의에 속한 모든 시험 조회
 	List<Exam> findByCourseId(Long courseId);
 
 	// 특정 강의에 속한 시험 상세 조회
 	Optional<Exam> findByCourseIdAndId(Long courseId, Long id);
 
-	/**
-	 * 2. 강사
-	 */
 	// 강사가 담당하는 강의의 모든 시험 조회
 	@Query("SELECT e FROM Exam e "
 			+ "JOIN FETCH e.course c "
@@ -32,9 +26,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 			+ "WHERE i.email = :instructorEmail")
 	List<Exam> findByInstructorEmail(String instructorEmail);
 
-	/**
-	 * 3. 학생
-	 */
 	// 학생이 수강중인 강의의 모든 시험 조회
 	@Query("SELECT e FROM Exam e "
 			+ "JOIN FETCH e.course c "

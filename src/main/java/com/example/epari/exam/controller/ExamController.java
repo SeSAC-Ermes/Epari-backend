@@ -3,6 +3,9 @@ package com.example.epari.exam.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,48 +37,35 @@ public class ExamController {
 
 	// 시험 생성
 	@PostMapping
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<Long> createExam(
 			@PathVariable Long courseId,
 			@RequestBody ExamRequestDto examRequestDto,
 			@CurrentUserEmail String instructorEmail) {
-		Long examId = instructorExamService.createExam(courseId, examRequestDto, instructorEmail);
+		Long examId = examService.createExam(courseId, examRequestDto, instructorEmail);
 		return ResponseEntity.ok(examId);
 	}
 
-	// 특정 강의에 해당하는 시험 정보 조회
-	@GetMapping
-	public ResponseEntity<List<ExamResponseDto>> getExams(@PathVariable Long courseId) {
-		List<ExamResponseDto> exams = examService.getExamByCourse(courseId);
-		return ResponseEntity.ok(exams);
-	}
-
-	// 특정 강의에 속한 시험 상세 조회
-	@GetMapping("/{examId}")
-	public ResponseEntity<ExamResponseDto> getExam(
-			@PathVariable Long courseId,
-			@PathVariable("examId") Long id) {
-		ExamResponseDto exam = examService.getExam(courseId, id);
-		return ResponseEntity.ok(exam);
-	}
-
-	// 특정 강의에 속한 시험 수정
+	// 시험 수정
 	@PutMapping("/{examId}")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<ExamResponseDto> updateExam(
 			@PathVariable Long courseId,
-			@PathVariable("examId") Long id,
+			@PathVariable Long examId,
 			@RequestBody ExamRequestDto examRequestDto,
 			@CurrentUserEmail String instructorEmail) {
-		ExamResponseDto updateExam = instructorExamService.updateExam(courseId, id, examRequestDto, instructorEmail);
+		ExamResponseDto updateExam = examService.updateExam(courseId, examId, examRequestDto, instructorEmail);
 		return ResponseEntity.ok(updateExam);
 	}
 
-	// 특정 강의에 속한 시험 삭제
+	// 시험 삭제
 	@DeleteMapping("/{examId}")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<Void> deleteExam(
 			@PathVariable Long courseId,
-			@PathVariable("examId") Long id,
+			@PathVariable Long examId,
 			@CurrentUserEmail String instructorEmail) {
-		instructorExamService.deleteExam(courseId, id, instructorEmail);
+		examService.deleteExam(courseId, examId, instructorEmail);
 		return ResponseEntity.noContent().build();
 	}
 

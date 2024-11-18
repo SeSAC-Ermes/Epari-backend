@@ -63,6 +63,7 @@ public class SecurityConfig {
 						// 기존 역할 기반 접근 제어
 						.requestMatchers("/api/instructor/**").hasRole("INSTRUCTOR")
 						.requestMatchers("/api/student/**").hasRole("STUDENT")
+						.requestMatchers("/api/admin/**").hasRole("ADMIN")
 						.anyRequest().authenticated()
 				)
 				.oauth2ResourceServer(oauth2 -> oauth2

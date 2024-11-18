@@ -56,11 +56,12 @@ public class AssignmentController {
 	@PutMapping("/{assignmentId}")
 	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<AssignmentResponseDto> updateAssignment(
+			@PathVariable Long courseId,
 			@PathVariable Long assignmentId,
 			@RequestParam Long instructorId,
-			@RequestBody AssignmentRequestDto requestDto) {
+			@ModelAttribute AssignmentRequestDto requestDto) {
 		log.info("과제 수정 요청: ID = {}, 제목 = {}", assignmentId, requestDto.getTitle());
-		AssignmentResponseDto responseDto = assignmentService.updateAssignment(assignmentId, requestDto, instructorId);
+		AssignmentResponseDto responseDto = assignmentService.updateAssignment(courseId, assignmentId, requestDto, instructorId);
 		log.info("과제 수정 완료: ID = {}", assignmentId);
 		return ResponseEntity.ok(responseDto);
 	}
@@ -69,6 +70,7 @@ public class AssignmentController {
 	@DeleteMapping("/{assignmentId}")
 	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<Void> deleteAssignment(
+			@PathVariable Long courseId,
 			@PathVariable Long assignmentId,
 			@RequestParam Long instructorId) {
 		log.info("과제 삭제 요청: ID = {}, instructorId = {}", assignmentId, instructorId);
