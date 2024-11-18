@@ -6,6 +6,8 @@ import java.util.List;
 
 import com.example.epari.global.common.base.BaseTimeEntity;
 import com.example.epari.global.common.enums.ExamStatus;
+import com.example.epari.global.exception.BusinessBaseException;
+import com.example.epari.global.exception.ErrorCode;
 import com.example.epari.user.domain.Student;
 
 import jakarta.persistence.CascadeType;
@@ -96,28 +98,28 @@ public class ExamResult extends BaseTimeEntity {
 
 	private void validateExam(Exam exam) {
 		if (exam == null) {
-			throw new IllegalArgumentException("시험 정보는 필수입니다.");
+			throw new BusinessBaseException(ErrorCode.EXAM_NOT_FOUND);
 		}
 		if (exam.isAfterExam()) {
-			throw new IllegalStateException("종료된 시험입니다.");
+			throw new BusinessBaseException(ErrorCode.EXAM_ALREADY_ENDED);
 		}
 	}
 
 	private void validateStudent(Student student) {
 		if (student == null) {
-			throw new IllegalArgumentException("학생 정보는 필수입니다.");
+			throw new BusinessBaseException(ErrorCode.STUDENT_NOT_FOUND);
 		}
 	}
 
 	private void validateScoreAddable() {
 		if (status == ExamStatus.SUBMITTED || status == ExamStatus.COMPLETED) {
-			throw new IllegalStateException("이미 제출된 시험에는 답안을 추가할 수 없습니다.");
+			throw new BusinessBaseException(ErrorCode.EXAM_ALREADY_SUBMITTED);
 		}
 	}
 
 	private void validateSubmittable() {
 		if (status != ExamStatus.IN_PROGRESS) {
-			throw new IllegalStateException("진행 중인 시험만 제출할 수 있습니다.");
+			throw new BusinessBaseException(ErrorCode.EXAM_NOT_IN_PROGRESS);
 		}
 		validateAllQuestionsAnswered();
 	}
@@ -128,7 +130,7 @@ public class ExamResult extends BaseTimeEntity {
 				.filter(score -> !score.isTemporary())
 				.count();
 		if (answeredQuestions < totalQuestions) {
-			throw new IllegalStateException("모든 문제에 답해야 제출할 수 있습니다.");
+			throw new BusinessBaseException(ErrorCode.EXAM_NOT_ALL_QUESTIONS_ANSWERED);
 		}
 	}
 

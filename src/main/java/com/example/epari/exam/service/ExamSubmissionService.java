@@ -20,9 +20,12 @@ import com.example.epari.exam.repository.ExamQuestionRepository;
 import com.example.epari.exam.repository.ExamRepository;
 import com.example.epari.exam.repository.ExamResultRepository;
 import com.example.epari.global.common.enums.ExamStatus;
+import com.example.epari.global.exception.BusinessBaseException;
+import com.example.epari.global.exception.ErrorCode;
 import com.example.epari.global.validator.CourseAccessValidator;
 import com.example.epari.user.domain.Student;
 import com.example.epari.user.repository.StudentRepository;
+import com.example.epari.global.validator.ExamQuestionValidator;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,26 +51,22 @@ public class ExamSubmissionService {
 
 	private final CourseStudentRepository courseStudentRepository;
 
+	private final ExamQuestionValidator examQuestionValidator;
+
 	// 시험 시작
 	public ExamSubmissionStatusDto startExam(Long courseId, Long examId, String studentEmail) {
 		Student student = studentRepository.findByEmail(studentEmail)
-				.orElseThrow(() -> new IllegalArgumentException("학생 정보를 찾을 수 없습니다."));
+            .orElseThrow(() -> new BusinessBaseException(ErrorCode.STUDENT_NOT_FOUND));
 
-		Exam exam = examRepository.findByCourseIdAndId(courseId, examId)
-				.orElseThrow(() -> new IllegalArgumentException("시험을 찾을 수 없습니다."));
+        Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
 
-		// 수강생 확인 - 수정된 부분
+		// 수강생 확인
 		if (!courseStudentRepository.existsByCourseIdAndStudentId(courseId, student.getId())) {
-			throw new IllegalStateException("해당 강의를 수강하지 않는 학생입니다.");
+			throw new BusinessBaseException(ErrorCode.UNAUTHORIZED_COURSE_ACCESS);
 		}
 
-		// 나머지 코드는 동일
-		validateExamTime(exam);
-
-		examResultRepository.findByExamIdAndStudentEmail(examId, studentEmail)
-				.ifPresent(result -> {
-					throw new IllegalStateException("이미 시작된 시험입니다.");
-				});
+		examQuestionValidator.validateExamTime(exam);
+		examQuestionValidator.validateNotAlreadyStarted(examId, studentEmail);
 
 		ExamResult examResult = ExamResult.builder()
 				.exam(exam)
@@ -118,7 +117,7 @@ public class ExamSubmissionService {
 		validateExamTimeRemaining(examResult.getExam());
 
 		ExamQuestion question = examQuestionRepository.findById(questionId)
-				.orElseThrow(() -> new IllegalArgumentException("문제를 찾을 수 없습니다."));
+        .orElseThrow(() -> new BusinessBaseException(ErrorCode.QUESTION_NOT_FOUND));
 
 		// 기존 답안이 있는지 확인
 		Optional<ExamScore> existingScore = examResult.getScores().stream()
@@ -144,6 +143,9 @@ public class ExamSubmissionService {
 	// 시험 종료
 	public void finishExam(Long courseId, Long examId, String studentEmail, boolean force) {
 		ExamResult examResult = getExamResultInProgress(examId, studentEmail);
+		if (!force) {
+			validateAllQuestionsAnswered(examResult);
+		}
 		examResult.submit(force);
 	}
 
@@ -170,40 +172,23 @@ public class ExamSubmissionService {
 	@Transactional(readOnly = true)
 	public ExamSubmissionStatusDto getSubmissionStatus(Long courseId, Long examId, String studentEmail) {
 		ExamResult examResult = examResultRepository.findByExamIdAndStudentEmail(examId, studentEmail)
-				.orElseThrow(() -> new IllegalArgumentException("시험 결과를 찾을 수 없습니다."));
+        .orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
 
 		return createExamSubmissionStatusDto(examResult.getExam(), examResult);
 	}
 
-	// 검증 메서드들
-	private void validateExamTime(Exam exam) {
-		if (exam.isBeforeExam()) {
-			throw new IllegalStateException("아직 시험 시작 시간이 아닙니다.");
-		}
-		if (exam.isAfterExam()) {
-			throw new IllegalStateException("이미 종료된 시험입니다.");
-		}
-	}
-
-	private void validateNotAlreadyStarted(Long examId, String studentEmail) {
-		examResultRepository.findByExamIdAndStudentEmail(examId, studentEmail)
-				.ifPresent(result -> {
-					throw new IllegalStateException("이미 시작된 시험입니다.");
-				});
-	}
-
 	private void validateExamTimeRemaining(Exam exam) {
 		if (exam.isAfterExam()) {
-			throw new IllegalStateException("시험 시간이 종료되었습니다.");
+			throw new BusinessBaseException(ErrorCode.EXAM_TIME_EXPIRED);
 		}
 	}
 
 	private void validateAllQuestionsAnswered(ExamResult examResult) {
 		int totalQuestions = examResult.getExam().getQuestions().size();
 		int answeredQuestions = examResult.getScores().size();
-
+	
 		if (answeredQuestions < totalQuestions) {
-			throw new IllegalStateException("모든 문제에 답하지 않았습니다.");
+			throw new BusinessBaseException(ErrorCode.EXAM_NOT_ALL_QUESTIONS_ANSWERED);
 		}
 	}
 
@@ -211,7 +196,7 @@ public class ExamSubmissionService {
 	private ExamResult getExamResultInProgress(Long examId, String studentEmail) {
 		return examResultRepository.findByExamIdAndStudentEmail(examId, studentEmail)
 				.filter(result -> result.getStatus() == ExamStatus.IN_PROGRESS)
-				.orElseThrow(() -> new IllegalStateException("진행 중인 시험을 찾을 수 없습니다."));
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_IN_PROGRESS));
 	}
 
 	private ExamSubmissionStatusDto createExamSubmissionStatusDto(Exam exam, ExamResult examResult) {

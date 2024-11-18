@@ -20,7 +20,10 @@ import com.example.epari.exam.dto.response.ExamSummaryDto;
 import com.example.epari.exam.repository.ExamRepository;
 import com.example.epari.exam.repository.ExamResultRepository;
 import com.example.epari.global.common.enums.ExamStatus;
+import com.example.epari.global.exception.BusinessBaseException;
+import com.example.epari.global.exception.ErrorCode;
 import com.example.epari.global.validator.CourseAccessValidator;
+import com.example.epari.global.validator.ExamQuestionValidator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,9 +43,9 @@ public class ExamService {
 
 	private final CourseAccessValidator courseAccessValidator;
 
-	private final ExamFinder examFinder;
-
 	private final CourseStudentRepository courseStudentRepository;
+
+	private final ExamQuestionValidator examQuestionValidator; 
 
 	private boolean matchesStatus(Exam exam, ExamStatus status, LocalDateTime now) {
 		return switch (status) {
@@ -111,7 +114,7 @@ public class ExamService {
 				categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams, completedExams);
 			} else {
 				ExamResult result = examResultRepository.findByExamIdAndStudentEmail(exam.getId(), email)
-						.orElse(null);
+        				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
 				ExamSummaryDto summaryDto = ExamSummaryDto.forStudent(exam, result);
 				categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams, completedExams);
 			}
@@ -132,9 +135,10 @@ public class ExamService {
 			courseAccessValidator.validateStudentAccess(courseId, email);
 		}
 
-		Exam exam = examFinder.findExam(courseId, examId);
-		return ExamResponseDto.fromExam(exam);
-	}
+		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
+        return ExamResponseDto.fromExam(exam);
+    }
+
 
 	// 시험 생성
 	@Transactional
@@ -142,7 +146,7 @@ public class ExamService {
 		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
 
 		Course course = courseRepository.findById(courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다."));
+        .orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
 
 		Exam exam = Exam.builder()
 				.title(requestDto.getTitle())
@@ -161,7 +165,7 @@ public class ExamService {
 	public ExamResponseDto updateExam(Long courseId, Long examId, ExamRequestDto requestDto, String instructorEmail) {
 		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
 
-		Exam exam = examFinder.findExam(courseId, examId);
+		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
 		exam.updateExam(
 				requestDto.getTitle(),
 				requestDto.getExamDateTime(),
@@ -178,7 +182,7 @@ public class ExamService {
 	public void deleteExam(Long courseId, Long examId, String instructorEmail) {
 		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
 
-		Exam exam = examFinder.findExam(courseId, examId);
+		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
 		examRepository.delete(exam);
 	}
 
