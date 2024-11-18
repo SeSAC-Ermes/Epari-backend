@@ -6,7 +6,6 @@ import java.util.List;
 
 import com.example.epari.course.domain.Course;
 import com.example.epari.global.common.base.BaseTimeEntity;
-import com.example.epari.course.domain.Course;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
