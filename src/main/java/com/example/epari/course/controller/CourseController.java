@@ -25,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/courses")
 @RequiredArgsConstructor
-@EnableMethodSecurity
 public class CourseController {
 
 	private final CourseService courseService;
