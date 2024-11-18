@@ -12,11 +12,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
  * 강의 정보를 관리하는 Entity 클래스
@@ -45,6 +48,9 @@ public class Course extends BaseTimeEntity {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "instructor_id")
 	private Instructor instructor;
+
+	@OneToMany(mappedBy = "course")
+    private List<CourseStudent> courseStudents;
 
 	@Builder
 	private Course(String name, LocalDate startDate, LocalDate endDate, String classroom, Instructor instructor) {
