@@ -1,7 +1,13 @@
 package com.example.epari.assignment.domain;
 
 import com.example.epari.global.common.base.BaseFile;
-import jakarta.persistence.*;
+
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrimaryKeyJoinColumn;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,19 +26,17 @@ public class AssignmentFile extends BaseFile {
 	@JoinColumn(name = "assignment_id")
 	private Assignment assignment;
 
-	private AssignmentFile(String originalFileName, String storedFileName, String fileUrl, Long fileSize) {
+	private AssignmentFile(String originalFileName, String storedFileName, String fileUrl, Long fileSize,
+			Assignment assignment) {
 		super(originalFileName, storedFileName, fileUrl, fileSize);
+		this.assignment = assignment;
+		assignment.getFiles().add(this);
 	}
 
 	public static AssignmentFile createAssignmentFile(String originalFileName, String storedFileName, String fileUrl,
-													  Long fileSize, Assignment assignment) {
-		AssignmentFile assignmentFile = new AssignmentFile(originalFileName, storedFileName, fileUrl, fileSize);
-		assignmentFile.setAssignment(assignment);
-		return assignmentFile;
-	}
-
-	private void setAssignment(Assignment assignment) {
-		this.assignment = assignment;
+			Long fileSize, Assignment assignment) {
+		
+		return new AssignmentFile(originalFileName, storedFileName, fileUrl, fileSize, assignment);
 	}
 
 }
