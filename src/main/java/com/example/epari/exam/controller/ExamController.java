@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.epari.exam.dto.request.ExamRequestDto;
 import com.example.epari.exam.dto.response.ExamResponseDto;
 import com.example.epari.exam.service.ExamService;
-import com.example.epari.exam.service.InstructorExamService;
 import com.example.epari.global.annotation.CurrentUserEmail;
 
 import lombok.RequiredArgsConstructor;
