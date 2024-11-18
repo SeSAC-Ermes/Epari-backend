@@ -33,7 +33,38 @@ public class ExamController {
 
 	private final ExamService examService;
 
-	private final InstructorExamService instructorExamService;
+	// 시험 목록 조회
+	@GetMapping
+	@PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT')")
+	public ResponseEntity<List<ExamResponseDto>> getExams(
+			@PathVariable Long courseId,
+			@CurrentUserEmail String email,
+			Authentication authentication) {
+		String role = authentication.getAuthorities().stream()
+				.findFirst()
+				.map(GrantedAuthority::getAuthority)
+				.orElseThrow(() -> new IllegalStateException("권한 정보를 찾을 수 없습니다."));
+
+		List<ExamResponseDto> exams = examService.getExams(courseId, email, role);
+		return ResponseEntity.ok(exams);
+	}
+
+	// 시험 조회
+	@GetMapping("/{examId}")
+	@PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT')")
+	public ResponseEntity<ExamResponseDto> getExam(
+			@PathVariable Long courseId,
+			@PathVariable Long examId,
+			@CurrentUserEmail String email,
+			Authentication authentication) {
+		String role = authentication.getAuthorities().stream()
+				.findFirst()
+				.map(GrantedAuthority::getAuthority)
+				.orElseThrow(() -> new IllegalStateException("권한 정보를 찾을 수 없습니다."));
+
+		ExamResponseDto exam = examService.getExam(courseId, examId, email, role);
+		return ResponseEntity.ok(exam);
+	}
 
 	// 시험 생성
 	@PostMapping
