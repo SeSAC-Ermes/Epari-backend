@@ -121,4 +121,21 @@ public class Exam extends BaseTimeEntity {
 				.forEach(q -> q.updateExamNumber(q.getExamNumber() - 1));
 	}
 
+	public boolean isBeforeExam() {
+		return LocalDateTime.now().isBefore(examDateTime);
+	}
+
+	public boolean isAfterExam() {
+		return LocalDateTime.now().isAfter(examDateTime.plusMinutes(duration));
+	}
+
+	public boolean isExamInProgress() {
+		LocalDateTime now = LocalDateTime.now();
+		return !isBeforeExam() && !isAfterExam();
+	}
+
+	public LocalDateTime getEndDateTime() {
+		return examDateTime.plusMinutes(duration);
+	}
+
 }
