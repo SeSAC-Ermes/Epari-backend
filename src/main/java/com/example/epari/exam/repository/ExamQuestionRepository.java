@@ -1,8 +1,10 @@
 package com.example.epari.exam.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import com.example.epari.exam.domain.ExamQuestion;
 
@@ -17,4 +19,6 @@ public interface ExamQuestionRepository extends JpaRepository<ExamQuestion, Long
 	// 시험에 속한 문제인지 확인
 	boolean existsByIdAndExamId(Long questionId, Long examId);
 
+    Optional<ExamQuestion> findByExamIdAndId(Long examId, Long id);
+	
 }
