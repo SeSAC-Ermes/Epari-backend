@@ -69,7 +69,11 @@ public enum ErrorCode {
 	// Cognito 관련 에러 코드 (CGT)
 	COGNITO_USER_FETCH_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-001", "사용자 정보 조회에 실패했습니다."),
 	COGNITO_USER_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-002", "사용자 정보를 찾을 수 없습니다."),
-	COGNITO_USER_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-003", "사용자를 삭제하는 도중 오류가 발생했습니다.");
+	COGNITO_USER_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-003", "사용자를 삭제하는 도중 오류가 발생했습니다."),
+
+	// 알림 관련 에러 코드 (NTF)
+	NOTIFICATION_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "NTF-001", "알림 발송에 실패했습니다."),
+	SES_SERVICE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "NTF-002", "이메일 서비스 연동 중 오류가 발생했습니다.");
 
 	private final HttpStatus status;
 
