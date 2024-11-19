@@ -1,15 +1,14 @@
 package com.example.epari.assignment.dto.submission;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.example.epari.assignment.domain.Submission;
 import com.example.epari.assignment.dto.file.SubmissionFileResponseDto;
 import com.example.epari.user.domain.Student;
-
 import lombok.Builder;
 import lombok.Getter;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Builder
@@ -18,6 +17,10 @@ public class SubmissionResponseDto {
 	private Long id;
 
 	private String description;
+
+	private String grade;           // 추가
+
+	private String feedback;        // 추가
 
 	private LocalDateTime createdAt;
 
@@ -54,6 +57,8 @@ public class SubmissionResponseDto {
 		return SubmissionResponseDto.builder()
 				.id(submission.getId())
 				.description(submission.getDescription())
+				.grade(submission.getGrade())        // 추가
+				.feedback(submission.getFeedback())  // 추가
 				.createdAt(submission.getCreatedAt())
 				.updatedAt(submission.getUpdatedAt())
 				.files(submission.getFiles().stream()
