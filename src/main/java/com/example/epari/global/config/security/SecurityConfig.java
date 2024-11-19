@@ -54,6 +54,7 @@ public class SecurityConfig {
 						.requestMatchers("/actuator/health/**").permitAll() // Actuator 헬스체크 엔드포인트 허용
 						.requestMatchers("/api/instructor/**").hasRole("INSTRUCTOR")
 						.requestMatchers("/api/student/**").hasRole("STUDENT")
+						.requestMatchers("/api/admin/**").hasRole("ADMIN")
 						.anyRequest().authenticated()
 				)
 				.oauth2ResourceServer(oauth2 -> oauth2
