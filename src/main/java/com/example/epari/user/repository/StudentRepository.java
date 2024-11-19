@@ -1,5 +1,7 @@
 package com.example.epari.user.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.epari.user.domain.Student;
@@ -9,5 +11,7 @@ import com.example.epari.user.domain.Student;
  * Spring Data JPA를 통해 기본적인 CRUD 연산을 제공합니다.
  */
 public interface StudentRepository extends JpaRepository<Student, Long> {
+
+	Optional<Student> findByEmail(String email);
 
 }

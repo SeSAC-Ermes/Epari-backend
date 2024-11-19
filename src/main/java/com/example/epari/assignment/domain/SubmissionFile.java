@@ -27,19 +27,17 @@ public class SubmissionFile extends BaseFile {
 	@JoinColumn(name = "submission_id")
 	private Submission submission;
 
+	private SubmissionFile(String originalFileName, String storedFileName, String fileUrl, Long fileSize,
+			Submission submission) {
+		super(originalFileName, storedFileName, fileUrl, fileSize);
+		this.submission = submission;
+		submission.getFiles().add(this);
+	}
+
 	public static SubmissionFile createSubmissionFile(String originalFileName, String storedFileName,
 			String fileUrl, Long fileSize, Submission submission) {
-		SubmissionFile file = new SubmissionFile(originalFileName, storedFileName, fileUrl, fileSize);
-		file.setSubmission(submission);
-		return file;
-	}
 
-	private SubmissionFile(String originalFileName, String storedFileName, String fileUrl, Long fileSize) {
-		super(originalFileName, storedFileName, fileUrl, fileSize);
-	}
-
-	private void setSubmission(Submission submission) {
-		this.submission = submission;
+		return new SubmissionFile(originalFileName, storedFileName, fileUrl, fileSize, submission);
 	}
 
 }

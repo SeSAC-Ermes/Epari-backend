@@ -20,6 +20,13 @@ public enum ErrorCode {
 	// 인증, 인가 관련 에러 코드 (AUTH)
 	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUTH-001", "인증이 필요한 요청입니다."),
 	FORBIDDEN(HttpStatus.FORBIDDEN, "AUTH-002", "해당 리소스에 대한 접근 권한이 없습니다."),
+	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTH-003", "사용자를 찾을 수 없습니다."),
+	USER_ALREADY_EXISTS(HttpStatus.CONFLICT, "AUTH-004", "이미 가입된 이메일입니다."),
+	INVALID_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "AUTH-005", "잘못된 인증 코드입니다. 다시 시도해주세요."),
+	VERIFICATION_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "AUTH-006", "만료된 인증 코드입니다. 코드를 재발송 해주세요."),
+	SIGNUP_FAILED(HttpStatus.BAD_REQUEST, "AUTH-007", "회원가입 처리 중 오류가 발생했습니다."),
+	PENDING_APPROVAL(HttpStatus.BAD_REQUEST, "AUTH-008", "가입 승인 대기중입니다."),
+	VERIFICATION_CODE_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "AUTH-009", "잠시 후 다시 시도해주세요."),
 
 	// Course 관련 에러 코드 (CRS)
 	COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS-001", "강의를 찾을 수 없습니다."),
@@ -31,7 +38,12 @@ public enum ErrorCode {
 
 	// Exam 관련 에러 코드 (EXAM)
 	EXAM_NOT_FOUND(HttpStatus.NOT_FOUND, "EXAM-001", "시험을 찾을 수 없습니다."),
-	EXAM_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "EXAM-002", "시험 결과를 찾을 수 없습니다.");
+	EXAM_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "EXAM-002", "시험 결과를 찾을 수 없습니다."),
+
+	// Cognito 관련 에러 코드 (CGT)
+	COGNITO_USER_FETCH_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-001", "사용자 정보 조회에 실패했습니다."),
+	COGNITO_USER_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-002", "사용자 정보를 찾을 수 없습니다."),
+	COGNITO_USER_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-003", "사용자를 삭제하는 도중 오류가 발생했습니다.");
 
 	private final HttpStatus status;
 
