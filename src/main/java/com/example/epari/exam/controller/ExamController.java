@@ -1,7 +1,5 @@
 package com.example.epari.exam.controller;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -13,12 +11,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.epari.exam.dto.request.ExamRequestDto;
+import com.example.epari.exam.dto.response.ExamListResponseDto;
 import com.example.epari.exam.dto.response.ExamResponseDto;
 import com.example.epari.exam.service.ExamService;
 import com.example.epari.global.annotation.CurrentUserEmail;
+import com.example.epari.global.common.enums.ExamStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,16 +36,18 @@ public class ExamController {
 	// 시험 목록 조회
 	@GetMapping
 	@PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT')")
-	public ResponseEntity<List<ExamResponseDto>> getExams(
+	public ResponseEntity<ExamListResponseDto> getExams(
 			@PathVariable Long courseId,
+			@RequestParam(required = false) ExamStatus status,
 			@CurrentUserEmail String email,
 			Authentication authentication) {
+
 		String role = authentication.getAuthorities().stream()
 				.findFirst()
 				.map(GrantedAuthority::getAuthority)
 				.orElseThrow(() -> new IllegalStateException("권한 정보를 찾을 수 없습니다."));
 
-		List<ExamResponseDto> exams = examService.getExams(courseId, email, role);
+		ExamListResponseDto exams = examService.getExams(courseId, status, email, role);
 		return ResponseEntity.ok(exams);
 	}
 
