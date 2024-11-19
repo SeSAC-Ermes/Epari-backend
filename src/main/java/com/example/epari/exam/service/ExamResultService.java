@@ -1,6 +1,7 @@
 package com.example.epari.exam.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -30,17 +31,30 @@ public class ExamResultService {
 	private final CourseAccessValidator courseAccessValidator;
 
 	/**
-	 * 학생의 전체 시험 결과를 조회합니다.
+	 * 강의의 모든 학생 시험 결과를 조회합니다.
 	 */
-	public ExamResultResponseDto getStudentExamResults(Long studentId, String email) {
+	public List<ExamResultResponseDto> getCourseExamResults(Long courseId, String instructorEmail) {
+		// 강사 권한 검증
+		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
 
-		// 시험 결과 조회
-		List<ExamResult> examResults = examResultRepository.findAllByStudentId(studentId);
+		// 해당 강의의 모든 시험 결과를 조회
+		List<ExamResult> examResults = examResultRepository.findAllByCourseId(courseId);
 		if (examResults.isEmpty()) {
-			log.warn("No exam results found for student ID: {}", studentId);
+			log.warn("No exam results found for course ID: {}", courseId);
 			throw new ExamResultNotFoundException();
 		}
 
+		// 학생별로 시험 결과를 그룹화
+		Map<Long, List<ExamResult>> resultsByStudent = examResults.stream()
+				.collect(Collectors.groupingBy(result -> result.getStudent().getId()));
+
+		// 각 학생별 ExamResultResponseDto 생성
+		return resultsByStudent.values().stream()
+				.map(this::createExamResultResponse)
+				.collect(Collectors.toList());
+	}
+
+	private ExamResultResponseDto createExamResultResponse(List<ExamResult> examResults) {
 		ExamResultResponseDto.StudentInfo studentInfo =
 				ExamResultResponseDto.StudentInfo.from(examResults.get(0).getStudent());
 
