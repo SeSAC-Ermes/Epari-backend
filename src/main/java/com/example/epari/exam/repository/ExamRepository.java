@@ -41,4 +41,10 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 			"WHERE s.email = :studentEmail")
 	List<Exam> findByStudentEmail(@Param("studentEmail") String studentEmail);
 
+	@Query("SELECT e FROM Exam e " +
+			"LEFT JOIN FETCH e.questions q " +
+			"LEFT JOIN FETCH q.image " +
+			"WHERE e.id = :examId")
+	Optional<Exam> findByIdWithQuestionsAndCourse(@Param("examId") Long examId);
+
 }

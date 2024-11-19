@@ -1,7 +1,9 @@
 package com.example.epari.exam.controller;
 
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +16,8 @@ import com.example.epari.exam.dto.common.AnswerSubmissionDto;
 import com.example.epari.exam.dto.common.ExamSubmissionStatusDto;
 import com.example.epari.exam.service.ExamSubmissionService;
 import com.example.epari.global.annotation.CurrentUserEmail;
+import com.example.epari.global.exception.BusinessBaseException;
+import com.example.epari.global.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -74,13 +78,14 @@ public class ExamSubmissionController {
 	}
 
 	// 현재 진행 상태 조회
-	@GetMapping("/status")
-	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.checkStudentAccess(#courseId, #studentEmail)")
+	@GetMapping("/{examId}/status")
+	@PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT')")
 	public ResponseEntity<ExamSubmissionStatusDto> getSubmissionStatus(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
-			@CurrentUserEmail String studentEmail) {
-		ExamSubmissionStatusDto status = examSubmissionService.getSubmissionStatus(courseId, examId, studentEmail);
+			@CurrentUserEmail String email) {
+		
+		ExamSubmissionStatusDto status = examSubmissionService.getSubmissionStatus(courseId, examId, email);
 		return ResponseEntity.ok(status);
 	}
 

@@ -45,12 +45,12 @@ public class ExamService {
 
 	private final CourseStudentRepository courseStudentRepository;
 
-	private final ExamQuestionValidator examQuestionValidator; 
+	private final ExamQuestionValidator examQuestionValidator;
 
 	private boolean matchesStatus(Exam exam, ExamStatus status, LocalDateTime now) {
 		return switch (status) {
 			case SCHEDULED -> exam.isBeforeExam();
-			case IN_PROGRESS -> exam.isExamInProgress();
+			case IN_PROGRESS -> exam.isDuringExam();
 			case SUBMITTED, GRADING, GRADED, COMPLETED -> exam.isAfterExam();
 			default -> false;
 		};
@@ -63,7 +63,7 @@ public class ExamService {
 
 		if (exam.isBeforeExam()) {
 			scheduledExams.add(summaryDto);
-		} else if (exam.isExamInProgress()) {
+		} else if (exam.isDuringExam()) {
 			inProgressExams.add(summaryDto);
 		} else {
 			completedExams.add(summaryDto);
@@ -87,6 +87,9 @@ public class ExamService {
 
 	// 시험 목록 조회
 	public ExamListResponseDto getExams(Long courseId, ExamStatus status, String email, String role) {
+		Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
+		
 		List<Exam> exams;
 
 		// 권한에 따른 시험 목록 조회
@@ -114,7 +117,7 @@ public class ExamService {
 				categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams, completedExams);
 			} else {
 				ExamResult result = examResultRepository.findByExamIdAndStudentEmail(exam.getId(), email)
-        				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
+						.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
 				ExamSummaryDto summaryDto = ExamSummaryDto.forStudent(exam, result);
 				categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams, completedExams);
 			}
@@ -127,18 +130,34 @@ public class ExamService {
 				.build();
 	}
 
-	// 시험 상세 조회
+	@Transactional(readOnly = true)
 	public ExamResponseDto getExam(Long courseId, Long examId, String email, String role) {
+		// 접근 권한 검증
 		if (role.contains("ROLE_INSTRUCTOR")) {
 			courseAccessValidator.validateInstructorAccess(courseId, email);
 		} else {
 			courseAccessValidator.validateStudentAccess(courseId, email);
 		}
 
-		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
-        return ExamResponseDto.fromExam(exam);
-    }
+		// 시험 조회 (with fetch join questions)
+		Exam exam = examRepository.findByIdWithQuestionsAndCourse(examId)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_FOUND));
 
+		// courseId 검증
+		if (!exam.getCourse().getId().equals(courseId)) {
+			throw new BusinessBaseException(ErrorCode.UNAUTHORIZED_EXAM_ACCESS);
+		}
+
+		// 권한별 응답 생성
+		if (role.contains("ROLE_INSTRUCTOR")) {
+			return ExamResponseDto.fromExamForInstructor(exam);
+		} else {
+			ExamResult result = examResultRepository
+					.findByExamIdAndStudentEmail(examId, email)
+					.orElse(null);
+			return ExamResponseDto.fromExamForStudent(exam, result);
+		}
+	}
 
 	// 시험 생성
 	@Transactional
@@ -146,7 +165,7 @@ public class ExamService {
 		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
 
 		Course course = courseRepository.findById(courseId)
-        .orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
 
 		Exam exam = Exam.builder()
 				.title(requestDto.getTitle())
@@ -174,7 +193,7 @@ public class ExamService {
 				requestDto.getDescription()
 		);
 
-		return ExamResponseDto.fromExam(exam);
+		return ExamResponseDto.fromExamForInstructor(exam);
 	}
 
 	// 시험 삭제

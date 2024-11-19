@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 import com.example.epari.course.repository.CourseStudentRepository;
 import com.example.epari.exam.domain.Exam;
@@ -23,9 +24,9 @@ import com.example.epari.global.common.enums.ExamStatus;
 import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
 import com.example.epari.global.validator.CourseAccessValidator;
+import com.example.epari.global.validator.ExamQuestionValidator;
 import com.example.epari.user.domain.Student;
 import com.example.epari.user.repository.StudentRepository;
-import com.example.epari.global.validator.ExamQuestionValidator;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,8 +48,6 @@ public class ExamSubmissionService {
 
 	private final StudentRepository studentRepository;
 
-	private final CourseAccessValidator courseAccessValidator;
-
 	private final CourseStudentRepository courseStudentRepository;
 
 	private final ExamQuestionValidator examQuestionValidator;
@@ -56,9 +55,9 @@ public class ExamSubmissionService {
 	// 시험 시작
 	public ExamSubmissionStatusDto startExam(Long courseId, Long examId, String studentEmail) {
 		Student student = studentRepository.findByEmail(studentEmail)
-            .orElseThrow(() -> new BusinessBaseException(ErrorCode.STUDENT_NOT_FOUND));
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.STUDENT_NOT_FOUND));
 
-        Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
+		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
 
 		// 수강생 확인
 		if (!courseStudentRepository.existsByCourseIdAndStudentId(courseId, student.getId())) {
@@ -79,45 +78,54 @@ public class ExamSubmissionService {
 
 	// 답안 임시 저장
 	public void saveAnswerTemporarily(Long courseId, Long examId, Long questionId,
-			AnswerSubmissionDto answerDto, String studentEmail) {
-		// 시험 결과 조회
-		ExamResult examResult = getExamResultInProgress(examId, studentEmail);
+        AnswerSubmissionDto answerDto, String studentEmail) {
+    ExamResult examResult = getExamResultInProgress(examId, studentEmail);
+    validateExamTimeRemaining(examResult.getExam());
 
-		// 시험 시간 검증
-		validateExamTimeRemaining(examResult.getExam());
+    // examId로 함께 검증
+    ExamQuestion question = examQuestionRepository
+            .findByExamIdAndId(examId, questionId)
+            .orElseThrow(() -> new BusinessBaseException(ErrorCode.QUESTION_NOT_FOUND));
 
-		// 문제 조회
-		ExamQuestion question = examQuestionRepository.findById(questionId)
-				.orElseThrow(() -> new IllegalArgumentException("문제를 찾을 수 없습니다."));
+    // question이 해당 시험의 문제가 맞는지 한번 더 검증
+    if (!question.getExam().getId().equals(examResult.getExam().getId())) {
+        throw new BusinessBaseException(ErrorCode.UNAUTHORIZED_EXAM_ACCESS);
+    }
 
-		// 기존 임시 저장된 답안이 있는지 확인
-		Optional<ExamScore> existingScore = examResult.getScores().stream()
-				.filter(score -> score.getQuestion().getId().equals(questionId))
-				.findFirst();
+    // 기존 임시 저장된 답안이 있는지 확인
+    Optional<ExamScore> existingScore = examResult.getScores().stream()
+            .filter(score -> score.getQuestion().getId().equals(questionId))
+            .findFirst();
 
-		if (existingScore.isPresent()) {
-			// 기존 답안 업데이트
-			existingScore.get().updateAnswer(answerDto.getAnswer());
-		} else {
-			// 새로운 답안 생성
-			ExamScore score = ExamScore.builder()
-					.examResult(examResult)
-					.question(question)
-					.studentAnswer(answerDto.getAnswer())
-					.temporary(true)  // 임시저장 표시
-					.build();
-			examResult.addScore(score);
-		}
-	}
+    if (existingScore.isPresent()) {
+        // 기존 답안 업데이트
+        existingScore.get().updateAnswer(answerDto.getAnswer());
+    } else {
+        // 새로운 답안 생성
+        ExamScore score = ExamScore.builder()
+                .examResult(examResult)
+                .question(question)
+                .studentAnswer(answerDto.getAnswer())
+                .temporary(true)  // 임시저장 표시
+                .build();
+        examResult.addScore(score);
+    }
+}
 
-	// 답안 제출
 	public void submitAnswer(Long courseId, Long examId, Long questionId,
 			AnswerSubmissionDto answerDto, String studentEmail) {
 		ExamResult examResult = getExamResultInProgress(examId, studentEmail);
 		validateExamTimeRemaining(examResult.getExam());
 
-		ExamQuestion question = examQuestionRepository.findById(questionId)
-        .orElseThrow(() -> new BusinessBaseException(ErrorCode.QUESTION_NOT_FOUND));
+		// examId로 함께 검증
+		ExamQuestion question = examQuestionRepository
+				.findByExamIdAndId(examId, questionId)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.QUESTION_NOT_FOUND));
+
+		// question이 해당 시험의 문제가 맞는지 한번 더 검증
+		if (!question.getExam().getId().equals(examResult.getExam().getId())) {
+			throw new BusinessBaseException(ErrorCode.UNAUTHORIZED_EXAM_ACCESS);
+		}
 
 		// 기존 답안이 있는지 확인
 		Optional<ExamScore> existingScore = examResult.getScores().stream()
@@ -149,36 +157,44 @@ public class ExamSubmissionService {
 		examResult.submit(force);
 	}
 
+	@Value("${exam.max-duration-minutes:180}")  // application.properties에서 설정값을 가져옴
+	private Integer maxExamDurationMinutes;
+
 	@Scheduled(fixedRate = 60000) // 1분마다 실행
 	@Transactional
 	public void autoSubmitExpiredExams() {
-		// 현재 시간에서 가장 긴 시험 시간(예: 3시간)을 뺀 시간을 기준으로 조회
-		LocalDateTime baseTime = LocalDateTime.now().minusMinutes(180);
-
+		LocalDateTime baseTime = LocalDateTime.now().minusMinutes(maxExamDurationMinutes);
 		List<ExamResult> expiredExams = examResultRepository.findExpiredExams(baseTime);
 
-		for (ExamResult examResult : expiredExams) {
-			// 실제로 종료된 시험인지 다시 한번 체크
-			if (examResult.getExam().isAfterExam()) {
-				examResult.submit(true);
-				log.info("시험 자동 제출 처리: examId={}, studentId={}",
-						examResult.getExam().getId(),
-						examResult.getStudent().getId());
-			}
-		}
+		expiredExams.stream()
+				.filter(result -> result.getExam().isAfterExam())
+				.forEach(result -> {
+					result.submit(true);
+					log.info("Auto submitted exam: examId={}, studentId={}, submittedAt={}, remainingQuestions={}",
+							result.getExam().getId(),
+							result.getStudent().getId(),
+							result.getSubmitTime(),
+							result.getExam().getQuestions().size() - result.getSubmittedQuestionCount());
+				});
 	}
 
 	// 시험 상태 조회
 	@Transactional(readOnly = true)
-	public ExamSubmissionStatusDto getSubmissionStatus(Long courseId, Long examId, String studentEmail) {
-		ExamResult examResult = examResultRepository.findByExamIdAndStudentEmail(examId, studentEmail)
-        .orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
-
-		return createExamSubmissionStatusDto(examResult.getExam(), examResult);
+	public ExamSubmissionStatusDto getSubmissionStatus(Long courseId, Long examId, String email) {
+		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
+		ExamResult examResult = examResultRepository.findByExamIdAndStudentEmail(examId, email)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
+		
+		return ExamSubmissionStatusDto.builder()
+				.examId(examId)
+				.status(examResult.getStatus())
+				.submittedQuestionCount(examResult.getSubmittedQuestionCount())
+				.totalQuestionCount(exam.getQuestions().size())
+				.build();
 	}
 
 	private void validateExamTimeRemaining(Exam exam) {
-		if (exam.isAfterExam()) {
+		if (!exam.isDuringExam()) {
 			throw new BusinessBaseException(ErrorCode.EXAM_TIME_EXPIRED);
 		}
 	}
@@ -186,7 +202,7 @@ public class ExamSubmissionService {
 	private void validateAllQuestionsAnswered(ExamResult examResult) {
 		int totalQuestions = examResult.getExam().getQuestions().size();
 		int answeredQuestions = examResult.getScores().size();
-	
+
 		if (answeredQuestions < totalQuestions) {
 			throw new BusinessBaseException(ErrorCode.EXAM_NOT_ALL_QUESTIONS_ANSWERED);
 		}
@@ -202,13 +218,11 @@ public class ExamSubmissionService {
 	private ExamSubmissionStatusDto createExamSubmissionStatusDto(Exam exam, ExamResult examResult) {
 		LocalDateTime now = LocalDateTime.now();
 		return ExamSubmissionStatusDto.builder()
-				.status(examResult.getStatus())
-				.startTime(examResult.getSubmitTime())
-				.endTime(exam.getEndDateTime())
+				.status(examResult.getStatus())                    
 				.submittedQuestionCount(examResult.getSubmittedQuestionCount())
 				.totalQuestionCount(exam.getQuestions().size())
-				.examEndTime(exam.getEndDateTime())
 				.remainingTimeInMinutes(calculateRemainingTime(now, exam.getEndDateTime()))
+				.submitTime(examResult.getSubmitTime())
 				.build();
 	}
 
