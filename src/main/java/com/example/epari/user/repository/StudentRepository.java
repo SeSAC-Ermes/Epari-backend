@@ -1,5 +1,7 @@
 package com.example.epari.user.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.epari.user.domain.Student;

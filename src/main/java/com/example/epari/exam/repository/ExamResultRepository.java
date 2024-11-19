@@ -12,8 +12,10 @@ import com.example.epari.exam.domain.ExamResult;
 import com.example.epari.global.common.enums.ExamStatus;
 
 /**
+ * 학생별 시험 결과를 조회하는 레포지토리 인터페이스 구현
  * 시험 정보에 대한 데이터베이스 접근을 담당하는 Repository 인터페이스
  */
+
 public interface ExamResultRepository extends JpaRepository<ExamResult, Long> {
 
 	// 특정 학생의 특정 시험 결과 조회
@@ -52,5 +54,15 @@ public interface ExamResultRepository extends JpaRepository<ExamResult, Long> {
 			    AND e.examDateTime <= :baseTime
 			""")
 	List<ExamResult> findExpiredExams(@Param("baseTime") LocalDateTime baseTime);
+
+	// 특정 학생의 모든 시험 결과 조회 (시험 정보와 점수 포함)
+	@Query("""
+			 SELECT DISTINCT er FROM ExamResult er
+			 JOIN FETCH er.exam e
+			 JOIN FETCH er.student s
+			 WHERE e.course.id = :courseId
+			 ORDER BY s.name ASC, e.examDateTime DESC
+			""")
+	List<ExamResult> findAllByCourseId(@Param("courseId") Long courseId);
 
 }
