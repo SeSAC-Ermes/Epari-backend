@@ -1,15 +1,9 @@
 package com.example.epari.assignment.controller;
 
+import com.example.epari.assignment.dto.submission.GradeRequestDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.epari.assignment.dto.submission.SubmissionRequestDto;
 import com.example.epari.assignment.dto.submission.SubmissionResponseDto;
@@ -45,6 +39,7 @@ public class SubmissionController {
 		);
 	}
 
+	@PreAuthorize("hasRole('STUDENT')")
 	@GetMapping("/{submissionId}")
 	public ResponseEntity<SubmissionResponseDto> getSubmission(
 			@PathVariable Long courseId,
@@ -55,6 +50,7 @@ public class SubmissionController {
 		);
 	}
 
+	@PreAuthorize("hasRole('STUDENT')")
 	@PutMapping("/{submissionId}")
 	public ResponseEntity<SubmissionResponseDto> updateSubmission(
 			@PathVariable Long courseId,
@@ -71,14 +67,32 @@ public class SubmissionController {
 		);
 	}
 
+	@PreAuthorize("hasRole('INSTRUCTOR')")
 	@PutMapping("/{submissionId}/grade")
 	public ResponseEntity<SubmissionResponseDto> gradeSubmission(
+			@PathVariable Long courseId,
+			@PathVariable Long assignmentId,
 			@PathVariable Long submissionId,
-			@RequestParam String grade,
-			@RequestParam String feedback) {
+			@RequestBody GradeRequestDto gradeRequestDto) {
 		return ResponseEntity.ok(
-				submissionService.gradeSubmission(submissionId, grade, feedback)
+				submissionService.gradeSubmission(submissionId,
+						gradeRequestDto.getGrade(),
+						gradeRequestDto.getFeedback())
 		);
+	}
+
+	@PreAuthorize("hasRole('STUDENT')")
+	@DeleteMapping("/{submissionId}")
+	public ResponseEntity<Void> deleteSubmission(
+			@PathVariable Long courseId,
+			@PathVariable Long assignmentId,
+			@PathVariable Long submissionId,
+			@CurrentUserEmail String email) {
+		Student student = studentRepository.findByEmail(email)
+				.orElseThrow(() -> new IllegalArgumentException("학생 정보를 찾을 수 없습니다."));
+
+		submissionService.deleteSubmission(courseId, assignmentId, submissionId, student.getId());
+		return ResponseEntity.ok().build();
 	}
 
 }
