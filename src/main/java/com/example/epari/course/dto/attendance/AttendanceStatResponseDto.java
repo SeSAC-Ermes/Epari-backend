@@ -51,6 +51,8 @@ public class AttendanceStatResponseDto {
 
 		private int totalDays;       // 전체 수업일수
 
+		private double attendanceRate; // 출석률 추가
+
 	}
 
 }
