@@ -40,6 +40,10 @@ public enum ErrorCode {
 	EXAM_NOT_FOUND(HttpStatus.NOT_FOUND, "EXAM-001", "시험을 찾을 수 없습니다."),
 	EXAM_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "EXAM-002", "시험 결과를 찾을 수 없습니다."),
 
+	// Attendance 관련 에러 코드
+	ATTENDANCE_NOT_FOUND(HttpStatus.NOT_FOUND, "ATT-001", "출석 데이터를 찾을 수 없습니다."),
+	ATTENDANCE_FUTURE_COURSE(HttpStatus.BAD_REQUEST, "ATT-002", "아직 시작하지 않은 강의입니다."),
+
 	// Cognito 관련 에러 코드 (CGT)
 	COGNITO_USER_FETCH_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-001", "사용자 정보 조회에 실패했습니다."),
 	COGNITO_USER_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-002", "사용자 정보를 찾을 수 없습니다."),
