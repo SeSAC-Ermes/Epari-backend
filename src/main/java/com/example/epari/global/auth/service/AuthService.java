@@ -226,4 +226,27 @@ public class AuthService {
 		}
 	}
 
+	public List<String> getUserGroups(String email) {
+		try {
+			UserType user = findUserByEmail(email, true); // 이미 구현된 메소드 활용
+
+			AdminListGroupsForUserRequest groupsRequest = AdminListGroupsForUserRequest.builder()
+					.userPoolId(userPoolId)
+					.username(user.username())
+					.build();
+
+			AdminListGroupsForUserResponse groupsResponse = cognitoClient.adminListGroupsForUser(groupsRequest);
+
+			return groupsResponse.groups().stream()
+					.map(GroupType::groupName)
+					.toList();
+
+		} catch (UserNotFoundException e) {
+			throw new AuthUserNotFoundException();
+		} catch (Exception e) {
+			log.error("Failed to get user groups", e);
+			throw new AuthenticationException(ErrorCode.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 }
