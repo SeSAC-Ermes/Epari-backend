@@ -44,12 +44,17 @@ public class ExamScore extends BaseTimeEntity {
 	@Column(nullable = false)
 	private int earnedScore;
 
+	@Column(nullable = false)
+	private boolean temporary;
+
 	private String feedback;
 
 	@Builder
-	private ExamScore(ExamQuestion question, String studentAnswer) {
+	public ExamScore(ExamResult examResult, ExamQuestion question, String studentAnswer, boolean temporary) {
+		this.examResult = examResult;
 		this.question = question;
 		this.studentAnswer = studentAnswer;
+		this.temporary = temporary;
 		this.earnedScore = 0;
 	}
 
@@ -60,6 +65,18 @@ public class ExamScore extends BaseTimeEntity {
 	public void updateScore(int earnedScore, String feedback) {
 		this.earnedScore = earnedScore;
 		this.feedback = feedback;
+	}
+
+	public void updateAnswer(String answer) {
+		this.studentAnswer = answer;
+	}
+
+	public void markAsSubmitted() {
+		this.temporary = false;
+	}
+
+	public void updateScore(int score) {
+		this.earnedScore = score;
 	}
 
 }

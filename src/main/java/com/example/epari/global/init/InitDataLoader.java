@@ -16,10 +16,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.epari.assignment.domain.Assignment;
-import com.example.epari.assignment.domain.Submission;
-import com.example.epari.assignment.repository.AssignmentRepository;
-import com.example.epari.assignment.repository.SubmissionRepository;
 import com.example.epari.course.domain.Attendance;
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.domain.CourseStudent;
@@ -71,10 +67,6 @@ public class InitDataLoader implements ApplicationRunner {
 
 	private final ExamResultRepository examResultRepository;
 
-	private final AssignmentRepository assignmentRepository;
-
-	private final SubmissionRepository submissionRepository;
-
 	@Transactional
 	@Override
 	public void run(ApplicationArguments args) {
@@ -99,17 +91,15 @@ public class InitDataLoader implements ApplicationRunner {
 		List<CourseStudent> courseStudents2 = createCourseStudents(courses.get(1),
 				students.subList(0, students.size() / 2));
 
-		// 6. 출석 데이터 생성 (첫 번째 강의에 대해서만)
+		// 8. 출석 데이터 생성 (첫 번째 강의에 대해서만)
 		createAttendances(courseStudents1);
 
-		// 7. 시험 데이터 생성 (시험과 문제 생성)
+		// 6. 시험 데이터 생성 (시험과 문제 생성)
 		createExams(courses);
 
-		// 8. 시험 결과 데이터 생성 (모든 학생이 모든 시험을 봄)
+		// 7. 시험 결과 데이터 생성 (모든 학생이 모든 시험을 봄)
 		createExamResults(courses, students);
 
-		// 9. 과제 데이터 생성
-		createAssignments(courses.get(0), instructors.get(0), students);
 	}
 
 	// 강사 추가를 위해 list로 반환
@@ -405,7 +395,7 @@ public class InitDataLoader implements ApplicationRunner {
 
 	private boolean isWeekend(LocalDate date) {
 		return date.getDayOfWeek() == java.time.DayOfWeek.SATURDAY
-			   || date.getDayOfWeek() == java.time.DayOfWeek.SUNDAY;
+				|| date.getDayOfWeek() == java.time.DayOfWeek.SUNDAY;
 	}
 
 	private static class CurriculumInfo {
@@ -434,7 +424,7 @@ public class InitDataLoader implements ApplicationRunner {
 		// 1. Java 중간고사
 		Exam javaExam = Exam.builder()
 				.title("Java 중간고사")
-				.examDateTime(LocalDateTime.of(2024, 7, 23, 14, 0))
+				.examDateTime(LocalDateTime.of(2025, 7, 23, 14, 0))
 				.duration(120)
 				.totalScore(100)
 				.description("Java 기초 문법과 객체지향 프로그래밍에 대한 이해도를 평가합니다.")
@@ -448,7 +438,7 @@ public class InitDataLoader implements ApplicationRunner {
 		// 2. Spring 중간고사
 		Exam springExam = Exam.builder()
 				.title("Spring Framework 중간고사")
-				.examDateTime(LocalDateTime.of(2024, 9, 13, 14, 0))
+				.examDateTime(LocalDateTime.of(2025, 9, 13, 14, 0))
 				.duration(120)
 				.totalScore(100)
 				.description("Spring Framework의 핵심 개념과 JPA에 대한 이해도를 평가합니다.")
@@ -464,7 +454,7 @@ public class InitDataLoader implements ApplicationRunner {
 		// 3. JavaScript 시험
 		Exam jsExam = Exam.builder()
 				.title("JavaScript & ES6+ 평가")
-				.examDateTime(LocalDateTime.of(2024, 8, 30, 14, 0))
+				.examDateTime(LocalDateTime.of(2025, 8, 30, 14, 0))
 				.duration(90)
 				.totalScore(100)
 				.description("JavaScript 기초와 ES6+ 문법에 대한 이해도를 평가합니다.")
@@ -477,7 +467,7 @@ public class InitDataLoader implements ApplicationRunner {
 		// 4. React 시험
 		Exam reactExam = Exam.builder()
 				.title("React 실전 평가")
-				.examDateTime(LocalDateTime.of(2024, 9, 27, 14, 0))
+				.examDateTime(LocalDateTime.of(2025, 9, 27, 14, 0))
 				.duration(150)
 				.totalScore(100)
 				.description("React의 핵심 개념과 실전 응용력을 평가합니다.")
@@ -1508,78 +1498,6 @@ public class InitDataLoader implements ApplicationRunner {
 		}
 
 		attendanceRepository.saveAll(attendances);
-	}
-
-	private void createAssignments(Course course, Instructor instructor, List<Student> students) {
-		// 과제 3개 생성
-		Assignment assignment1 = Assignment.createAssignment(
-				"Java Stream API 실습",
-				"Stream API를 활용하여 주어진 데이터를 처리하는 프로그램을 작성하세요.",
-				LocalDateTime.of(2024, 7, 15, 23, 59),
-				course,
-				instructor
-		);
-
-		Assignment assignment2 = Assignment.createAssignment(
-				"Spring Security 구현",
-				"JWT를 이용한 인증/인가 시스템을 구현하세요.",
-				LocalDateTime.of(2024, 8, 30, 23, 59),
-				course,
-				instructor
-		);
-
-		Assignment assignment3 = Assignment.createAssignment(
-				"React 컴포넌트 설계",
-				"주어진 요구사항에 맞는 재사용 가능한 컴포넌트를 설계하고 구현하세요.",
-				LocalDateTime.of(2024, 9, 30, 23, 59),
-				course,
-				instructor
-		);
-
-		List<Assignment> assignments = assignmentRepository.saveAll(List.of(assignment1, assignment2, assignment3));
-
-		List<Submission> allSubmissions = new ArrayList<>();
-		Random random = new Random();
-
-		for (Assignment assignment : assignments) {
-			for (Student student : students) {
-				int statusRandom = random.nextInt(100);
-				Submission submission;
-
-				if (statusRandom >= 90) {
-					// 10% 확률로 미제출 - description을 null로 설정하면 자동으로 NOT_SUBMITTED 상태가 됨
-					submission = Submission.createSubmission(
-							null,  // 내용 없음
-							assignment,
-							student
-					);
-				} else if (statusRandom < 70) {
-					// 70% 확률로 채점 완료
-					submission = Submission.createSubmission(
-							"과제 내용입니다. 열심히 작성했습니다.",
-							assignment,
-							student
-					);
-					String grade = random.nextInt(100) < 70 ? "PASS" : "NON-PASS";
-					String feedback = grade.equals("PASS")
-							? "잘 작성된 과제입니다. 요구사항을 모두 충족했습니다."
-							: "아쉽게도 핵심 요구사항이 일부 누락되었습니다. 다음 과제에서는 개선이 필요합니다.";
-					submission.updateGrade(grade, feedback);  // 자동으로 GRADED 상태로 변경됨
-				} else {
-					// 20% 확률로 제출만 완료 - 기본적으로 SUBMITTED 상태가 됨
-					submission = Submission.createSubmission(
-							"과제 내용입니다. 열심히 작성했습니다.",
-							assignment,
-							student
-					);
-				}
-
-				allSubmissions.add(submission);
-			}
-		}
-
-		submissionRepository.saveAll(allSubmissions);
-		log.info("Created {} submissions for {} assignments", allSubmissions.size(), assignments.size());
 	}
 
 }
