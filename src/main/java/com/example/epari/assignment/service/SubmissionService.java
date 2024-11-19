@@ -9,6 +9,7 @@ import com.example.epari.assignment.repository.AssignmentRepository;
 import com.example.epari.assignment.repository.SubmissionRepository;
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.repository.CourseRepository;
+import com.example.epari.global.common.enums.SubmissionGrade;
 import com.example.epari.global.common.service.S3FileService;
 import com.example.epari.user.domain.Student;
 import com.example.epari.user.repository.StudentRepository;
@@ -121,7 +122,7 @@ public class SubmissionService {
 	 * 과제 채점
 	 */
 	@Transactional
-	public SubmissionResponseDto gradeSubmission(Long submissionId, String grade, String feedback) {
+	public SubmissionResponseDto gradeSubmission(Long submissionId, SubmissionGrade grade, String feedback) {
 		Submission submission = submissionRepository.findById(submissionId)
 				.orElseThrow(() -> new IllegalArgumentException("제출된 과제를 찾을 수 없습니다."));
 

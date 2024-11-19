@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.epari.global.common.base.BaseTimeEntity;
+import com.example.epari.global.common.enums.SubmissionGrade;
 import com.example.epari.global.common.enums.SubmissionStatus;
 import com.example.epari.user.domain.Student;
 
@@ -42,8 +43,9 @@ public class Submission extends BaseTimeEntity {
 	private String description;
 
 	@Column
-	private String grade;
+	private SubmissionGrade grade;
 
+	@Column
 	private String feedback;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -66,7 +68,7 @@ public class Submission extends BaseTimeEntity {
 		this.description = description;
 		this.assignment = assignment;
 		this.student = student;
-		this.grade = "F";
+		this.grade = SubmissionGrade.UNDER_REVIEW;
 		this.status = SubmissionStatus.SUBMITTED;
 	}
 
@@ -83,7 +85,7 @@ public class Submission extends BaseTimeEntity {
 		this.description = description;
 	}
 
-	public void updateGrade(String grade, String feedback) {
+	public void updateGrade(SubmissionGrade grade, String feedback) {
 		this.grade = grade;
 		this.feedback = feedback;
 		this.status = SubmissionStatus.GRADED;
