@@ -35,6 +35,8 @@ public class AttendanceStatisticsService {
 
 	private final CourseAccessValidator courseAccessValidator;
 
+	private final AttendanceCalculationService attendanceCalculationService;
+
 	public List<AttendanceStatResponseDto> getStudentAttendanceStats(Long courseId, String instructorEmail) {
 		// 강사 권한 검증
 		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
@@ -99,12 +101,30 @@ public class AttendanceStatisticsService {
 	private AttendanceStatResponseDto createStudentStatistics(List<Attendance> attendances) {
 		Student student = attendances.get(0).getCourseStudent().getStudent();
 
+		// 각 상태별 출석 횟수를 한 번만 계산
+		int presentCount = (int)countByStatus(attendances, AttendanceStatus.PRESENT);
+		int lateCount = (int)countByStatus(attendances, AttendanceStatus.LATE);
+		int sickLeaveCount = (int)countByStatus(attendances, AttendanceStatus.SICK_LEAVE);
+		int absentCount = (int)countByStatus(attendances, AttendanceStatus.ABSENT);
+		int totalDays = attendances.size();
+
+		// 출석률 계산을 전용 서비스에 위임
+		double attendanceRate = attendanceCalculationService.calculateAttendanceRate(
+				presentCount,
+				lateCount,
+				sickLeaveCount,
+				absentCount,
+				totalDays
+		);
+
+		// 저장된 변수를 사용하여 AttendanceCounts 생성
 		AttendanceStatResponseDto.AttendanceCounts counts = AttendanceStatResponseDto.AttendanceCounts.builder()
-				.presentCount((int)countByStatus(attendances, AttendanceStatus.PRESENT))
-				.lateCount((int)countByStatus(attendances, AttendanceStatus.LATE))
-				.sickLeaveCount((int)countByStatus(attendances, AttendanceStatus.SICK_LEAVE))
-				.absentCount((int)countByStatus(attendances, AttendanceStatus.ABSENT))
-				.totalDays(attendances.size())
+				.presentCount(presentCount)
+				.lateCount(lateCount)
+				.sickLeaveCount(sickLeaveCount)
+				.absentCount(absentCount)
+				.totalDays(totalDays)
+				.attendanceRate(attendanceRate)
 				.build();
 
 		return AttendanceStatResponseDto.builder()
