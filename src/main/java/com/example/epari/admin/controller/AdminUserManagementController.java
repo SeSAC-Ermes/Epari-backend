@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.epari.admin.dto.ApprovalRequestDTO;
 import com.example.epari.admin.dto.CognitoUserDTO;
+import com.example.epari.admin.dto.RejectionRequestDTO;
 import com.example.epari.admin.service.AdminUserService;
 import com.example.epari.admin.service.CognitoService;
 import com.example.epari.global.event.NotificationEvent;
@@ -77,11 +78,19 @@ public class AdminUserManagementController {
 	 * 임시 그룹에 속한 사용자를 반려하는 엔드포인트
 	 */
 	@PostMapping("/{userEmail}/reject")
-	public ResponseEntity<Void> rejectUser(@PathVariable("userEmail") String email) {
+	public ResponseEntity<Void> rejectUser(
+			@PathVariable("userEmail") String email,
+			@RequestBody RejectionRequestDTO request
+	) {
 		// 1. Cognito에서 사용자 삭제
 		cognitoService.deleteUser(email);
 
-		// 2. TODO 이메일 발송
+		// 2. 이메일 발송
+		NotificationEvent event = NotificationEvent.of(email, NotificationType.USER_REJECTED)
+				.addProperty("name", request.getName())
+				.addProperty("reason", request.getReason());
+
+		eventPublisher.publishEvent(event);
 
 		return ResponseEntity.ok().build();
 	}
