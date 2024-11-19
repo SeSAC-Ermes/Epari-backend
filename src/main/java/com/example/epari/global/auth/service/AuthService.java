@@ -31,7 +31,7 @@ public class AuthService {
 
 	private final CognitoIdentityProviderClient cognitoClient;
 
-	@Value("${aws.cognito.userPoolId}")
+	@Value("${aws.cognito.userpool.id}")
 	private String userPoolId;
 
 	@Value("${aws.cognito.clientId}")
