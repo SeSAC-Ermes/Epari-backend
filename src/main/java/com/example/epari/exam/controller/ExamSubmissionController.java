@@ -78,13 +78,13 @@ public class ExamSubmissionController {
 	}
 
 	// 현재 진행 상태 조회
-	@GetMapping("/{examId}/status")
+	@GetMapping("/status")
 	@PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT')")
 	public ResponseEntity<ExamSubmissionStatusDto> getSubmissionStatus(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
 			@CurrentUserEmail String email) {
-		
+
 		ExamSubmissionStatusDto status = examSubmissionService.getSubmissionStatus(courseId, examId, email);
 		return ResponseEntity.ok(status);
 	}
