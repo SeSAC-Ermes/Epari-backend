@@ -1,5 +1,7 @@
 package com.example.epari.exam.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,19 +20,19 @@ import lombok.RequiredArgsConstructor;
  */
 
 @RestController
-@RequestMapping("/api/scores")
+@RequestMapping("/api/courses/{courseId}/scores")
 @RequiredArgsConstructor
 public class ExamResultController {
 
 	private final ExamResultService examResultService;
 
-	@GetMapping("/students/{studentId}")
-	@PreAuthorize("hasRole('INSTRUCTOR') or @courseSecurityChecker.checkStudentAccess(#studentId, #email)")
-	public ResponseEntity<ExamResultResponseDto> getStudentExamResults(
-			@PathVariable Long studentId,
+	@GetMapping
+	@PreAuthorize("hasRole('INSTRUCTOR')")
+	public ResponseEntity<List<ExamResultResponseDto>> getCourseExamResults(
+			@PathVariable Long courseId,
 			@CurrentUserEmail String email) {
 
-		ExamResultResponseDto response = examResultService.getStudentExamResults(studentId, email);
+		List<ExamResultResponseDto> response = examResultService.getCourseExamResults(courseId, email);
 		return ResponseEntity.ok(response);
 	}
 
