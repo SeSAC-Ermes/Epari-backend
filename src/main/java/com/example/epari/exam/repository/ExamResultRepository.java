@@ -16,11 +16,12 @@ public interface ExamResultRepository extends JpaRepository<ExamResult, Long> {
 
 	// 특정 학생의 모든 시험 결과 조회 (시험 정보와 점수 포함)
 	@Query("""
-			SELECT DISTINCT er FROM ExamResult er
-			JOIN FETCH er.exam e
-			WHERE er.student.id = :studentId
-			ORDER BY e.examDateTime DESC
+			 SELECT DISTINCT er FROM ExamResult er
+			 JOIN FETCH er.exam e
+			 JOIN FETCH er.student s
+			 WHERE e.course.id = :courseId
+			 ORDER BY s.name ASC, e.examDateTime DESC
 			""")
-	List<ExamResult> findAllByStudentId(@Param("studentId") Long studentId);
+	List<ExamResult> findAllByCourseId(@Param("courseId") Long courseId);
 
 }
