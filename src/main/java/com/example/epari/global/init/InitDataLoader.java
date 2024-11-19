@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -17,6 +16,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.epari.assignment.domain.Assignment;
+import com.example.epari.assignment.domain.Submission;
+import com.example.epari.assignment.repository.AssignmentRepository;
+import com.example.epari.assignment.repository.SubmissionRepository;
 import com.example.epari.course.domain.Attendance;
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.domain.CourseStudent;
@@ -68,6 +71,10 @@ public class InitDataLoader implements ApplicationRunner {
 
 	private final ExamResultRepository examResultRepository;
 
+	private final AssignmentRepository assignmentRepository;
+
+	private final SubmissionRepository submissionRepository;
+
 	@Transactional
 	@Override
 	public void run(ApplicationArguments args) {
@@ -92,15 +99,17 @@ public class InitDataLoader implements ApplicationRunner {
 		List<CourseStudent> courseStudents2 = createCourseStudents(courses.get(1),
 				students.subList(0, students.size() / 2));
 
-		// 8. 출석 데이터 생성 (첫 번째 강의에 대해서만)
+		// 6. 출석 데이터 생성 (첫 번째 강의에 대해서만)
 		createAttendances(courseStudents1);
 
-		// 6. 시험 데이터 생성 (시험과 문제 생성)
+		// 7. 시험 데이터 생성 (시험과 문제 생성)
 		createExams(courses);
 
-		// 7. 시험 결과 데이터 생성 (모든 학생이 모든 시험을 봄)
+		// 8. 시험 결과 데이터 생성 (모든 학생이 모든 시험을 봄)
 		createExamResults(courses, students);
 
+		// 9. 과제 데이터 생성
+		createAssignments(courses.get(0), instructors.get(0), students);
 	}
 
 	// 강사 추가를 위해 list로 반환
@@ -489,10 +498,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("3")
 				.build();
 		addChoicesToQuestion(q1, List.of(
-				new String[]{"1", "int"},
-				new String[]{"2", "boolean"},
-				new String[]{"3", "String"},
-				new String[]{"4", "char"}
+				new String[] {"1", "int"},
+				new String[] {"2", "boolean"},
+				new String[] {"3", "String"},
+				new String[] {"4", "char"}
 		));
 
 		MultipleChoiceQuestion q2 = MultipleChoiceQuestion.builder()
@@ -503,10 +512,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("4")
 				.build();
 		addChoicesToQuestion(q2, List.of(
-				new String[]{"1", "캡슐화"},
-				new String[]{"2", "상속성"},
-				new String[]{"3", "다형성"},
-				new String[]{"4", "순차성"}
+				new String[] {"1", "캡슐화"},
+				new String[] {"2", "상속성"},
+				new String[] {"3", "다형성"},
+				new String[] {"4", "순차성"}
 		));
 
 		MultipleChoiceQuestion q3 = MultipleChoiceQuestion.builder()
@@ -517,10 +526,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("2")
 				.build();
 		addChoicesToQuestion(q3, List.of(
-				new String[]{"1", "size"},
-				new String[]{"2", "length"},
-				new String[]{"3", "count"},
-				new String[]{"4", "index"}
+				new String[] {"1", "size"},
+				new String[] {"2", "length"},
+				new String[] {"3", "count"},
+				new String[] {"4", "index"}
 		));
 
 		MultipleChoiceQuestion q4 = MultipleChoiceQuestion.builder()
@@ -531,10 +540,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("1")
 				.build();
 		addChoicesToQuestion(q4, List.of(
-				new String[]{"1", "public"},
-				new String[]{"2", "protected"},
-				new String[]{"3", "default"},
-				new String[]{"4", "private"}
+				new String[] {"1", "public"},
+				new String[] {"2", "protected"},
+				new String[] {"3", "default"},
+				new String[] {"4", "private"}
 		));
 
 		MultipleChoiceQuestion q5 = MultipleChoiceQuestion.builder()
@@ -545,10 +554,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("3")
 				.build();
 		addChoicesToQuestion(q5, List.of(
-				new String[]{"1", "constant"},
-				new String[]{"2", "static"},
-				new String[]{"3", "final"},
-				new String[]{"4", "const"}
+				new String[] {"1", "constant"},
+				new String[] {"2", "static"},
+				new String[] {"3", "final"},
+				new String[] {"4", "const"}
 		));
 
 		MultipleChoiceQuestion q6 = MultipleChoiceQuestion.builder()
@@ -559,10 +568,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("4")
 				.build();
 		addChoicesToQuestion(q6, List.of(
-				new String[]{"1", "추상 메소드를 포함할 수 있다"},
-				new String[]{"2", "상속받은 클래스에서 구현해야 한다"},
-				new String[]{"3", "abstract 키워드를 사용한다"},
-				new String[]{"4", "다중 상속이 가능하다"}
+				new String[] {"1", "추상 메소드를 포함할 수 있다"},
+				new String[] {"2", "상속받은 클래스에서 구현해야 한다"},
+				new String[] {"3", "abstract 키워드를 사용한다"},
+				new String[] {"4", "다중 상속이 가능하다"}
 		));
 
 		MultipleChoiceQuestion q7 = MultipleChoiceQuestion.builder()
@@ -573,10 +582,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("2")
 				.build();
 		addChoicesToQuestion(q7, List.of(
-				new String[]{"1", "Set"},
-				new String[]{"2", "List"},
-				new String[]{"3", "Map"},
-				new String[]{"4", "Queue"}
+				new String[] {"1", "Set"},
+				new String[] {"2", "List"},
+				new String[] {"3", "Map"},
+				new String[] {"4", "Queue"}
 		));
 
 		MultipleChoiceQuestion q8 = MultipleChoiceQuestion.builder()
@@ -587,10 +596,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("4")
 				.build();
 		addChoicesToQuestion(q8, List.of(
-				new String[]{"1", "try"},
-				new String[]{"2", "catch"},
-				new String[]{"3", "finally"},
-				new String[]{"4", "finish"}
+				new String[] {"1", "try"},
+				new String[] {"2", "catch"},
+				new String[] {"3", "finally"},
+				new String[] {"4", "finish"}
 		));
 
 		MultipleChoiceQuestion q9 = MultipleChoiceQuestion.builder()
@@ -601,10 +610,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("3")
 				.build();
 		addChoicesToQuestion(q9, List.of(
-				new String[]{"1", "Lambda Expression"},
-				new String[]{"2", "Stream API"},
-				new String[]{"3", "Generics"},
-				new String[]{"4", "Optional"}
+				new String[] {"1", "Lambda Expression"},
+				new String[] {"2", "Stream API"},
+				new String[] {"3", "Generics"},
+				new String[] {"4", "Optional"}
 		));
 
 		MultipleChoiceQuestion q10 = MultipleChoiceQuestion.builder()
@@ -615,10 +624,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("4")
 				.build();
 		addChoicesToQuestion(q10, List.of(
-				new String[]{"1", "NEW"},
-				new String[]{"2", "RUNNABLE"},
-				new String[]{"3", "WAITING"},
-				new String[]{"4", "DESTROY"}
+				new String[] {"1", "NEW"},
+				new String[] {"2", "RUNNABLE"},
+				new String[] {"3", "WAITING"},
+				new String[] {"4", "DESTROY"}
 		));
 
 		// 주관식 문제 5개 (각 8점 = 40점)
@@ -947,10 +956,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("4")
 				.build();
 		addChoicesToQuestion(q1, List.of(
-				new String[]{"1", "var"},
-				new String[]{"2", "let"},
-				new String[]{"3", "const"},
-				new String[]{"4", "variable"}
+				new String[] {"1", "var"},
+				new String[] {"2", "let"},
+				new String[] {"3", "const"},
+				new String[] {"4", "variable"}
 		));
 
 		MultipleChoiceQuestion q2 = MultipleChoiceQuestion.builder()
@@ -961,10 +970,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("3")
 				.build();
 		addChoicesToQuestion(q2, List.of(
-				new String[]{"1", "number"},
-				new String[]{"2", "string"},
-				new String[]{"3", "array"},
-				new String[]{"4", "boolean"}
+				new String[] {"1", "number"},
+				new String[] {"2", "string"},
+				new String[] {"3", "array"},
+				new String[] {"4", "boolean"}
 		));
 
 		MultipleChoiceQuestion q3 = MultipleChoiceQuestion.builder()
@@ -975,10 +984,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("2")
 				.build();
 		addChoicesToQuestion(q3, List.of(
-				new String[]{"1", "Callback"},
-				new String[]{"2", "Promise"},
-				new String[]{"3", "Async"},
-				new String[]{"4", "Wait"}
+				new String[] {"1", "Callback"},
+				new String[] {"2", "Promise"},
+				new String[] {"3", "Async"},
+				new String[] {"4", "Wait"}
 		));
 
 		MultipleChoiceQuestion q4 = MultipleChoiceQuestion.builder()
@@ -989,10 +998,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("4")
 				.build();
 		addChoicesToQuestion(q4, List.of(
-				new String[]{"1", "let/const"},
-				new String[]{"2", "Arrow Function"},
-				new String[]{"3", "Template Literals"},
-				new String[]{"4", "typeof"}
+				new String[] {"1", "let/const"},
+				new String[] {"2", "Arrow Function"},
+				new String[] {"3", "Template Literals"},
+				new String[] {"4", "typeof"}
 		));
 
 		MultipleChoiceQuestion q5 = MultipleChoiceQuestion.builder()
@@ -1003,10 +1012,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("3")
 				.build();
 		addChoicesToQuestion(q5, List.of(
-				new String[]{"1", "getElementById"},
-				new String[]{"2", "querySelector"},
-				new String[]{"3", "selectElement"},
-				new String[]{"4", "getElementsByClassName"}
+				new String[] {"1", "getElementById"},
+				new String[] {"2", "querySelector"},
+				new String[] {"3", "selectElement"},
+				new String[] {"4", "getElementsByClassName"}
 		));
 
 		MultipleChoiceQuestion q6 = MultipleChoiceQuestion.builder()
@@ -1017,10 +1026,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("2")
 				.build();
 		addChoicesToQuestion(q6, List.of(
-				new String[]{"1", "preventDefault()"},
-				new String[]{"2", "stopPropagation()"},
-				new String[]{"3", "stopBubbling()"},
-				new String[]{"4", "cancelBubble()"}
+				new String[] {"1", "preventDefault()"},
+				new String[] {"2", "stopPropagation()"},
+				new String[] {"3", "stopBubbling()"},
+				new String[] {"4", "cancelBubble()"}
 		));
 
 		MultipleChoiceQuestion q7 = MultipleChoiceQuestion.builder()
@@ -1031,10 +1040,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("4")
 				.build();
 		addChoicesToQuestion(q7, List.of(
-				new String[]{"1", "map"},
-				new String[]{"2", "forEach"},
-				new String[]{"3", "filter"},
-				new String[]{"4", "loop"}
+				new String[] {"1", "map"},
+				new String[] {"2", "forEach"},
+				new String[] {"3", "filter"},
+				new String[] {"4", "loop"}
 		));
 
 		MultipleChoiceQuestion q8 = MultipleChoiceQuestion.builder()
@@ -1045,10 +1054,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("1")
 				.build();
 		addChoicesToQuestion(q8, List.of(
-				new String[]{"1", "obj[key]"},
-				new String[]{"2", "obj->key"},
-				new String[]{"3", "obj::key"},
-				new String[]{"4", "obj@key"}
+				new String[] {"1", "obj[key]"},
+				new String[] {"2", "obj->key"},
+				new String[] {"3", "obj::key"},
+				new String[] {"4", "obj@key"}
 		));
 
 		MultipleChoiceQuestion q9 = MultipleChoiceQuestion.builder()
@@ -1059,10 +1068,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("3")
 				.build();
 		addChoicesToQuestion(q9, List.of(
-				new String[]{"1", "Global scope"},
-				new String[]{"2", "Function scope"},
-				new String[]{"3", "Package scope"},
-				new String[]{"4", "Block scope"}
+				new String[] {"1", "Global scope"},
+				new String[] {"2", "Function scope"},
+				new String[] {"3", "Package scope"},
+				new String[] {"4", "Block scope"}
 		));
 
 		MultipleChoiceQuestion q10 = MultipleChoiceQuestion.builder()
@@ -1073,10 +1082,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("2")
 				.build();
 		addChoicesToQuestion(q10, List.of(
-				new String[]{"1", "require"},
-				new String[]{"2", "import"},
-				new String[]{"3", "include"},
-				new String[]{"4", "using"}
+				new String[] {"1", "require"},
+				new String[] {"2", "import"},
+				new String[] {"3", "include"},
+				new String[] {"4", "using"}
 		));
 
 		// 주관식 문제 5개 (각 8점 = 40점)
@@ -1134,10 +1143,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("1")
 				.build();
 		addChoicesToQuestion(q1, List.of(
-				new String[]{"1", "useState"},
-				new String[]{"2", "useStatus"},
-				new String[]{"3", "useState()"},
-				new String[]{"4", "setState"}
+				new String[] {"1", "useState"},
+				new String[] {"2", "useStatus"},
+				new String[] {"3", "useState()"},
+				new String[] {"4", "setState"}
 		));
 
 		MultipleChoiceQuestion q2 = MultipleChoiceQuestion.builder()
@@ -1148,10 +1157,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("2")
 				.build();
 		addChoicesToQuestion(q2, List.of(
-				new String[]{"1", "useLife"},
-				new String[]{"2", "useEffect"},
-				new String[]{"3", "useCycle"},
-				new String[]{"4", "useLifecycle"}
+				new String[] {"1", "useLife"},
+				new String[] {"2", "useEffect"},
+				new String[] {"3", "useCycle"},
+				new String[] {"4", "useLifecycle"}
 		));
 
 		MultipleChoiceQuestion q3 = MultipleChoiceQuestion.builder()
@@ -1162,10 +1171,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("4")
 				.build();
 		addChoicesToQuestion(q3, List.of(
-				new String[]{"1", "Props"},
-				new String[]{"2", "Context"},
-				new String[]{"3", "Redux"},
-				new String[]{"4", "Direct Binding"}
+				new String[] {"1", "Props"},
+				new String[] {"2", "Context"},
+				new String[] {"3", "Redux"},
+				new String[] {"4", "Direct Binding"}
 		));
 
 		MultipleChoiceQuestion q4 = MultipleChoiceQuestion.builder()
@@ -1176,10 +1185,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("3")
 				.build();
 		addChoicesToQuestion(q4, List.of(
-				new String[]{"1", "재사용성"},
-				new String[]{"2", "단방향 데이터 흐름"},
-				new String[]{"3", "양방향 바인딩"},
-				new String[]{"4", "선언적 UI"}
+				new String[] {"1", "재사용성"},
+				new String[] {"2", "단방향 데이터 흐름"},
+				new String[] {"3", "양방향 바인딩"},
+				new String[] {"4", "선언적 UI"}
 		));
 
 		MultipleChoiceQuestion q5 = MultipleChoiceQuestion.builder()
@@ -1190,10 +1199,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("4")
 				.build();
 		addChoicesToQuestion(q5, List.of(
-				new String[]{"1", "&&"},
-				new String[]{"2", "?:"},
-				new String[]{"3", "||"},
-				new String[]{"4", "??"}
+				new String[] {"1", "&&"},
+				new String[] {"2", "?:"},
+				new String[] {"3", "||"},
+				new String[] {"4", "??"}
 		));
 
 		MultipleChoiceQuestion q6 = MultipleChoiceQuestion.builder()
@@ -1204,10 +1213,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("1")
 				.build();
 		addChoicesToQuestion(q6, List.of(
-				new String[]{"1", ":parameter"},
-				new String[]{"2", "*parameter"},
-				new String[]{"3", "@parameter"},
-				new String[]{"4", "#parameter"}
+				new String[] {"1", ":parameter"},
+				new String[] {"2", "*parameter"},
+				new String[] {"3", "@parameter"},
+				new String[] {"4", "#parameter"}
 		));
 
 		MultipleChoiceQuestion q7 = MultipleChoiceQuestion.builder()
@@ -1218,10 +1227,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("4")
 				.build();
 		addChoicesToQuestion(q7, List.of(
-				new String[]{"1", "map"},
-				new String[]{"2", "filter"},
-				new String[]{"3", "concat"},
-				new String[]{"4", "push"}
+				new String[] {"1", "map"},
+				new String[] {"2", "filter"},
+				new String[] {"3", "concat"},
+				new String[] {"4", "push"}
 		));
 
 		MultipleChoiceQuestion q8 = MultipleChoiceQuestion.builder()
@@ -1232,10 +1241,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("2")
 				.build();
 		addChoicesToQuestion(q8, List.of(
-				new String[]{"1", "usePerformance"},
-				new String[]{"2", "useMemo"},
-				new String[]{"3", "useOptimize"},
-				new String[]{"4", "useSpeed"}
+				new String[] {"1", "usePerformance"},
+				new String[] {"2", "useMemo"},
+				new String[] {"3", "useOptimize"},
+				new String[] {"4", "useSpeed"}
 		));
 
 		MultipleChoiceQuestion q9 = MultipleChoiceQuestion.builder()
@@ -1246,10 +1255,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("1")
 				.build();
 		addChoicesToQuestion(q9, List.of(
-				new String[]{"1", "useRef"},
-				new String[]{"2", "useReference"},
-				new String[]{"3", "createRef"},
-				new String[]{"4", "makeRef"}
+				new String[] {"1", "useRef"},
+				new String[] {"2", "useReference"},
+				new String[] {"3", "createRef"},
+				new String[] {"4", "makeRef"}
 		));
 
 		MultipleChoiceQuestion q10 = MultipleChoiceQuestion.builder()
@@ -1260,10 +1269,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("3")
 				.build();
 		addChoicesToQuestion(q10, List.of(
-				new String[]{"1", "메모리에 존재"},
-				new String[]{"2", "실제 DOM과 비교"},
-				new String[]{"3", "직접 조작 가능"},
-				new String[]{"4", "성능 최적화"}
+				new String[] {"1", "메모리에 존재"},
+				new String[] {"2", "실제 DOM과 비교"},
+				new String[] {"3", "직접 조작 가능"},
+				new String[] {"4", "성능 최적화"}
 		));
 
 		MultipleChoiceQuestion q11 = MultipleChoiceQuestion.builder()
@@ -1274,10 +1283,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("4")
 				.build();
 		addChoicesToQuestion(q11, List.of(
-				new String[]{"1", "React.memo"},
-				new String[]{"2", "useMemo"},
-				new String[]{"3", "useCallback"},
-				new String[]{"4", "useOptimize"}
+				new String[] {"1", "React.memo"},
+				new String[] {"2", "useMemo"},
+				new String[] {"3", "useCallback"},
+				new String[] {"4", "useOptimize"}
 		));
 
 		MultipleChoiceQuestion q12 = MultipleChoiceQuestion.builder()
@@ -1288,10 +1297,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("1")
 				.build();
 		addChoicesToQuestion(q12, List.of(
-				new String[]{"1", "useEffect"},
-				new String[]{"2", "useAsync"},
-				new String[]{"3", "usePromise"},
-				new String[]{"4", "useData"}
+				new String[] {"1", "useEffect"},
+				new String[] {"2", "useAsync"},
+				new String[] {"3", "usePromise"},
+				new String[] {"4", "useData"}
 		));
 
 		MultipleChoiceQuestion q13 = MultipleChoiceQuestion.builder()
@@ -1302,10 +1311,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("3")
 				.build();
 		addChoicesToQuestion(q13, List.of(
-				new String[]{"1", "제어 컴포넌트"},
-				new String[]{"2", "비제어 컴포넌트"},
-				new String[]{"3", "자동 제어 컴포넌트"},
-				new String[]{"4", "ref 사용"}
+				new String[] {"1", "제어 컴포넌트"},
+				new String[] {"2", "비제어 컴포넌트"},
+				new String[] {"3", "자동 제어 컴포넌트"},
+				new String[] {"4", "ref 사용"}
 		));
 
 		MultipleChoiceQuestion q14 = MultipleChoiceQuestion.builder()
@@ -1316,10 +1325,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("2")
 				.build();
 		addChoicesToQuestion(q14, List.of(
-				new String[]{"1", "useContextProvider"},
-				new String[]{"2", "useContext"},
-				new String[]{"3", "useProvider"},
-				new String[]{"4", "useGlobal"}
+				new String[] {"1", "useContextProvider"},
+				new String[] {"2", "useContext"},
+				new String[] {"3", "useProvider"},
+				new String[] {"4", "useGlobal"}
 		));
 
 		MultipleChoiceQuestion q15 = MultipleChoiceQuestion.builder()
@@ -1330,10 +1339,10 @@ public class InitDataLoader implements ApplicationRunner {
 				.correctAnswer("1")
 				.build();
 		addChoicesToQuestion(q15, List.of(
-				new String[]{"1", "PropTypes"},
-				new String[]{"2", "TypeChecker"},
-				new String[]{"3", "PropsValidator"},
-				new String[]{"4", "ReactTypes"}
+				new String[] {"1", "PropTypes"},
+				new String[] {"2", "TypeChecker"},
+				new String[] {"3", "PropsValidator"},
+				new String[] {"4", "ReactTypes"}
 		));
 
 		// 주관식 문제 5개 (각 8점 = 40점)
@@ -1499,6 +1508,78 @@ public class InitDataLoader implements ApplicationRunner {
 		}
 
 		attendanceRepository.saveAll(attendances);
+	}
+
+	private void createAssignments(Course course, Instructor instructor, List<Student> students) {
+		// 과제 3개 생성
+		Assignment assignment1 = Assignment.createAssignment(
+				"Java Stream API 실습",
+				"Stream API를 활용하여 주어진 데이터를 처리하는 프로그램을 작성하세요.",
+				LocalDateTime.of(2024, 7, 15, 23, 59),
+				course,
+				instructor
+		);
+
+		Assignment assignment2 = Assignment.createAssignment(
+				"Spring Security 구현",
+				"JWT를 이용한 인증/인가 시스템을 구현하세요.",
+				LocalDateTime.of(2024, 8, 30, 23, 59),
+				course,
+				instructor
+		);
+
+		Assignment assignment3 = Assignment.createAssignment(
+				"React 컴포넌트 설계",
+				"주어진 요구사항에 맞는 재사용 가능한 컴포넌트를 설계하고 구현하세요.",
+				LocalDateTime.of(2024, 9, 30, 23, 59),
+				course,
+				instructor
+		);
+
+		List<Assignment> assignments = assignmentRepository.saveAll(List.of(assignment1, assignment2, assignment3));
+
+		List<Submission> allSubmissions = new ArrayList<>();
+		Random random = new Random();
+
+		for (Assignment assignment : assignments) {
+			for (Student student : students) {
+				int statusRandom = random.nextInt(100);
+				Submission submission;
+
+				if (statusRandom >= 90) {
+					// 10% 확률로 미제출 - description을 null로 설정하면 자동으로 NOT_SUBMITTED 상태가 됨
+					submission = Submission.createSubmission(
+							null,  // 내용 없음
+							assignment,
+							student
+					);
+				} else if (statusRandom < 70) {
+					// 70% 확률로 채점 완료
+					submission = Submission.createSubmission(
+							"과제 내용입니다. 열심히 작성했습니다.",
+							assignment,
+							student
+					);
+					String grade = random.nextInt(100) < 70 ? "PASS" : "NON-PASS";
+					String feedback = grade.equals("PASS")
+							? "잘 작성된 과제입니다. 요구사항을 모두 충족했습니다."
+							: "아쉽게도 핵심 요구사항이 일부 누락되었습니다. 다음 과제에서는 개선이 필요합니다.";
+					submission.updateGrade(grade, feedback);  // 자동으로 GRADED 상태로 변경됨
+				} else {
+					// 20% 확률로 제출만 완료 - 기본적으로 SUBMITTED 상태가 됨
+					submission = Submission.createSubmission(
+							"과제 내용입니다. 열심히 작성했습니다.",
+							assignment,
+							student
+					);
+				}
+
+				allSubmissions.add(submission);
+			}
+		}
+
+		submissionRepository.saveAll(allSubmissions);
+		log.info("Created {} submissions for {} assignments", allSubmissions.size(), assignments.size());
 	}
 
 }
