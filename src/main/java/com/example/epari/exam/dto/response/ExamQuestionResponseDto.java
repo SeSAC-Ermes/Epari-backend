@@ -27,35 +27,55 @@ public class ExamQuestionResponseDto {
 
 	private String correctAnswer;
 
-	private List<ChoiceResponseDto> choices;  // 객관식인 경우에만 사용
+	private List<ChoiceResponseDto> choices;
 
-	public static ExamQuestionResponseDto from(ExamQuestion question) {
+	private QuestionImageResponseDto image;
+
+	// 강사용 (정답 포함)
+	public static ExamQuestionResponseDto fromQuestionWithAnswer(ExamQuestion question) {
 		if (question instanceof MultipleChoiceQuestion) {
-			MultipleChoiceQuestion mcq = (MultipleChoiceQuestion)question;
-			return ExamQuestionResponseDto.builder()
-					.id(mcq.getId())
-					.questionText(mcq.getQuestionText())
-					.examNumber(mcq.getExamNumber())
-					.score(mcq.getScore())
-					.type(ExamQuestionType.MULTIPLE_CHOICE)
-					.correctAnswer(mcq.getCorrectAnswer())
-					.choices(mcq.getChoices().stream()
-							.map(ChoiceResponseDto::from)
-							.collect(Collectors.toList()))
-					.build();
-		} else if (question instanceof SubjectiveQuestion) {
-			SubjectiveQuestion sq = (SubjectiveQuestion)question;
-			return ExamQuestionResponseDto.builder()
-					.id(sq.getId())
-					.questionText(sq.getQuestionText())
-					.examNumber(sq.getExamNumber())
-					.score(sq.getScore())
-					.type(ExamQuestionType.SUBJECTIVE)
-					.correctAnswer(sq.getCorrectAnswer())
-					.build();
+			return fromMultipleChoiceQuestion((MultipleChoiceQuestion)question, true);
 		}
+		return fromSubjectiveQuestion((SubjectiveQuestion)question, true);
+	}
 
-		throw new IllegalArgumentException("지원하지 않는 문제 유형입니다");
+	// 학생용 (정답 제외)
+	public static ExamQuestionResponseDto fromQuestionWithoutAnswer(ExamQuestion question) {
+		if (question instanceof MultipleChoiceQuestion) {
+			return fromMultipleChoiceQuestion((MultipleChoiceQuestion)question, false);
+		}
+		return fromSubjectiveQuestion((SubjectiveQuestion)question, false);
+	}
+
+	private static ExamQuestionResponseDto fromMultipleChoiceQuestion(
+			MultipleChoiceQuestion question, boolean includeAnswer) {
+		return ExamQuestionResponseDto.builder()
+				.id(question.getId())
+				.questionText(question.getQuestionText())
+				.examNumber(question.getExamNumber())
+				.score(question.getScore())
+				.type(ExamQuestionType.MULTIPLE_CHOICE)
+				.correctAnswer(includeAnswer ? question.getCorrectAnswer() : null)
+				.choices(question.getChoices().stream()
+						.map(ChoiceResponseDto::from)
+						.collect(Collectors.toList()))
+				.image(question.getImage() != null ?
+						QuestionImageResponseDto.from(question.getImage()) : null)
+				.build();
+	}
+
+	private static ExamQuestionResponseDto fromSubjectiveQuestion(
+			SubjectiveQuestion question, boolean includeAnswer) {
+		return ExamQuestionResponseDto.builder()
+				.id(question.getId())
+				.questionText(question.getQuestionText())
+				.examNumber(question.getExamNumber())
+				.score(question.getScore())
+				.type(ExamQuestionType.SUBJECTIVE)
+				.correctAnswer(includeAnswer ? question.getCorrectAnswer() : null)
+				.image(question.getImage() != null ?
+						QuestionImageResponseDto.from(question.getImage()) : null)
+				.build();
 	}
 
 }
