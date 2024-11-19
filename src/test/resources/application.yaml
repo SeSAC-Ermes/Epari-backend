@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: Epari-backend
+  profiles:
+    active: test
+
+logging:
+  level:
+    org:
+      hibernate:
+        orm:
+          jdbc:
+            bind: trace
+      springframework:
+        test: DEBUG
