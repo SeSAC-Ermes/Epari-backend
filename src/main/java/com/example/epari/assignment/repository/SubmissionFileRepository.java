@@ -1,10 +1,11 @@
 package com.example.epari.assignment.repository;
 
-import com.example.epari.assignment.domain.AssignmentFile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import com.example.epari.assignment.domain.SubmissionFile;
+
 @Repository
-public interface AssignmentFileRepository extends JpaRepository<AssignmentFile, Long> {
+public interface SubmissionFileRepository extends JpaRepository<SubmissionFile, Long> {
 
 }
