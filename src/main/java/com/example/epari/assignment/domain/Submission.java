@@ -61,10 +61,10 @@ public class Submission extends BaseTimeEntity {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private SubmissionStatus status = SubmissionStatus.SUBMITTED;
+	private SubmissionStatus status = SubmissionStatus.NOT_SUBMITTED;
 
 	@Builder
-	private Submission(String description, Assignment assignment, Student student) {
+	private Submission(String description, Assignment assignment, Student student, SubmissionGrade grade) {
 		this.description = description;
 		this.assignment = assignment;
 		this.student = student;
@@ -74,11 +74,17 @@ public class Submission extends BaseTimeEntity {
 
 	public static Submission createSubmission(String description,
 			Assignment assignment, Student student) {
-		return Submission.builder()
+		Submission submission = Submission.builder()
 				.description(description)
 				.assignment(assignment)
 				.student(student)
 				.build();
+		submission.submit();
+		return submission;
+	}
+
+	public void submit() {
+		this.status = SubmissionStatus.SUBMITTED;
 	}
 
 	public void updateSubmission(String description) {
