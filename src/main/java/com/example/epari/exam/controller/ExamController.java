@@ -51,7 +51,7 @@ public class ExamController {
 		return ResponseEntity.ok(exams);
 	}
 
-	// 시험 조회
+	// 시험 설정 정보 조회
 	@GetMapping("/{examId}")
 	@PreAuthorize("hasAnyRole('INSTRUCTOR', 'STUDENT')")
 	public ResponseEntity<ExamResponseDto> getExam(
