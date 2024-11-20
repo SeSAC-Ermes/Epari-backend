@@ -19,7 +19,6 @@ import lombok.NoArgsConstructor;
 /**
  * 개별 문제에 대한 학생의 답안과 채점 결과를 관리하는 엔티티
  */
-
 @Entity
 @Table(name = "exam_scores")
 @Getter
@@ -47,8 +46,6 @@ public class ExamScore extends BaseTimeEntity {
 	@Column(nullable = false)
 	private boolean temporary;
 
-	private String feedback;
-
 	@Builder
 	public ExamScore(ExamResult examResult, ExamQuestion question, String studentAnswer, boolean temporary) {
 		this.examResult = examResult;
@@ -62,21 +59,32 @@ public class ExamScore extends BaseTimeEntity {
 		this.examResult = examResult;
 	}
 
-	public void updateScore(int earnedScore, String feedback) {
-		this.earnedScore = earnedScore;
-		this.feedback = feedback;
-	}
-
+	/**
+	 * 답안 업데이트
+	 */
 	public void updateAnswer(String answer) {
 		this.studentAnswer = answer;
 	}
 
+	/**
+	 * 임시저장 상태 해제 (최종 제출)
+	 */
 	public void markAsSubmitted() {
 		this.temporary = false;
 	}
 
+	/**
+	 * 채점 결과 업데이트
+	 */
 	public void updateScore(int score) {
 		this.earnedScore = score;
+	}
+
+	/**
+	 * 정답 여부 확인
+	 */
+	public boolean isCorrect() {
+		return earnedScore > 0;
 	}
 
 }
