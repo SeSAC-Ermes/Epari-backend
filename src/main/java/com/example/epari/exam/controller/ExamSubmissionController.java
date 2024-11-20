@@ -101,7 +101,7 @@ public class ExamSubmissionController {
 		return ResponseEntity.ok(result);
 	}
 
-	//
+	// 시험 결과
 	@GetMapping("/results")
 	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #email)")
 	public ResponseEntity<List<ExamResultSummaryDto>> getExamResults(
