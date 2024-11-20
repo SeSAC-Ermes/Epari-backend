@@ -17,7 +17,7 @@ public class ThymeleafConfig {
 		SpringTemplateEngine templateEngine = new SpringTemplateEngine();
 
 		templateEngine.setTemplateResolver(emailTemplateResolver());
-		
+
 		return templateEngine;
 	}
 

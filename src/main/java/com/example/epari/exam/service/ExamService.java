@@ -88,8 +88,8 @@ public class ExamService {
 	// 시험 목록 조회
 	public ExamListResponseDto getExams(Long courseId, ExamStatus status, String email, String role) {
 		Course course = courseRepository.findById(courseId)
-            .orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
-		
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
+
 		List<Exam> exams;
 
 		// 권한에 따른 시험 목록 조회
