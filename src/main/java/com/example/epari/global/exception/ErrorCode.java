@@ -49,7 +49,7 @@ public enum ErrorCode {
 	PENDING_APPROVAL(HttpStatus.BAD_REQUEST, "AUTH-020", "가입 승인 대기중입니다."),
 
 	// Student 관련 에러 코드(ST
-    STUDENT_NOT_FOUND(HttpStatus.NOT_FOUND, "STD-001", "학생 정보를 찾을 수 없습니다."),
+	STUDENT_NOT_FOUND(HttpStatus.NOT_FOUND, "STD-001", "학생 정보를 찾을 수 없습니다."),
 
 	// Course 관련 에러 코드 (CRS)
 	COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS-001", "강의를 찾을 수 없습니다."),
@@ -59,9 +59,9 @@ public enum ErrorCode {
 	ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASM-001", "과제를 찾을 수 없습니다."),
 	SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "ASM-002", "과제 제출물을 찾을 수 없습니다."),
 
-    // Question 관련 에러 코드(EXAM)
-    QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "QST-001", "문제를 찾을 수 없습니다."),
-    QUESTION_HAS_SUBMISSIONS(HttpStatus.BAD_REQUEST, "QST-002", "답안이 제출된 문제는 삭제할 수 없습니다."),
+	// Question 관련 에러 코드(EXAM)
+	QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "QST-001", "문제를 찾을 수 없습니다."),
+	QUESTION_HAS_SUBMISSIONS(HttpStatus.BAD_REQUEST, "QST-002", "답안이 제출된 문제는 삭제할 수 없습니다."),
 
 	// Exam 관련 에러 코드 (EXAM)
 	EXAM_NOT_FOUND(HttpStatus.NOT_FOUND, "EXAM-001", "시험을 찾을 수 없습니다."),
@@ -93,7 +93,14 @@ public enum ErrorCode {
 
 	// 알림 관련 에러 코드 (NTF)
 	NOTIFICATION_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "NTF-001", "알림 발송에 실패했습니다."),
-	SES_SERVICE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "NTF-002", "이메일 서비스 연동 중 오류가 발생했습니다.");
+	SES_SERVICE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "NTF-002", "이메일 서비스 연동 중 오류가 발생했습니다."),
+
+	// 채점 관련 에러 코드 (GRD)
+	EXAM_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "GRD-001", "제출되지 않은 시험은 채점할 수 없습니다."),
+    EXAM_ALREADY_GRADED(HttpStatus.BAD_REQUEST, "GRD-002", "이미 채점이 완료된 시험입니다."),
+    GRADING_IN_PROGRESS(HttpStatus.BAD_REQUEST, "GRD-003", "채점이 진행 중인 시험입니다."),
+    INVALID_SCORE_VALUE(HttpStatus.BAD_REQUEST, "GRD-004", "유효하지 않은 점수입니다."),
+    GRADING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "GRD-005", "채점 처리 중 오류가 발생했습니다.");
 
 	private final HttpStatus status;
 

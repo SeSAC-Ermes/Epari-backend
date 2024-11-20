@@ -22,9 +22,12 @@ public class SubjectiveQuestion extends ExamQuestion {
 	}
 
 	@Override
-	public boolean validateAnswer(String studentAnswer) {
-		// 주관식은 좀 더 유연한 검증이 필요할 수 있음
-		return getCorrectAnswer().trim().equalsIgnoreCase(studentAnswer.trim());
+	protected boolean doValidateAnswer(String studentAnswer) {
+		// 대소문자 무시, 앞뒤 공백 제거 후 비교
+		String normalizedCorrectAnswer = getCorrectAnswer().trim().toLowerCase();
+		String normalizedStudentAnswer = studentAnswer.trim().toLowerCase();
+
+		return normalizedCorrectAnswer.equals(normalizedStudentAnswer);
 	}
 
 }
