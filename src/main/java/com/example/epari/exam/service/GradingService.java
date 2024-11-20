@@ -33,21 +33,18 @@ public class GradingService {
 			throw new IllegalStateException("제출된 시험만 채점할 수 있습니다.");
 		}
 
-		int totalScore = 0;
-
 		for (ExamScore score : examResult.getScores()) {
 			ExamQuestion question = score.getQuestion();
 			String studentAnswer = score.getStudentAnswer();
-
+			
 			// 답안 채점
 			boolean isCorrect = question.validateAnswer(studentAnswer);
 			int earnedScore = isCorrect ? question.getScore() : 0;
 			score.updateScore(earnedScore);
-
-			totalScore += earnedScore;
 		}
-
-		examResult.updateStatus(ExamStatus.GRADED);
+	
+		// 총점 계산 및 상태 업데이트
+		examResult.updateScore();  // updateStatus 대신 updateScore 호출
 		examResultRepository.save(examResult);
 	}
 
