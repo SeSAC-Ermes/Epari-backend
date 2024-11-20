@@ -4,12 +4,16 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
@@ -26,6 +30,33 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 @Configuration
 @EnableCaching
 public class RedisConfig {
+
+	@Value("${spring.data.redis.ssl.enabled:false}")
+	private boolean ssl;
+
+	/**
+	 * Redis 연결을 위한 ConnectionFactory 빈을 생성합니다.
+	 * - 개발 환경: SSL 미사용 (spring.data.redis.ssl=false)
+	 * - 운영 환경: SSL 사용 (spring.data.redis.ssl=true)
+	 * @param host Redis 서버 호스트 주소
+	 * @param port Redis 서버 포트 번호
+	 * @return Redis 연결을 위한 LettuceConnectionFactory 인스턴스
+	 */
+	@Bean
+	public RedisConnectionFactory redisConnectionFactory(
+			@Value("${spring.data.redis.host}") String host,
+			@Value("${spring.data.redis.port}") int port) {
+
+		RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
+		redisConfig.setHostName(host);
+		redisConfig.setPort(port);
+
+		LettuceClientConfiguration clientConfig = ssl ?
+				LettuceClientConfiguration.builder().useSsl().build() :
+				LettuceClientConfiguration.builder().build();
+
+		return new LettuceConnectionFactory(redisConfig, clientConfig);
+	}
 
 	/**
 	 * Java 8 이상 날짜/시간 타입을 위한 Jackson ObjectMapper 설정
