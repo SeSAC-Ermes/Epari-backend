@@ -33,7 +33,7 @@ public class AdminUserService {
 	 * 사용자 저장 및 과목 매핑 수행
 	 */
 	@Transactional
-	public void approveUser(String email, ApprovalRequestDTO request) {
+	public String approveUser(String email, ApprovalRequestDTO request) {
 		// 1. 사용자 저장
 		Student student = Student
 				.createStudent(email, "PASSWORD", request.getName(), "010-1234-5678");
@@ -45,6 +45,8 @@ public class AdminUserService {
 				.orElseThrow(CourseNotFoundException::new);
 
 		courseStudentRepository.save(new CourseStudent(course, student));
+
+		return course.getName();
 	}
 
 }

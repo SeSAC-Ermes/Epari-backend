@@ -1419,9 +1419,9 @@ public class InitDataLoader implements ApplicationRunner {
 								.build();
 
 						if (question.validateAnswer(studentAnswer)) {
-							score.updateScore(question.getScore(), "정답입니다.");
+							score.updateScore(question.getScore());
 						} else {
-							score.updateScore(0, "오답입니다. 정답은 " + question.getCorrectAnswer() + "입니다.");
+							score.updateScore(0);
 						}
 
 						result.addScore(score);

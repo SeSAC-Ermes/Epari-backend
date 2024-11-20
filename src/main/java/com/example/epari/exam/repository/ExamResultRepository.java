@@ -38,7 +38,7 @@ public interface ExamResultRepository extends JpaRepository<ExamResult, Long> {
 			@Param("studentEmail") String studentEmail
 	);
 
-	// 시험 상태별 결과 조회
+	// 특정 상태의 시험 결과 조회
 	@Query("SELECT er FROM ExamResult er " +
 			"WHERE er.exam.id = :examId " +
 			"AND er.status = :status")
@@ -47,11 +47,20 @@ public interface ExamResultRepository extends JpaRepository<ExamResult, Long> {
 			@Param("status") ExamStatus status
 	);
 
+	// 채점 대기중인 시험 결과 조회 (자동 채점용)
 	@Query("""
-			    SELECT er FROM ExamResult er
-			    JOIN FETCH er.exam e
-			    WHERE er.status = 'IN_PROGRESS'
-			    AND e.examDateTime <= :baseTime
+			SELECT er FROM ExamResult er
+			WHERE er.status = 'SUBMITTED'
+			AND er.submitTime <= :baseTime
+			""")
+	List<ExamResult> findPendingGradingExams(@Param("baseTime") LocalDateTime baseTime);
+
+	// 시간 초과된 진행중 시험 조회 (자동 제출용)
+	@Query("""
+			SELECT er FROM ExamResult er
+			JOIN FETCH er.exam e
+			WHERE er.status = 'IN_PROGRESS'
+			AND e.examDateTime <= :baseTime
 			""")
 	List<ExamResult> findExpiredExams(@Param("baseTime") LocalDateTime baseTime);
 
