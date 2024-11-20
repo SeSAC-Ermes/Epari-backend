@@ -77,10 +77,10 @@ public enum ErrorCode {
 
 	// 채점 관련 에러 코드 (GRD)
 	EXAM_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "GRD-001", "제출되지 않은 시험은 채점할 수 없습니다."),
-	EXAM_ALREADY_GRADED(HttpStatus.BAD_REQUEST, "GRD-002", "이미 채점이 완료된 시험입니다."),
-	GRADING_IN_PROGRESS(HttpStatus.BAD_REQUEST, "GRD-003", "채점이 진행 중인 시험입니다."),
-	INVALID_SCORE_VALUE(HttpStatus.BAD_REQUEST, "GRD-004", "유효하지 않은 점수입니다."),
-	GRADING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "GRD-005", "채점 처리 중 오류가 발생했습니다.");
+    EXAM_ALREADY_GRADED(HttpStatus.BAD_REQUEST, "GRD-002", "이미 채점이 완료된 시험입니다."),
+    GRADING_IN_PROGRESS(HttpStatus.BAD_REQUEST, "GRD-003", "채점이 진행 중인 시험입니다."),
+    INVALID_SCORE_VALUE(HttpStatus.BAD_REQUEST, "GRD-004", "유효하지 않은 점수입니다."),
+    GRADING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "GRD-005", "채점 처리 중 오류가 발생했습니다.");
 
 	private final HttpStatus status;
 

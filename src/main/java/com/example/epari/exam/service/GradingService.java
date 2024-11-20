@@ -25,7 +25,10 @@ public class GradingService {
 
 	private final ExamResultRepository examResultRepository;
 
-	public void gradeExamResult(ExamResult examResult) {
+	/**
+     * 단순 채점 처리 (내부용)
+     */
+	public void processGrading(ExamResult examResult) {
 		if (examResult.getStatus() != ExamStatus.SUBMITTED) {
 			throw new IllegalStateException("제출된 시험만 채점할 수 있습니다.");
 		}
@@ -58,7 +61,7 @@ public class GradingService {
 	}
 
 	/**
-	 * 개별 시험 결과 채점
+	 * 개별 시험 결과 채점 (API용)
 	 */
 	public void gradeExamResult(Long examResultId) {
 		ExamResult examResult = examResultRepository.findById(examResultId)
