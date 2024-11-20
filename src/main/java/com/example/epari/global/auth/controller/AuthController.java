@@ -67,4 +67,15 @@ public class AuthController {
 		return ResponseEntity.ok().body(new SuccessResponseDto("회원가입이 완료되었습니다."));
 	}
 
+	@PostMapping("/check-user")
+	public ResponseEntity<?> checkUser(@RequestBody Map<String, String> request) {
+		String email = request.get("email");
+		List<String> groups = authService.getUserGroups(email);
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("groups", groups);
+
+		return ResponseEntity.ok(response);
+	}
+
 }
