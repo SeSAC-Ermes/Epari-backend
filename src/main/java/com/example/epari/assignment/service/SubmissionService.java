@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -52,15 +53,34 @@ public class SubmissionService {
 		Student student = studentRepository.findById(studentId)
 				.orElseThrow(() -> new IllegalArgumentException("학생 정보를 찾을 수 없습니다."));
 
-		Submission submission = Submission.createSubmission(requestDto.getDescription(), assignment, student);
+		// 기존 제출물이 있는지 확인
+		Optional<Submission> existingSubmission = submissionRepository
+				.findByAssignment_IdAndStudent_Id(assignmentId, studentId);
+
+		Submission submission;
+		if (existingSubmission.isPresent()) {
+			// 기존 제출물이 있으면 업데이트
+			submission = existingSubmission.get();
+			submission.updateSubmission(requestDto.getDescription());
+
+			// 새로운 파일 추가 전에 기존 파일 유지
+		} else {
+			// 새로운 제출물 생성
+			submission = Submission.createSubmission(requestDto.getDescription(), assignment, student);
+		}
 
 		// 파일 업로드 처리
 		if (requestDto.getFiles() != null && !requestDto.getFiles().isEmpty()) {
 			for (MultipartFile file : requestDto.getFiles()) {
 				String fileUrl = s3FileService.uploadFile("submissions", file);
 
-				SubmissionFile submissionFile = SubmissionFile.createSubmissionFile(file.getOriginalFilename(),
-						extractStoredFileName(fileUrl), fileUrl, file.getSize(), submission);
+				SubmissionFile submissionFile = SubmissionFile.createSubmissionFile(
+						file.getOriginalFilename(),
+						extractStoredFileName(fileUrl),
+						fileUrl,
+						file.getSize(),
+						submission
+				);
 
 				submission.addFile(submissionFile);
 			}
@@ -85,6 +105,26 @@ public class SubmissionService {
 		}
 
 		return SubmissionResponseDto.from(submission);
+	}
+
+	/**
+	 * 학생의 과제 제출물 조회
+	 */
+	public SubmissionResponseDto getStudentSubmission(Long courseId, Long assignmentId, Long studentId) {
+		Optional<Submission> submission = submissionRepository.findByAssignment_IdAndStudent_Id(assignmentId, studentId);
+
+		// 제출물이 없으면 null 반환 (404 대신)
+		if (submission.isEmpty()) {
+			return null;
+		}
+
+		Submission foundSubmission = submission.get();
+		// 제출된 과제가 해당 코스에 속하는지 확인
+		if (!foundSubmission.getAssignment().getCourse().getId().equals(courseId)) {
+			throw new IllegalArgumentException("해당 과제의 제출물이 아닙니다.");
+		}
+
+		return SubmissionResponseDto.from(foundSubmission);
 	}
 
 	/**
