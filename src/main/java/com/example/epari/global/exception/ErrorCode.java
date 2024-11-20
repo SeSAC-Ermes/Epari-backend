@@ -48,8 +48,11 @@ public enum ErrorCode {
 	SIGNUP_FAILED(HttpStatus.BAD_REQUEST, "AUTH-019", "회원가입 처리 중 오류가 발생했습니다."),
 	PENDING_APPROVAL(HttpStatus.BAD_REQUEST, "AUTH-020", "가입 승인 대기중입니다."),
 
-	// Student 관련 에러 코드(ST
+	// Student 관련 에러 코드(STD)
 	STUDENT_NOT_FOUND(HttpStatus.NOT_FOUND, "STD-001", "학생 정보를 찾을 수 없습니다."),
+
+	// Instructor 관련 에러 코드(IST)
+	INSTRUCTOR_NOT_FOUND(HttpStatus.NOT_FOUND, "IST-001", "강사 정보를 찾을 수 없습니다."),
 
 	// Course 관련 에러 코드 (CRS)
 	COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS-001", "강의를 찾을 수 없습니다."),
@@ -97,10 +100,10 @@ public enum ErrorCode {
 
 	// 채점 관련 에러 코드 (GRD)
 	EXAM_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "GRD-001", "제출되지 않은 시험은 채점할 수 없습니다."),
-    EXAM_ALREADY_GRADED(HttpStatus.BAD_REQUEST, "GRD-002", "이미 채점이 완료된 시험입니다."),
-    GRADING_IN_PROGRESS(HttpStatus.BAD_REQUEST, "GRD-003", "채점이 진행 중인 시험입니다."),
-    INVALID_SCORE_VALUE(HttpStatus.BAD_REQUEST, "GRD-004", "유효하지 않은 점수입니다."),
-    GRADING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "GRD-005", "채점 처리 중 오류가 발생했습니다.");
+	EXAM_ALREADY_GRADED(HttpStatus.BAD_REQUEST, "GRD-002", "이미 채점이 완료된 시험입니다."),
+	GRADING_IN_PROGRESS(HttpStatus.BAD_REQUEST, "GRD-003", "채점이 진행 중인 시험입니다."),
+	INVALID_SCORE_VALUE(HttpStatus.BAD_REQUEST, "GRD-004", "유효하지 않은 점수입니다."),
+	GRADING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "GRD-005", "채점 처리 중 오류가 발생했습니다.");
 
 	private final HttpStatus status;
 
