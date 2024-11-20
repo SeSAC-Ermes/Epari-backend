@@ -3,6 +3,8 @@ package com.example.epari.global.exception;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
+
 import lombok.Getter;
 
 /**
@@ -38,4 +40,16 @@ public class ErrorResponse {
 		return new ErrorResponse(errorCode, errors);
 	}
 
+	    public static ResponseEntity<ErrorResponse> toResponseEntity(ErrorCode errorCode) {
+        return ResponseEntity
+            .status(errorCode.getStatus())
+            .body(ErrorResponse.of(errorCode));
+    }
+
+    public static ResponseEntity<ErrorResponse> toResponseEntity(ErrorCode errorCode, List<ValidationError> errors) {
+        return ResponseEntity
+            .status(errorCode.getStatus())
+            .body(ErrorResponse.of(errorCode, errors));
+
+}
 }
