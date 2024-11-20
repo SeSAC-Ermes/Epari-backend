@@ -15,10 +15,12 @@ import com.example.epari.global.exception.ErrorCode;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class GradingService {
 
 	private final ExamResultRepository examResultRepository;
