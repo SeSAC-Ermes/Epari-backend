@@ -98,4 +98,15 @@ public class ExamSummaryDto {
 				.build();
 	}
 
+	public static ExamSummaryDto forNewExam(Exam exam) {
+        return ExamSummaryDto.builder()
+				.id(exam.getId())
+				.title(exam.getTitle())
+				.examDateTime(exam.getExamDateTime())
+				.duration(exam.getDuration())
+				.totalScore(exam.getTotalScore())
+				.status(ExamStatus.SCHEDULED) 
+				.build();
+    }
+
 }
