@@ -240,42 +240,38 @@ public class ExamSubmissionService {
 		// 1. 시험 결과 조회
 		ExamResult examResult = examResultRepository.findByExamIdAndStudentEmail(examId, studentEmail)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
-
+	
 		// 2. 시험 정보 조회
 		Exam exam = examRepository.findById(examId)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_FOUND));
-
-		// 3. 문제별 답안 조회
-		List<ExamAnswer> answers = examAnswerRepository.findByExamIdAndStudentEmail(examId, studentEmail);
-
-		// 4. DTO 변환
-		List<QuestionResultDto> questionResults = answers.stream()
-				.map(answer -> QuestionResultDto.builder()
-						.questionId(answer.getQuestionId())
-						.questionTitle(answer.getQuestion().getTitle())
-						.studentAnswer(answer.getAnswer())
-						.score(answer.getScore())
-						.build())
+	
+		// 3. 문제별 답안 조회 (ExamScore 사용)
+		List<QuestionResultDto> questionResults = examResult.getScores().stream()
+				.<QuestionResultDto>map(score -> QuestionResultDto.builder()
+					.questionId(score.getQuestion().getId())
+					.questionTitle(score.getQuestion().getQuestionText())  // title -> questionText로 변경
+					.studentAnswer(score.getStudentAnswer())
+					.score(score.getEarnedScore())
+					.build())
 				.collect(Collectors.toList());
-
+	
 		return ExamResultDetailDto.builder()
 				.examId(examId)
 				.examTitle(exam.getTitle())
-				.startTime(examResult.getStartTime())
 				.endTime(examResult.getSubmitTime())
 				.status(examResult.getStatus())
-				.totalScore(examResult.getTotalScore())
+				.totalScore(examResult.getEarnedScore())
 				.questionResults(questionResults)
 				.build();
 	}
 
 	public List<ExamResultSummaryDto> getExamResults(Long courseId, Long examId) {
-		return examResultRepository.findAllByExamId(examId).stream()
+		return examResultRepository.findByExamId(examId).stream()
 				.map(result -> ExamResultSummaryDto.builder()
 						.studentName(result.getStudent().getName())
 						.studentEmail(result.getStudent().getEmail())
 						.status(result.getStatus())
-						.totalScore(result.getTotalScore())
+						.totalScore(result.getEarnedScore())
 						.submittedAt(result.getSubmitTime())
 						.build())
 				.collect(Collectors.toList());
