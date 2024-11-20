@@ -53,7 +53,7 @@ public abstract class ExamQuestion extends BaseTimeEntity {
 	@Column(nullable = false)
 	private ExamQuestionType type;
 
-	@Column(name = "correct_answer", nullable = false)  // 단일 정답 필드
+	@Column(name = "correct_answer", nullable = false)
 	private String correctAnswer;
 
 	@Embedded
@@ -73,9 +73,6 @@ public abstract class ExamQuestion extends BaseTimeEntity {
 		this.correctAnswer = correctAnswer;
 	}
 
-	// 정답 검증을 위한 추상 메소드
-	public abstract boolean validateAnswer(String studentAnswer);
-
 	public void setImage(QuestionImage image) {
 		this.image = image;
 	}
@@ -83,6 +80,24 @@ public abstract class ExamQuestion extends BaseTimeEntity {
 	void setExam(Exam exam) {
 		this.exam = exam;
 	}
+
+	/**
+	 * 학생의 답안을 채점하여 맞았는지 여부를 반환
+	 * @param studentAnswer 학생이 제출한 답안
+	 * @return 정답 여부
+	 */
+	public final boolean validateAnswer(String studentAnswer) {
+		if (studentAnswer == null || studentAnswer.trim().isEmpty()) {
+			return false;
+		}
+		return doValidateAnswer(studentAnswer.trim());
+	}
+
+	/**
+	 * 실제 답안 검증 로직을 구현하는 추상 메서드
+	 * 각 문제 타입별로 구체적인 검증 방식을 구현
+	 */
+	protected abstract boolean doValidateAnswer(String studentAnswer);
 
 	public void updateExamNumber(int newNumber) {
 		this.examNumber = newNumber;
