@@ -1,12 +1,22 @@
 package com.example.epari.admin.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.epari.admin.dto.AdminCourseRequestDto;
 import com.example.epari.admin.dto.CourseSearchResponseDTO;
+import com.example.epari.course.domain.Course;
+import com.example.epari.course.domain.Curriculum;
 import com.example.epari.course.repository.CourseRepository;
+import com.example.epari.course.repository.CurriculumRepository;
+import com.example.epari.global.common.service.S3FileService;
+import com.example.epari.global.exception.BusinessBaseException;
+import com.example.epari.global.exception.ErrorCode;
+import com.example.epari.user.domain.Instructor;
+import com.example.epari.user.repository.InstructorRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,13 +28,65 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class AdminCourseService {
 
+	private static final String COURSE_IMAGE_DIRECTORY = "course-images";
+
 	private final CourseRepository courseRepository;
+
+	private final InstructorRepository instructorRepository;
+
+	private final CurriculumRepository curriculumRepository;
+
+	private final S3FileService s3FileService;
 
 	/**
 	 * 키워드 기반 강의 검색 메서드
 	 */
 	public List<CourseSearchResponseDTO> searchCourses(String keyword) {
 		return courseRepository.searchCoursesWithDTO(keyword);
+	}
+
+	/**
+	 * 강의 생성
+	 */
+	@Transactional
+	public Long createCourse(AdminCourseRequestDto request) {
+		// 1. 강사 존재 여부 확인
+		Instructor instructor = instructorRepository.findById(request.getInstructorId())
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.INSTRUCTOR_NOT_FOUND));
+
+		// 2. 강의 생성
+		Course course = Course.builder()
+				.name(request.getName())
+				.startDate(request.getStartDate())
+				.endDate(request.getEndDate())
+				.classroom(request.getClassroom())
+				.instructor(instructor)
+				.build();
+
+		// 3. 이미지 처리
+		if (request.getCourseImage() != null && !request.getCourseImage().isEmpty()) {
+			String imageUrl = s3FileService.uploadFile(COURSE_IMAGE_DIRECTORY, request.getCourseImage());
+			course.updateCourseImage(imageUrl);
+		}
+
+		Course savedCourse = courseRepository.save(course);
+
+		// 4. 커리큘럼 생성 및 저장
+		List<Curriculum> curriculums = new ArrayList<>();
+
+		for (AdminCourseRequestDto.CurriculumInfo info : request.getCurriculums()) {
+			Curriculum curriculum = Curriculum.builder()
+					.date(info.getDate())
+					.topic(info.getTopic())
+					.description(info.getDescription())
+					.course(savedCourse)
+					.build();
+			curriculums.add(curriculum);
+		}
+
+		curriculumRepository.saveAll(curriculums);
+
+		return savedCourse.getId();
 	}
 
 }
