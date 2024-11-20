@@ -4,11 +4,12 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Value;
 
 import com.example.epari.course.repository.CourseStudentRepository;
 import com.example.epari.exam.domain.Exam;
@@ -16,14 +17,16 @@ import com.example.epari.exam.domain.ExamQuestion;
 import com.example.epari.exam.domain.ExamResult;
 import com.example.epari.exam.domain.ExamScore;
 import com.example.epari.exam.dto.common.AnswerSubmissionDto;
+import com.example.epari.exam.dto.common.ExamResultDetailDto;
+import com.example.epari.exam.dto.common.ExamResultSummaryDto;
 import com.example.epari.exam.dto.common.ExamSubmissionStatusDto;
+import com.example.epari.exam.dto.common.QuestionResultDto;
 import com.example.epari.exam.repository.ExamQuestionRepository;
 import com.example.epari.exam.repository.ExamRepository;
 import com.example.epari.exam.repository.ExamResultRepository;
 import com.example.epari.global.common.enums.ExamStatus;
 import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
-import com.example.epari.global.validator.CourseAccessValidator;
 import com.example.epari.global.validator.ExamQuestionValidator;
 import com.example.epari.user.domain.Student;
 import com.example.epari.user.repository.StudentRepository;
@@ -78,39 +81,39 @@ public class ExamSubmissionService {
 
 	// 답안 임시 저장
 	public void saveAnswerTemporarily(Long courseId, Long examId, Long questionId,
-        AnswerSubmissionDto answerDto, String studentEmail) {
-    ExamResult examResult = getExamResultInProgress(examId, studentEmail);
-    validateExamTimeRemaining(examResult.getExam());
+			AnswerSubmissionDto answerDto, String studentEmail) {
+		ExamResult examResult = getExamResultInProgress(examId, studentEmail);
+		validateExamTimeRemaining(examResult.getExam());
 
-    // examId로 함께 검증
-    ExamQuestion question = examQuestionRepository
-            .findByExamIdAndId(examId, questionId)
-            .orElseThrow(() -> new BusinessBaseException(ErrorCode.QUESTION_NOT_FOUND));
+		// examId로 함께 검증
+		ExamQuestion question = examQuestionRepository
+				.findByExamIdAndId(examId, questionId)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.QUESTION_NOT_FOUND));
 
-    // question이 해당 시험의 문제가 맞는지 한번 더 검증
-    if (!question.getExam().getId().equals(examResult.getExam().getId())) {
-        throw new BusinessBaseException(ErrorCode.UNAUTHORIZED_EXAM_ACCESS);
-    }
+		// question이 해당 시험의 문제가 맞는지 한번 더 검증
+		if (!question.getExam().getId().equals(examResult.getExam().getId())) {
+			throw new BusinessBaseException(ErrorCode.UNAUTHORIZED_EXAM_ACCESS);
+		}
 
-    // 기존 임시 저장된 답안이 있는지 확인
-    Optional<ExamScore> existingScore = examResult.getScores().stream()
-            .filter(score -> score.getQuestion().getId().equals(questionId))
-            .findFirst();
+		// 기존 임시 저장된 답안이 있는지 확인
+		Optional<ExamScore> existingScore = examResult.getScores().stream()
+				.filter(score -> score.getQuestion().getId().equals(questionId))
+				.findFirst();
 
-    if (existingScore.isPresent()) {
-        // 기존 답안 업데이트
-        existingScore.get().updateAnswer(answerDto.getAnswer());
-    } else {
-        // 새로운 답안 생성
-        ExamScore score = ExamScore.builder()
-                .examResult(examResult)
-                .question(question)
-                .studentAnswer(answerDto.getAnswer())
-                .temporary(true)  // 임시저장 표시
-                .build();
-        examResult.addScore(score);
-    }
-}
+		if (existingScore.isPresent()) {
+			// 기존 답안 업데이트
+			existingScore.get().updateAnswer(answerDto.getAnswer());
+		} else {
+			// 새로운 답안 생성
+			ExamScore score = ExamScore.builder()
+					.examResult(examResult)
+					.question(question)
+					.studentAnswer(answerDto.getAnswer())
+					.temporary(true)  // 임시저장 표시
+					.build();
+			examResult.addScore(score);
+		}
+	}
 
 	public void submitAnswer(Long courseId, Long examId, Long questionId,
 			AnswerSubmissionDto answerDto, String studentEmail) {
@@ -184,7 +187,7 @@ public class ExamSubmissionService {
 		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
 		ExamResult examResult = examResultRepository.findByExamIdAndStudentEmail(examId, email)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
-		
+
 		return ExamSubmissionStatusDto.builder()
 				.examId(examId)
 				.status(examResult.getStatus())
@@ -218,7 +221,7 @@ public class ExamSubmissionService {
 	private ExamSubmissionStatusDto createExamSubmissionStatusDto(Exam exam, ExamResult examResult) {
 		LocalDateTime now = LocalDateTime.now();
 		return ExamSubmissionStatusDto.builder()
-				.status(examResult.getStatus())                    
+				.status(examResult.getStatus())
 				.submittedQuestionCount(examResult.getSubmittedQuestionCount())
 				.totalQuestionCount(exam.getQuestions().size())
 				.remainingTimeInMinutes(calculateRemainingTime(now, exam.getEndDateTime()))
@@ -231,6 +234,51 @@ public class ExamSubmissionService {
 			return 0;
 		}
 		return (int)Duration.between(now, endTime).toMinutes();
+	}
+
+	public ExamResultDetailDto getStudentExamResult(Long courseId, Long examId, String studentEmail) {
+		// 1. 시험 결과 조회
+		ExamResult examResult = examResultRepository.findByExamIdAndStudentEmail(examId, studentEmail)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
+
+		// 2. 시험 정보 조회
+		Exam exam = examRepository.findById(examId)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_FOUND));
+
+		// 3. 문제별 답안 조회
+		List<ExamAnswer> answers = examAnswerRepository.findByExamIdAndStudentEmail(examId, studentEmail);
+
+		// 4. DTO 변환
+		List<QuestionResultDto> questionResults = answers.stream()
+				.map(answer -> QuestionResultDto.builder()
+						.questionId(answer.getQuestionId())
+						.questionTitle(answer.getQuestion().getTitle())
+						.studentAnswer(answer.getAnswer())
+						.score(answer.getScore())
+						.build())
+				.collect(Collectors.toList());
+
+		return ExamResultDetailDto.builder()
+				.examId(examId)
+				.examTitle(exam.getTitle())
+				.startTime(examResult.getStartTime())
+				.endTime(examResult.getSubmitTime())
+				.status(examResult.getStatus())
+				.totalScore(examResult.getTotalScore())
+				.questionResults(questionResults)
+				.build();
+	}
+
+	public List<ExamResultSummaryDto> getExamResults(Long courseId, Long examId) {
+		return examResultRepository.findAllByExamId(examId).stream()
+				.map(result -> ExamResultSummaryDto.builder()
+						.studentName(result.getStudent().getName())
+						.studentEmail(result.getStudent().getEmail())
+						.status(result.getStatus())
+						.totalScore(result.getTotalScore())
+						.submittedAt(result.getSubmitTime())
+						.build())
+				.collect(Collectors.toList());
 	}
 
 }
