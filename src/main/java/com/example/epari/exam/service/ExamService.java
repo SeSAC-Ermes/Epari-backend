@@ -90,7 +90,7 @@ public class ExamService {
 	public ExamListResponseDto getExams(Long courseId, ExamStatus status, String email, String role) {
 		Course course = courseRepository.findById(courseId)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
-	
+
 		List<Exam> exams;
 	
 		// 권한에 따른 시험 목록 조회
@@ -166,6 +166,7 @@ public class ExamService {
 			return ExamResponseDto.fromExamForStudent(exam, result);
 		}
 	}
+
 	// 시험 생성
 	@Transactional
 	public Long createExam(Long courseId, ExamRequestDto requestDto, String instructorEmail) {
