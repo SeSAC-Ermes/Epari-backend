@@ -3,14 +3,14 @@ package com.example.epari.global.common.enums;
 import lombok.Getter;
 
 @Getter
-public enum SubmissionStatus {
-	NOT_SUBMITTED("미제출"),
-	SUBMITTED("제출완료"),
-	GRADED("채점완료");
+public enum SubmissionGrade {
+	PASS("pass"),
+	NONE_PASS("none pass"),
+	UNDER_REVIEW("검토중");
 
 	private final String description;
 
-	SubmissionStatus(String description) {
+	SubmissionGrade(String description) {
 		this.description = description;
 	}
 }

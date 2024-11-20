@@ -36,8 +36,22 @@ public class MultipleChoiceQuestion extends ExamQuestion {
 	}
 
 	@Override
-	public boolean validateAnswer(String studentAnswer) {
-		return getCorrectAnswer().equals(studentAnswer);
+	protected boolean doValidateAnswer(String studentAnswer) {
+		try {
+			// 선택지 번호가 숫자인지 확인
+			int selectedNumber = Integer.parseInt(studentAnswer);
+
+			// 유효한 선택지 범위인지 확인
+			if (selectedNumber < 1 || selectedNumber > choices.size()) {
+				return false;
+			}
+
+			// 정답과 일치하는지 확인
+			return studentAnswer.equals(getCorrectAnswer());
+
+		} catch (NumberFormatException e) {
+			return false;
+		}
 	}
 
 	public void addChoice(Choice choice) {

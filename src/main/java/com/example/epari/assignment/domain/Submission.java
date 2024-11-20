@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.epari.global.common.base.BaseTimeEntity;
+import com.example.epari.global.common.enums.SubmissionGrade;
 import com.example.epari.global.common.enums.SubmissionStatus;
 import com.example.epari.user.domain.Student;
 
@@ -42,8 +43,9 @@ public class Submission extends BaseTimeEntity {
 	private String description;
 
 	@Column
-	private String grade;
+	private SubmissionGrade grade;
 
+	@Column
 	private String feedback;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -59,31 +61,37 @@ public class Submission extends BaseTimeEntity {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private SubmissionStatus status = SubmissionStatus.SUBMITTED;
+	private SubmissionStatus status = SubmissionStatus.NOT_SUBMITTED;
 
 	@Builder
-	private Submission(String description, Assignment assignment, Student student) {
+	private Submission(String description, Assignment assignment, Student student, SubmissionGrade grade) {
 		this.description = description;
 		this.assignment = assignment;
 		this.student = student;
-		this.grade = "F";
+		this.grade = SubmissionGrade.UNDER_REVIEW;
 		this.status = SubmissionStatus.SUBMITTED;
 	}
 
 	public static Submission createSubmission(String description,
 			Assignment assignment, Student student) {
-		return Submission.builder()
+		Submission submission = Submission.builder()
 				.description(description)
 				.assignment(assignment)
 				.student(student)
 				.build();
+		submission.submit();
+		return submission;
+	}
+
+	public void submit() {
+		this.status = SubmissionStatus.SUBMITTED;
 	}
 
 	public void updateSubmission(String description) {
 		this.description = description;
 	}
 
-	public void updateGrade(String grade, String feedback) {
+	public void updateGrade(SubmissionGrade grade, String feedback) {
 		this.grade = grade;
 		this.feedback = feedback;
 		this.status = SubmissionStatus.GRADED;

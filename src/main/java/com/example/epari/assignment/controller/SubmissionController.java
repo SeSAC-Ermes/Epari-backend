@@ -1,18 +1,16 @@
 package com.example.epari.assignment.controller;
 
 import com.example.epari.assignment.dto.submission.GradeRequestDto;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
 import com.example.epari.assignment.dto.submission.SubmissionRequestDto;
 import com.example.epari.assignment.dto.submission.SubmissionResponseDto;
 import com.example.epari.assignment.service.SubmissionService;
 import com.example.epari.global.annotation.CurrentUserEmail;
 import com.example.epari.user.domain.Student;
 import com.example.epari.user.repository.StudentRepository;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -48,6 +46,22 @@ public class SubmissionController {
 		return ResponseEntity.ok(
 				submissionService.getSubmissionById(courseId, assignmentId, submissionId)
 		);
+	}
+
+	@PreAuthorize("hasRole('STUDENT')")
+	@GetMapping
+	public ResponseEntity<SubmissionResponseDto> getStudentSubmission(
+			@PathVariable Long courseId,
+			@PathVariable Long assignmentId,
+			@CurrentUserEmail String email) {
+		Student student = studentRepository.findByEmail(email)
+				.orElseThrow(() -> new IllegalArgumentException("학생 정보를 찾을 수 없습니다."));
+
+		SubmissionResponseDto submission = submissionService.getStudentSubmission(
+				courseId, assignmentId, student.getId());
+
+		// 제출물이 없는 경우 404 대신 200 OK와 null을 반환
+		return ResponseEntity.ok(submission);
 	}
 
 	@PreAuthorize("hasRole('STUDENT')")

@@ -32,6 +32,20 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
+  data:
+    redis:
+      host: ${REDIS_HOST}  # ElastiCache 엔드포인트
+      port: ${REDIS_PORT:6379}
+      timeout: 3000       # 연결 타임아웃 (ms)
+      ssl:
+        enabled: true
+      lettuce:
+        pool:
+          max-active: 8   # 풀의 최대 연결 수
+          max-idle: 8     # 풀의 최대 유휴 연결 수
+          min-idle: 2     # 풀의 최소 유휴 연결 수
+          max-wait: -1ms  # 풀이 바쁠 때 연결을 기다리는 최대 시간
+
 ### AWS S3 Configuration ###
 aws:
   s3:

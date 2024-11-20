@@ -52,6 +52,9 @@ public class ExamResult extends BaseTimeEntity {
 	@Column(nullable = false)
 	private LocalDateTime submitTime;
 
+	@Column(nullable = false)
+	private Integer totalScore = 0;
+
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private ExamStatus status;
@@ -74,12 +77,19 @@ public class ExamResult extends BaseTimeEntity {
 		this.status = status;
 	}
 
+	/**
+	 * 답안 추가
+	 */
 	public void addScore(ExamScore score) {
 		validateScoreAddable();
 		scores.add(score);
 		score.setExamResult(this);
 	}
 
+	/**
+	 * 답안 제출 처리
+	 * @param force 강제 제출 여부 (시험 시간 초과 등의 경우)
+	 */
 	public void submit(boolean force) {
 		if (!force) {
 			validateSubmittable();
@@ -89,9 +99,62 @@ public class ExamResult extends BaseTimeEntity {
 		scores.forEach(ExamScore::markAsSubmitted);
 	}
 
+	/**
+	 * 임시저장 답안 여부 확인
+	 */
+	public boolean hasTemporaryAnswer(Long questionId) {
+		return scores.stream()
+				.anyMatch(score ->
+						score.getQuestion().getId().equals(questionId) &&
+								score.isTemporary()
+				);
+	}
+
+	/**
+	 * 채점 결과 반영
+	 */
+	public void updateScore() {
+		if (status != ExamStatus.SUBMITTED) {
+			throw new BusinessBaseException(ErrorCode.EXAM_NOT_SUBMITTED);
+		}
+
+		this.totalScore = calculateTotalScore();
+		this.status = ExamStatus.GRADED;
+	}
+
 	public int getEarnedScore() {
 		return scores.stream()
 				.filter(score -> !score.isTemporary())
+				.mapToInt(ExamScore::getEarnedScore)
+				.sum();
+	}
+
+	/**
+	 * 제출된 문제 수 조회
+	 */
+	public int getSubmittedQuestionCount() {
+		return (int)scores.stream()
+				.filter(score -> !score.isTemporary())
+				.count();
+	}
+
+	/**
+	 * 정답률 계산
+	 */
+	public double getCorrectAnswerRate() {
+		if (scores.isEmpty()) {
+			return 0.0;
+		}
+
+		long correctCount = scores.stream()
+				.filter(score -> score.getEarnedScore() > 0)
+				.count();
+
+		return (double)correctCount / scores.size() * 100;
+	}
+
+	private int calculateTotalScore() {
+		return scores.stream()
 				.mapToInt(ExamScore::getEarnedScore)
 				.sum();
 	}
@@ -132,20 +195,6 @@ public class ExamResult extends BaseTimeEntity {
 		if (answeredQuestions < totalQuestions) {
 			throw new BusinessBaseException(ErrorCode.EXAM_NOT_ALL_QUESTIONS_ANSWERED);
 		}
-	}
-
-	public int getSubmittedQuestionCount() {
-		return (int)scores.stream()
-				.filter(score -> !score.isTemporary())
-				.count();
-	}
-
-	public boolean hasTemporaryAnswer(Long questionId) {
-		return scores.stream()
-				.anyMatch(score ->
-						score.getQuestion().getId().equals(questionId) &&
-								score.isTemporary()
-				);
 	}
 
 }
