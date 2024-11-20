@@ -18,9 +18,11 @@ public class SubmissionResponseDto {
 
 	private String description;
 
-	private String grade;           // 추가
+	private String grade;
 
-	private String feedback;        // 추가
+	private String feedback;
+
+	private String status;
 
 	private LocalDateTime createdAt;
 
@@ -57,8 +59,9 @@ public class SubmissionResponseDto {
 		return SubmissionResponseDto.builder()
 				.id(submission.getId())
 				.description(submission.getDescription())
-				.grade(submission.getGrade())        // 추가
-				.feedback(submission.getFeedback())  // 추가
+				.grade(submission.getGrade() != null ? submission.getGrade().getDescription() : null)
+				.feedback(submission.getFeedback())
+				.status(submission.getStatus().getDescription())
 				.createdAt(submission.getCreatedAt())
 				.updatedAt(submission.getUpdatedAt())
 				.files(submission.getFiles().stream()
