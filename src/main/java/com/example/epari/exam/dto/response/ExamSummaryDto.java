@@ -99,7 +99,7 @@ public class ExamSummaryDto {
 	}
 
 	public static ExamSummaryDto forNewExam(Exam exam) {
-        return ExamSummaryDto.builder()
+		return ExamSummaryDto.builder()
 				.id(exam.getId())
 				.title(exam.getTitle())
 				.examDateTime(exam.getExamDateTime())
@@ -107,8 +107,8 @@ public class ExamSummaryDto {
 				.createdAt(exam.getCreatedAt())  // 출제일자 추가
 				.instructor(InstructorInfo.from(exam.getCourse().getInstructor()))  // 작성자 정보 추가
 				.totalScore(exam.getTotalScore())
-				.status(ExamStatus.SCHEDULED) 
+				.status(ExamStatus.SCHEDULED)
 				.build();
-    }
+	}
 
 }
