@@ -3,14 +3,17 @@ package com.example.epari.admin.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.epari.admin.dto.AdminCourseListResponseDto;
 import com.example.epari.admin.dto.AdminCourseRequestDto;
 import com.example.epari.admin.dto.CourseSearchResponseDTO;
+import com.example.epari.admin.repository.AdminCourseRepository;
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.domain.Curriculum;
-import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.course.repository.CurriculumRepository;
 import com.example.epari.global.common.service.S3FileService;
 import com.example.epari.global.exception.BusinessBaseException;
@@ -19,10 +22,12 @@ import com.example.epari.user.domain.Instructor;
 import com.example.epari.user.repository.InstructorRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 관리자가 강의를 관리하는 비즈니스 로직을 처리하는 서비스 클래스
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -30,7 +35,7 @@ public class AdminCourseService {
 
 	private static final String COURSE_IMAGE_DIRECTORY = "course-images";
 
-	private final CourseRepository courseRepository;
+	private final AdminCourseRepository courseRepository;
 
 	private final InstructorRepository instructorRepository;
 
@@ -49,6 +54,7 @@ public class AdminCourseService {
 	 * 강의 생성
 	 */
 	@Transactional
+	@CacheEvict(value = "courses", allEntries = true)
 	public Long createCourse(AdminCourseRequestDto request) {
 		// 1. 강사 존재 여부 확인
 		Instructor instructor = instructorRepository.findById(request.getInstructorId())
@@ -87,6 +93,17 @@ public class AdminCourseService {
 		curriculumRepository.saveAll(curriculums);
 
 		return savedCourse.getId();
+	}
+
+	/**
+	 * 모든 강의 목록 조회
+	 */
+	@Cacheable(value = "courses", key = "'all'")
+	public List<AdminCourseListResponseDto> getCourses() {
+		log.info("Fetching all courses with student count");
+		List<AdminCourseListResponseDto> courses = courseRepository.findAllWithStudentCount();
+		log.info("Found {} courses", courses.size());
+		return courses;
 	}
 
 }

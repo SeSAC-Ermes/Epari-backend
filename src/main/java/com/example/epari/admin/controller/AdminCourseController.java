@@ -2,7 +2,6 @@ package com.example.epari.admin.controller;
 
 import java.util.List;
 
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.epari.admin.dto.AdminCourseListResponseDto;
 import com.example.epari.admin.dto.AdminCourseRequestDto;
 import com.example.epari.admin.dto.CourseSearchResponseDTO;
 import com.example.epari.admin.service.AdminCourseService;
@@ -58,6 +58,14 @@ public class AdminCourseController {
 		log.info("Course created successfully - id: {}", savedCourseId);
 
 		return ResponseEntity.ok(savedCourseId);
+	}
+
+	/**
+	 * 모든 강의 목록 조회
+	 */
+	@GetMapping
+	public ResponseEntity<List<AdminCourseListResponseDto>> getCourses() {
+		return ResponseEntity.ok(adminCourseService.getCourses());
 	}
 
 }
