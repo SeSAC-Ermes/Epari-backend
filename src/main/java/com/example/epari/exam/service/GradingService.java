@@ -1,10 +1,15 @@
 package com.example.epari.exam.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.epari.course.domain.CourseStudent;
+import com.example.epari.course.repository.CourseStudentRepository;
+import com.example.epari.exam.domain.Exam;
 import com.example.epari.exam.domain.ExamQuestion;
 import com.example.epari.exam.domain.ExamResult;
 import com.example.epari.exam.domain.ExamScore;
@@ -12,6 +17,7 @@ import com.example.epari.exam.repository.ExamResultRepository;
 import com.example.epari.global.common.enums.ExamStatus;
 import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
+import com.example.epari.user.domain.Student;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -24,29 +30,51 @@ import lombok.extern.slf4j.Slf4j;
 public class GradingService {
 
 	private final ExamResultRepository examResultRepository;
+	private final CourseStudentRepository courseStudentRepository;
 
 	/**
-     * 단순 채점 처리 (내부용)
-     */
-	public void processGrading(ExamResult examResult) {
-		if (examResult.getStatus() != ExamStatus.SUBMITTED) {
-			throw new IllegalStateException("제출된 시험만 채점할 수 있습니다.");
-		}
+	 * 단순 채점 처리 (내부용)
+	 */
+	 public void processGrading(ExamResult examResult) {
+		Exam exam = examResult.getExam();
+		
+		// 1. 미제출자 처리
+		List<CourseStudent> courseStudents = courseStudentRepository.findAllCourseStudentsByCourseId(exam.getCourse().getId());
+        List<Long> submittedStudentIds = examResultRepository.findByExamId(exam.getId())
+                .stream()
+                .map(result -> result.getStudent().getId())
+                .collect(Collectors.toList());
 
-		for (ExamScore score : examResult.getScores()) {
-			ExamQuestion question = score.getQuestion();
-			String studentAnswer = score.getStudentAnswer();
-			
-			// 답안 채점
-			boolean isCorrect = question.validateAnswer(studentAnswer);
-			int earnedScore = isCorrect ? question.getScore() : 0;
-			score.updateScore(earnedScore);
-		}
-	
-		// 총점 계산 및 상태 업데이트
-		examResult.updateScore();  // updateStatus 대신 updateScore 호출
-		examResultRepository.save(examResult);
-	}
+        // 미제출자들의 ExamResult 생성
+        for (CourseStudent courseStudent : courseStudents) {
+            if (!submittedStudentIds.contains(courseStudent.getStudent().getId())) {
+                ExamResult notSubmittedResult = ExamResult.builder()
+                        .exam(exam)
+                        .student(courseStudent.getStudent())
+                        .status(ExamStatus.NOT_SUBMITTED)
+						.submitTime(LocalDateTime.now())
+                        .build();
+                examResultRepository.save(notSubmittedResult);
+                log.info("Created NOT_SUBMITTED result for student: {}", courseStudent.getId());
+            }
+        }
+
+        // 2. 기존 채점 로직
+        if (examResult.getStatus() == ExamStatus.SUBMITTED) {
+            for (ExamScore score : examResult.getScores()) {
+                ExamQuestion question = score.getQuestion();
+                String studentAnswer = score.getStudentAnswer();
+                
+                boolean isCorrect = question.validateAnswer(studentAnswer);
+                int earnedScore = isCorrect ? question.getScore() : 0;
+                score.updateScore(earnedScore);
+            }
+            
+            examResult.updateScore();
+            examResultRepository.save(examResult);
+        }
+    }
+
 
 	@Transactional(readOnly = true)
 	public boolean verifyTotalScore(ExamResult examResult) {
