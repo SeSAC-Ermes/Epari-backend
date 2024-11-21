@@ -135,6 +135,7 @@ public class RedisConfig {
 
 		// 캐시별 설정 추가
 		configMap.put("curriculums", defaultCacheConfig.entryTtl(CachingTTL.CURRICULUM));
+		configMap.put("courses", defaultCacheConfig.entryTtl(CachingTTL.COURSE_LIST));
 
 		return configMap;
 	}
@@ -160,6 +161,8 @@ public class RedisConfig {
 	private static class CachingTTL {
 
 		public static final Duration CURRICULUM = Duration.ofHours(12);
+
+		public static final Duration COURSE_LIST = Duration.ofHours(3); // 강의 목록 캐시
 
 	}
 
