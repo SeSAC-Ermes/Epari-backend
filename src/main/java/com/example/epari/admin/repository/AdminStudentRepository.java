@@ -21,24 +21,24 @@ public interface AdminStudentRepository extends JpaRepository<Student, Long> {
      * - STUDENT 그룹에 속한 사용자만 조회
      */
     @Query("""
-        SELECT new com.example.epari.admin.dto.AvailableStudentResponseDTO(
-            s.id,
-            u.name,
-            u.email
-        )
-        FROM Student s
-        JOIN BaseUser u ON u.id = s.id
-        WHERE s.id NOT IN (
-            SELECT cs.student.id
-            FROM CourseStudent cs
-            WHERE cs.course.id = :courseId
-        )
-        AND (:keyword IS NULL OR :keyword = ''
-            OR LOWER(u.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-            OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))
-        AND u.role = 'STUDENT'
-        ORDER BY u.name ASC
-        """)
+            SELECT new com.example.epari.admin.dto.AvailableStudentResponseDTO(
+                s.id,
+                u.name,
+                u.email
+            )
+            FROM Student s
+            JOIN BaseUser u ON u.id = s.id
+            WHERE s.id NOT IN (
+                SELECT cs.student.id
+                FROM CourseStudent cs
+                WHERE cs.course.id = :courseId
+            )
+            AND (:keyword IS NULL OR :keyword = ''
+                OR LOWER(u.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))
+            AND u.role = 'STUDENT'
+            ORDER BY u.name ASC
+            """)
     List<AvailableStudentResponseDTO> findAvailableStudentsForCourse(
         @Param("courseId") Long courseId,
         @Param("keyword") String keyword

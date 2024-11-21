@@ -1,9 +1,10 @@
 package com.example.epari.admin.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 import java.util.Set;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import com.example.epari.admin.dto.CourseStudentResponseDTO;
 import com.example.epari.course.domain.CourseStudent;
@@ -28,9 +29,10 @@ public interface AdminCourseStudentRepository extends JpaRepository<CourseStuden
 			WHERE cs.course.id = :courseId
 			ORDER BY cs.createdAt DESC
 			""")
-    List<CourseStudentResponseDTO> findEnrolledStudentsByCourseId(Long courseId);
+	List<CourseStudentResponseDTO> findEnrolledStudentsByCourseId(Long courseId);
 
-    void deleteByCourseIdAndStudentIdIn(Long courseId, Set<Long> studentIds);
+	void deleteByCourseIdAndStudentIdIn(Long courseId, Set<Long> studentIds);
 
-    List<CourseStudent> findByCourseId(Long courseId);
+	List<CourseStudent> findByCourseId(Long courseId);
+
 }
