@@ -36,7 +36,7 @@ public class AdminUserService {
 	public String approveUser(String email, ApprovalRequestDTO request) {
 		// 1. 사용자 저장
 		Student student = Student
-				.createStudent(email, "PASSWORD", request.getName(), "010-1234-5678");
+				.createStudent(email, request.getName());
 
 		studentRepository.save(student);
 

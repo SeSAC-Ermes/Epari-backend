@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/courses/{courseId}/assignments/{assignmentId}/submissions")
@@ -46,6 +48,15 @@ public class SubmissionController {
 		return ResponseEntity.ok(
 				submissionService.getSubmissionById(courseId, assignmentId, submissionId)
 		);
+	}
+
+	@PreAuthorize("hasRole('INSTRUCTOR')")
+	@GetMapping("/list")
+	public ResponseEntity<List<SubmissionResponseDto>> getAllSubmissions(
+			@PathVariable Long courseId,
+			@PathVariable Long assignmentId) {
+		List<SubmissionResponseDto> submissions = submissionService.getSubmissionsByAssignmentId(assignmentId);
+		return ResponseEntity.ok(submissions);
 	}
 
 	@PreAuthorize("hasRole('STUDENT')")
@@ -108,5 +119,6 @@ public class SubmissionController {
 		submissionService.deleteSubmission(courseId, assignmentId, submissionId, student.getId());
 		return ResponseEntity.ok().build();
 	}
+
 
 }

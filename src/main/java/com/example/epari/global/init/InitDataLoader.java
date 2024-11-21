@@ -107,23 +107,17 @@ public class InitDataLoader implements ApplicationRunner {
 		List<Instructor> instructors = new ArrayList<>();
 		Instructor instructor1 = Instructor.createInstructor(
 				"instructor@test.com",
-				"1234",
-				"윤강사",
-				"010-1234-5678"
+				"윤강사"
 		);
 
 		Instructor instructor2 = Instructor.createInstructor(
 				"instructor2@test.com",
-				"1234",
-				"김강사",
-				"010-9876-5432"
+				"김강사"
 		);
 
 		Instructor instructor3 = Instructor.createInstructor(
 				"instructor3@test.com",
-				"1234",
-				"이강사",
-				"010-7777-4444"
+				"이강사"
 		);
 
 		instructors.add(instructor1);
@@ -138,9 +132,7 @@ public class InitDataLoader implements ApplicationRunner {
 		for (int i = 1; i <= 10; i++) {
 			Student student = Student.createStudent(
 					"student" + i + "@test.com",
-					"1234",
-					"학생" + i,
-					"010-1234-" + String.format("%04d", i)
+					"학생" + i
 			);
 			students.add(student);
 		}

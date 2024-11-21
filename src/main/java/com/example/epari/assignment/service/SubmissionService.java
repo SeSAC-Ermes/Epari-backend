@@ -20,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -55,7 +57,7 @@ public class SubmissionService {
 
 		// 기존 제출물이 있는지 확인
 		Optional<Submission> existingSubmission = submissionRepository
-				.findByAssignment_IdAndStudent_Id(assignmentId, studentId);
+				.findByAssignmentIdAndStudentId(assignmentId, studentId);
 
 		Submission submission;
 		if (existingSubmission.isPresent()) {
@@ -111,7 +113,7 @@ public class SubmissionService {
 	 * 학생의 과제 제출물 조회
 	 */
 	public SubmissionResponseDto getStudentSubmission(Long courseId, Long assignmentId, Long studentId) {
-		Optional<Submission> submission = submissionRepository.findByAssignment_IdAndStudent_Id(assignmentId, studentId);
+		Optional<Submission> submission = submissionRepository.findByAssignmentIdAndStudentId(assignmentId, studentId);
 
 		// 제출물이 없으면 null 반환 (404 대신)
 		if (submission.isEmpty()) {
@@ -125,6 +127,30 @@ public class SubmissionService {
 		}
 
 		return SubmissionResponseDto.from(foundSubmission);
+	}
+
+	/**
+	 * 전체 과제 조회
+	 */
+	public List<SubmissionResponseDto> getSubmissionsByAssignmentId(Long assignmentId) {
+		List<Submission> submissions = submissionRepository.findByAssignmentId(assignmentId);
+		return submissions.stream()
+				.map(SubmissionResponseDto::from)
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * 특정 강의의 모든 과제 제출물 조회
+	 */
+	public List<SubmissionResponseDto> getSubmissionsByCourse(Long courseId) {
+		// 강의 존재 여부 확인
+		Course course = courseRepository.findById(courseId)
+				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다."));
+
+		List<Submission> submissions = submissionRepository.findByCourseId(courseId);
+		return submissions.stream()
+				.map(SubmissionResponseDto::from)
+				.collect(Collectors.toList());
 	}
 
 	/**

@@ -61,7 +61,7 @@ public class Submission extends BaseTimeEntity {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private SubmissionStatus status = SubmissionStatus.NOT_SUBMITTED;
+	private SubmissionStatus status = SubmissionStatus.SUBMITTED;
 
 	@Builder
 	private Submission(String description, Assignment assignment, Student student, SubmissionGrade grade) {
