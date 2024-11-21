@@ -17,12 +17,12 @@ import lombok.NoArgsConstructor;
 @Getter
 public class Student extends BaseUser {
 
-	private Student(String email, String password, String name, String phoneNumber) {
-		super(email, password, name, phoneNumber, UserRole.STUDENT);
+	private Student(String email, String name) {
+		super(email, name, UserRole.STUDENT);
 	}
 
-	public static Student createStudent(String email, String password, String name, String phoneNumber) {
-		return new Student(email, password, name, phoneNumber);
+	public static Student createStudent(String email, String name) {
+		return new Student(email, name);
 	}
 
 }

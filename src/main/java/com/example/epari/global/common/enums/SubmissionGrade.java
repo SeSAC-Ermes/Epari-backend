@@ -4,8 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum SubmissionGrade {
-	PASS("pass"),
-	NONE_PASS("none pass"),
+	PASS("통과"),
+	NONE_PASS("미통과"),
 	UNDER_REVIEW("검토중");
 
 	private final String description;

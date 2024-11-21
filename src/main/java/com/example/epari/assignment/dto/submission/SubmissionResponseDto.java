@@ -49,7 +49,6 @@ public class SubmissionResponseDto {
 					.id(student.getId())
 					.name(student.getName())
 					.email(student.getEmail())
-					.phoneNumber(student.getPhoneNumber())
 					.build();
 		}
 

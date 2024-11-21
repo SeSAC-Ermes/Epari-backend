@@ -45,7 +45,6 @@ public class AssignmentResponseDto {
 					.id(instructor.getId())
 					.name(instructor.getName())
 					.email(instructor.getEmail())
-					.phoneNumber(instructor.getPhoneNumber())
 					.build();
 		}
 

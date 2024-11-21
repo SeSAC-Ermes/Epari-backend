@@ -19,12 +19,12 @@ public class Instructor extends BaseUser {
 
 	private String careerHistory;
 
-	private Instructor(String email, String password, String name, String phoneNumber) {
-		super(email, password, name, phoneNumber, UserRole.INSTRUCTOR);
+	private Instructor(String email, String name) {
+		super(email, name, UserRole.INSTRUCTOR);
 	}
 
-	public static Instructor createInstructor(String email, String password, String name, String phoneNumber) {
-		return new Instructor(email, password, name, phoneNumber);
+	public static Instructor createInstructor(String email, String name) {
+		return new Instructor(email, name);
 	}
 
 }
