@@ -54,7 +54,7 @@ public class AdminCourseService {
 	 * 강의 생성
 	 */
 	@Transactional
-	@CacheEvict(value = "courses", allEntries = true)
+	@CacheEvict(value = "courses", key = "'all'")
 	public Long createCourse(AdminCourseRequestDto request) {
 		// 1. 강사 존재 여부 확인
 		Instructor instructor = instructorRepository.findById(request.getInstructorId())
