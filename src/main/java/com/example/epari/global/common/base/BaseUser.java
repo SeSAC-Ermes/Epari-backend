@@ -32,12 +32,7 @@ public abstract class BaseUser extends BaseTimeEntity {
 	private String email;
 
 	@Column(nullable = false)
-	private String password;
-
-	@Column(nullable = false)
 	private String name;
-
-	private String phoneNumber;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
@@ -50,17 +45,15 @@ public abstract class BaseUser extends BaseTimeEntity {
 		super();
 	}
 
-	protected BaseUser(String email, String password, String name, String phoneNumber, UserRole role) {
+	protected BaseUser(String email, String name, UserRole role) {
 		this.email = email;
-		this.password = password;
 		this.name = name;
-		this.phoneNumber = phoneNumber;
 		this.role = role;
 	}
 
-	public void updateProfile(String name, String phoneNumber) {
+	public void updateProfile(String name) {
 		this.name = name;
-		this.phoneNumber = phoneNumber;
+
 	}
 
 	public void updateProfileImage(ProfileImage profileImage) {

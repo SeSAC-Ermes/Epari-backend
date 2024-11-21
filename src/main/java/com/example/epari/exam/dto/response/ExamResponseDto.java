@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.example.epari.course.domain.Course;
 import com.example.epari.exam.domain.Exam;
 import com.example.epari.exam.domain.ExamResult;
 import com.example.epari.global.common.enums.ExamStatus;
@@ -40,6 +41,24 @@ public class ExamResponseDto {
 
 	private Integer earnedScore;
 
+	private InstructorInfo instructor;
+
+	@Getter
+	@Builder
+	public static class InstructorInfo {
+		private Long id;
+		private String name;
+		private String email;
+
+		public static InstructorInfo from(Course course) {
+			return InstructorInfo.builder()
+					.id(course.getInstructor().getId())
+					.name(course.getInstructor().getName())
+					.email(course.getInstructor().getEmail())
+					.build();
+		}
+	}
+
 	public static ExamResponseDto fromExamForInstructor(Exam exam) {
 		return ExamResponseDto.builder()
 				.id(exam.getId())
@@ -52,6 +71,7 @@ public class ExamResponseDto {
 				.questions(exam.getQuestions().stream()
 						.map(ExamQuestionResponseDto::fromQuestionWithAnswer)
 						.collect(Collectors.toList()))
+				.instructor(InstructorInfo.from(exam.getCourse()))
 				.build();
 	}
 
@@ -71,6 +91,7 @@ public class ExamResponseDto {
 				.status(result != null ? result.getStatus() : null)
 				.submitTime(result != null ? result.getSubmitTime() : null)
 				.earnedScore(result != null ? result.getEarnedScore() : null)
+				.instructor(InstructorInfo.from(exam.getCourse()))
 				.build();
 	}
 

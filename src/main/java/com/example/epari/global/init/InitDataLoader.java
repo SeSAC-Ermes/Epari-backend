@@ -16,6 +16,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.epari.assignment.domain.Assignment;
+import com.example.epari.assignment.domain.Submission;
+import com.example.epari.assignment.repository.AssignmentRepository;
+import com.example.epari.assignment.repository.SubmissionRepository;
+import com.example.epari.assignment.service.AssignmentService;
+import com.example.epari.assignment.service.SubmissionService;
 import com.example.epari.course.domain.Attendance;
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.domain.CourseStudent;
@@ -35,6 +41,8 @@ import com.example.epari.exam.repository.ExamQuestionRepository;
 import com.example.epari.exam.repository.ExamRepository;
 import com.example.epari.exam.repository.ExamResultRepository;
 import com.example.epari.global.common.enums.AttendanceStatus;
+import com.example.epari.global.common.enums.SubmissionGrade;
+import com.example.epari.global.common.enums.SubmissionStatus;
 import com.example.epari.user.domain.Instructor;
 import com.example.epari.user.domain.Student;
 import com.example.epari.user.repository.InstructorRepository;
@@ -66,6 +74,10 @@ public class InitDataLoader implements ApplicationRunner {
 	private final AttendanceRepository attendanceRepository;
 
 	private final ExamResultRepository examResultRepository;
+
+	private final AssignmentRepository assignmentRepository;
+
+	private final SubmissionRepository submissionRepository;
 
 	@Transactional
 	@Override
@@ -100,6 +112,9 @@ public class InitDataLoader implements ApplicationRunner {
 		// 7. 시험 결과 데이터 생성 (모든 학생이 모든 시험을 봄)
 		createExamResults(courses, students);
 
+		// 9. 과제 데이터 생성 (첫 번째 강의에 대해서만)
+		createAssignments(courses.get(0), instructors.get(0));
+
 	}
 
 	// 강사 추가를 위해 list로 반환
@@ -107,23 +122,17 @@ public class InitDataLoader implements ApplicationRunner {
 		List<Instructor> instructors = new ArrayList<>();
 		Instructor instructor1 = Instructor.createInstructor(
 				"instructor@test.com",
-				"1234",
-				"윤강사",
-				"010-1234-5678"
+				"윤강사"
 		);
 
 		Instructor instructor2 = Instructor.createInstructor(
 				"instructor2@test.com",
-				"1234",
-				"김강사",
-				"010-9876-5432"
+				"김강사"
 		);
 
 		Instructor instructor3 = Instructor.createInstructor(
 				"instructor3@test.com",
-				"1234",
-				"이강사",
-				"010-7777-4444"
+				"이강사"
 		);
 
 		instructors.add(instructor1);
@@ -138,9 +147,7 @@ public class InitDataLoader implements ApplicationRunner {
 		for (int i = 1; i <= 10; i++) {
 			Student student = Student.createStudent(
 					"student" + i + "@test.com",
-					"1234",
-					"학생" + i,
-					"010-1234-" + String.format("%04d", i)
+					"학생" + i
 			);
 			students.add(student);
 		}
@@ -395,7 +402,7 @@ public class InitDataLoader implements ApplicationRunner {
 
 	private boolean isWeekend(LocalDate date) {
 		return date.getDayOfWeek() == java.time.DayOfWeek.SATURDAY
-				|| date.getDayOfWeek() == java.time.DayOfWeek.SUNDAY;
+			   || date.getDayOfWeek() == java.time.DayOfWeek.SUNDAY;
 	}
 
 	private static class CurriculumInfo {
@@ -424,7 +431,7 @@ public class InitDataLoader implements ApplicationRunner {
 		// 1. Java 중간고사
 		Exam javaExam = Exam.builder()
 				.title("Java 중간고사")
-				.examDateTime(LocalDateTime.of(2025, 7, 23, 14, 0))
+				.examDateTime(LocalDateTime.of(2025, 11, 24, 18, 00))
 				.duration(120)
 				.totalScore(100)
 				.description("Java 기초 문법과 객체지향 프로그래밍에 대한 이해도를 평가합니다.")
@@ -1498,6 +1505,149 @@ public class InitDataLoader implements ApplicationRunner {
 		}
 
 		attendanceRepository.saveAll(attendances);
+	}
+
+	private void createAssignments(Course course, Instructor instructor) {
+		List<Assignment> assignments = new ArrayList<>();
+
+		// 1. Java 기초 과제
+		assignments.add(Assignment.createAssignment(
+				"Java 객체지향 프로그래밍 실습",
+				"상속, 다형성, 캡슐화를 활용한 간단한 도서관 관리 시스템을 구현하세요.",
+				LocalDateTime.of(2024, 7, 20, 23, 59),
+				course,
+				instructor
+		));
+
+		// 2. 알고리즘 과제
+		assignments.add(Assignment.createAssignment(
+				"알고리즘 문제 풀이",
+				"정렬 알고리즘을 구현하고 시간복잡도를 분석하세요.",
+				LocalDateTime.of(2024, 8, 10, 23, 59),
+				course,
+				instructor
+		));
+
+		// 3. 데이터베이스 설계 과제
+		assignments.add(Assignment.createAssignment(
+				"데이터베이스 모델링",
+				"쇼핑몰 데이터베이스를 설계하고 ERD를 작성하세요.",
+				LocalDateTime.of(2024, 8, 30, 23, 59),
+				course,
+				instructor
+		));
+
+		// 4. Spring Framework 과제
+		assignments.add(Assignment.createAssignment(
+				"Spring MVC 게시판 구현",
+				"Spring Boot와 JPA를 활용하여 CRUD 기능이 있는 게시판을 구현하세요.",
+				LocalDateTime.of(2024, 9, 20, 23, 59),
+				course,
+				instructor
+		));
+
+		// 5. AWS 실습 과제
+		assignments.add(Assignment.createAssignment(
+				"AWS 서비스 구축",
+				"EC2, RDS, S3를 활용하여 웹 애플리케이션을 배포하세요.",
+				LocalDateTime.of(2024, 10, 10, 23, 59),
+				course,
+				instructor
+		));
+
+		assignments = assignmentRepository.saveAll(assignments);
+		createSubmissions(assignments, studentRepository.findAll());
+	}
+
+	private void createSubmissions(List<Assignment> assignments, List<Student> students) {
+		Random random = new Random();
+		List<Submission> allSubmissions = new ArrayList<>();
+
+		for (Assignment assignment : assignments) {
+			for (Student student : students) {
+				// 90%의 확률로 과제 제출
+				if (random.nextInt(100) < 90) {
+					SubmissionStatus status;
+					SubmissionGrade grade = null;
+					String feedback = null;
+
+					// 과제 제출 날짜가 지났는지 확인
+					boolean isAfterDeadline = LocalDateTime.now().isAfter(assignment.getDeadline());
+
+					if (isAfterDeadline) {
+						// 제출 기한이 지난 과제는 채점 완료 상태
+						status = SubmissionStatus.GRADED;
+
+						// 랜덤하게 성적 부여 (70% PASS, 30% NONE_PASS)
+						if (random.nextInt(100) < 70) {
+							grade = SubmissionGrade.PASS;
+							feedback = "잘 작성된 과제입니다. 특히 " + generatePositiveFeedback();
+						} else {
+							grade = SubmissionGrade.NONE_PASS;
+							feedback = "아쉬운 점이 있습니다. " + generateNegativeFeedback();
+						}
+					} else {
+						// 제출 기한이 지나지 않은 과제
+						if (random.nextInt(100) < 70) {
+							// 70%는 채점 중
+							status = SubmissionStatus.SUBMITTED;
+							grade = SubmissionGrade.UNDER_REVIEW;
+						} else {
+							// 30%는 채점 완료
+							status = SubmissionStatus.GRADED;
+							if (random.nextInt(100) < 80) {
+								grade = SubmissionGrade.PASS;
+								feedback = "잘 작성된 과제입니다. 특히 " + generatePositiveFeedback();
+							} else {
+								grade = SubmissionGrade.NONE_PASS;
+								feedback = "아쉬운 점이 있습니다. " + generateNegativeFeedback();
+							}
+						}
+					}
+
+					Submission submission = Submission.createSubmission(
+							generateSubmissionDescription(assignment.getTitle()),
+							assignment,
+							student
+					);
+
+					if (grade != null && feedback != null) {
+						submission.updateGrade(grade, feedback);
+					}
+
+					// 파일 생성은 생략 (실제 파일이 필요한 경우 S3 업로드 로직 구현 필요)
+					allSubmissions.add(submission);
+				}
+			}
+		}
+
+		submissionRepository.saveAll(allSubmissions);
+	}
+
+	private String generateSubmissionDescription(String assignmentTitle) {
+		return String.format("%s에 대한 과제 제출입니다. 열심히 수행하였습니다.", assignmentTitle);
+	}
+
+	private String generatePositiveFeedback() {
+		String[] positivePoints = {
+				"코드의 구조가 잘 정리되어 있습니다.",
+				"문제 해결 방식이 창의적입니다.",
+				"제시된 요구사항을 모두 충족했습니다.",
+				"코드 품질이 우수합니다.",
+				"문서화가 잘 되어있습니다."
+		};
+		return positivePoints[new Random().nextInt(positivePoints.length)];
+	}
+
+	private String generateNegativeFeedback() {
+		String[] negativePoints = {
+				"코드 구조의 개선이 필요합니다.",
+				"일부 요구사항이 누락되었습니다.",
+				"테스트 케이스가 부족합니다.",
+				"예외 처리가 미흡합니다.",
+				"코드 재사용성을 고려해야 합니다."
+		};
+		return negativePoints[new Random().nextInt(negativePoints.length)];
 	}
 
 }

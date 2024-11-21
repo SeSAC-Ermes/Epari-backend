@@ -20,7 +20,9 @@ import com.example.epari.course.dto.content.CourseContentRequestDto;
 import com.example.epari.course.dto.content.CourseContentResponseDto;
 import com.example.epari.course.service.CourseContentService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 강의 컨텐츠 관련 REST API를 처리하는 컨트롤러
@@ -29,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/courses/{courseId}/contents")
 @RequiredArgsConstructor
 @EnableMethodSecurity
+@Slf4j
 public class CourseContentController {
 
 	private final CourseContentService courseContentService;
@@ -40,8 +43,8 @@ public class CourseContentController {
 	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<CourseContentResponseDto> uploadContent(
 			@PathVariable Long courseId,
-			@ModelAttribute CourseContentRequestDto.Upload request) {
-
+			@Valid @ModelAttribute CourseContentRequestDto.Upload request) {
+		log.info("Content upload request received for course: {}", courseId);
 		request.setDate(LocalDate.now());
 		return ResponseEntity.ok(courseContentService.uploadContent(courseId, request));
 	}
@@ -53,6 +56,7 @@ public class CourseContentController {
 	public ResponseEntity<CourseContentResponseDto> getContent(
 			@PathVariable Long courseId,
 			@PathVariable Long contentId) {
+		log.info("Fetching content: {} for course: {}", contentId, courseId);
 		return ResponseEntity.ok(courseContentService.getContent(courseId, contentId));
 	}
 
@@ -62,6 +66,7 @@ public class CourseContentController {
 	@GetMapping
 	public ResponseEntity<List<CourseContentResponseDto>> getContents(
 			@PathVariable Long courseId) {
+		log.info("Fetching all contents for course: {}", courseId);
 		return ResponseEntity.ok(courseContentService.getContents(courseId));
 	}
 
@@ -73,8 +78,8 @@ public class CourseContentController {
 	public ResponseEntity<CourseContentResponseDto> updateContent(
 			@PathVariable Long courseId,
 			@PathVariable Long contentId,
-			@ModelAttribute CourseContentRequestDto.Update request) {
-
+			@Valid @ModelAttribute CourseContentRequestDto.Update request) {
+		log.info("Content update request received - courseId: {}, contentId: {}", courseId, contentId);
 		return ResponseEntity.ok(courseContentService.updateContent(courseId, contentId, request));
 	}
 
@@ -86,6 +91,7 @@ public class CourseContentController {
 	public ResponseEntity<Void> deleteContent(
 			@PathVariable Long courseId,
 			@PathVariable Long contentId) {
+		log.info("Content deletion request received - courseId: {}, contentId: {}", courseId, contentId);
 		courseContentService.deleteContent(courseId, contentId);
 		return ResponseEntity.ok().build();
 	}
@@ -98,6 +104,8 @@ public class CourseContentController {
 	public ResponseEntity<Void> deleteContents(
 			@PathVariable Long courseId,
 			@RequestParam List<Long> contentIds) {
+		log.info("Batch content deletion request received - courseId: {}, contentIds: {}",
+				courseId, contentIds);
 		courseContentService.deleteContents(courseId, contentIds);
 		return ResponseEntity.ok().build();
 	}
@@ -110,6 +118,8 @@ public class CourseContentController {
 			@PathVariable Long courseId,
 			@PathVariable Long contentId,
 			@PathVariable Long fileId) {
+		log.info("File download request received - courseId: {}, contentId: {}, fileId: {}",
+				courseId, contentId, fileId);
 		String fileUrl = courseContentService.downloadContent(courseId, contentId, fileId);
 		return ResponseEntity.ok(fileUrl);
 	}
@@ -123,6 +133,8 @@ public class CourseContentController {
 			@PathVariable Long courseId,
 			@PathVariable Long contentId,
 			@PathVariable Long fileId) {
+		log.info("File deletion request received - courseId: {}, contentId: {}, fileId: {}",
+				courseId, contentId, fileId);
 		return ResponseEntity.ok(courseContentService.deleteFile(courseId, contentId, fileId));
 	}
 
@@ -132,6 +144,7 @@ public class CourseContentController {
 	@GetMapping("/today")
 	public ResponseEntity<List<CourseContentResponseDto>> getTodayContents(
 			@PathVariable Long courseId) {
+		log.info("Fetching today's contents for course: {}", courseId);
 		return ResponseEntity.ok(courseContentService.getTodayContents(courseId));
 	}
 

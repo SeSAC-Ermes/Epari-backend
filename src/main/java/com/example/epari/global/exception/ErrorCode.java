@@ -57,6 +57,11 @@ public enum ErrorCode {
 	// Course 관련 에러 코드 (CRS)
 	COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS-001", "강의를 찾을 수 없습니다."),
 	UNAUTHORIZED_COURSE_ACCESS(HttpStatus.FORBIDDEN, "CRS-002", "해당 강의에 대한 접근 권한이 없습니다."),
+	COURSE_INSTRUCTOR_MISMATCH(HttpStatus.FORBIDDEN, "CRS-003", "해당 강의에 대한 권한이 없습니다."),
+	COURSE_CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS-004", "강의 자료를 찾을 수 없습니다."),
+	COURSE_DATE_INVALID(HttpStatus.BAD_REQUEST, "CRS-005", "유효하지 않은 강의 일정입니다."),
+	COURSE_ALREADY_EXISTS(HttpStatus.CONFLICT, "CRS-006", "이미 존재하는 강의입니다."),
+	COURSE_STUDENT_NOT_FOUND(HttpStatus.NOT_FOUND, "CRS-007", "해당 강의의 수강생을 찾을 수 없습니다."),
 
 	// Assignment 관련 에러 코드 (ASM)
 	ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASM-001", "과제를 찾을 수 없습니다."),
@@ -103,7 +108,17 @@ public enum ErrorCode {
 	EXAM_ALREADY_GRADED(HttpStatus.BAD_REQUEST, "GRD-002", "이미 채점이 완료된 시험입니다."),
 	GRADING_IN_PROGRESS(HttpStatus.BAD_REQUEST, "GRD-003", "채점이 진행 중인 시험입니다."),
 	INVALID_SCORE_VALUE(HttpStatus.BAD_REQUEST, "GRD-004", "유효하지 않은 점수입니다."),
-	GRADING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "GRD-005", "채점 처리 중 오류가 발생했습니다.");
+	GRADING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "GRD-005", "채점 처리 중 오류가 발생했습니다."),
+
+	//파일 관련 에러 코드 (FILE)
+	FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "FILE-001", "파일을 찾을 수 없습니다."),
+	FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-002", "파일 업로드에 실패했습니다."),
+	FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-003", "파일 삭제에 실패했습니다."),
+	FILE_DOWNLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-004", "파일 다운로드에 실패했습니다."),
+	FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "FILE-005", "파일 크기가 제한을 초과했습니다."),
+	INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "FILE-006", "지원하지 않는 파일 형식입니다."),
+	FILE_EMPTY(HttpStatus.BAD_REQUEST, "FILE-007", "파일이 비어있습니다."),
+	INVALID_FILE_URL(HttpStatus.BAD_REQUEST, "FILE-008", "잘못된 파일 URL 형식입니다.");
 
 	private final HttpStatus status;
 
