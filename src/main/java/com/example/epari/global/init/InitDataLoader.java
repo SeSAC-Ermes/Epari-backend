@@ -424,7 +424,7 @@ public class InitDataLoader implements ApplicationRunner {
 		// 1. Java 중간고사
 		Exam javaExam = Exam.builder()
 				.title("Java 중간고사")
-				.examDateTime(LocalDateTime.of(2025, 7, 23, 14, 0))
+				.examDateTime(LocalDateTime.of(2025, 11, 24, 18, 00))
 				.duration(120)
 				.totalScore(100)
 				.description("Java 기초 문법과 객체지향 프로그래밍에 대한 이해도를 평가합니다.")
