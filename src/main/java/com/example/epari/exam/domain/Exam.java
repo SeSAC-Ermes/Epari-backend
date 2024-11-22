@@ -6,10 +6,13 @@ import java.util.List;
 
 import com.example.epari.course.domain.Course;
 import com.example.epari.global.common.base.BaseTimeEntity;
+import com.example.epari.global.common.enums.ExamStatus;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -145,6 +148,25 @@ public class Exam extends BaseTimeEntity {
 	public boolean isDuringExam() {
 		LocalDateTime now = LocalDateTime.now();
 		return !isBeforeExam() && !isAfterExam();
+	}
+
+	@Enumerated(EnumType.STRING)
+	private ExamStatus status = ExamStatus.SCHEDULED;
+
+	// 상태 변경 메서드 추가
+	public void updateStatus(ExamStatus newStatus) {
+		this.status = newStatus;
+	}
+
+	// 시험 상태 검증 메서드
+	public boolean canChangeStatusTo(ExamStatus newStatus) {
+		return switch (this.status) {
+			case SCHEDULED -> newStatus == ExamStatus.IN_PROGRESS;
+			case IN_PROGRESS -> newStatus == ExamStatus.GRADING;
+			case GRADING -> newStatus == ExamStatus.GRADED;
+			case GRADED -> newStatus == ExamStatus.COMPLETED;
+			default -> false;
+		};
 	}
 
 }
