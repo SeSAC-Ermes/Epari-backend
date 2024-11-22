@@ -18,6 +18,9 @@ import com.example.epari.global.exception.auth.AuthenticationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 인증 관련 기능을 처리하는 AuthController, 승인 대기 역할 추가 기능 포함
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
@@ -70,12 +73,21 @@ public class AuthController {
 	@PostMapping("/check-user")
 	public ResponseEntity<?> checkUser(@RequestBody Map<String, String> request) {
 		String email = request.get("email");
+		System.out.println("email: " + email);
 		List<String> groups = authService.getUserGroups(email);
 
 		Map<String, Object> response = new HashMap<>();
 		response.put("groups", groups);
 
 		return ResponseEntity.ok(response);
+	}
+
+	// AuthController.java에 추가
+	@PostMapping("/add-pending-role")
+	public ResponseEntity<?> addPendingRole(@RequestBody Map<String, String> request) {
+		String email = request.get("email");
+		authService.addUserToPendingRole(email);
+		return ResponseEntity.ok().body(new SuccessResponseDto("승인 대기 그룹에 추가되었습니다."));
 	}
 
 }
