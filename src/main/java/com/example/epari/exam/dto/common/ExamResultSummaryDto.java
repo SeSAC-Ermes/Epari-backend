@@ -19,6 +19,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ExamResultSummaryDto {
 
+	private Long id;
+
 	private String studentName;
 
 	private String studentEmail;
