@@ -11,6 +11,8 @@ import lombok.Getter;
 @Builder
 public class ExamResultSummaryDto {
 
+	private Long id;
+
 	private String studentName;
 
 	private String studentEmail;
