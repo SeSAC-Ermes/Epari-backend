@@ -1,10 +1,14 @@
 package com.example.epari.user.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.epari.user.domain.Student;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.util.Optional;
 
 /**
@@ -14,4 +18,7 @@ import java.util.Optional;
 public interface StudentRepository extends JpaRepository<Student, Long> {
 
     Optional<Student> findByEmail(String email);
+
+	@Query("SELECT cs.student FROM CourseStudent cs WHERE cs.course.id = :courseId")
+	List<Student> findByCourseId(@Param("courseId") Long courseId);
 }
