@@ -54,7 +54,7 @@ public class AdminCourseStudentService {
 	 * 수강생 목록 업데이트
 	 */
 	@Transactional
-	@CacheEvict(value = "courses", allEntries = true)
+	@CacheEvict(value = "courses", key = "'all'")
 	public void updateEnrolledStudents(Long courseId, CourseStudentUpdateRequestDTO request) {
 		Course course = courseRepository.findById(courseId)
 				.orElseThrow(CourseNotFoundException::new);
