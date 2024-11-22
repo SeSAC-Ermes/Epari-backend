@@ -240,21 +240,21 @@ public class ExamSubmissionService {
 		// 1. 시험 결과 조회
 		ExamResult examResult = examResultRepository.findByExamIdAndStudentEmail(examId, studentEmail)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
-	
+
 		// 2. 시험 정보 조회
 		Exam exam = examRepository.findById(examId)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_FOUND));
-	
+
 		// 3. 문제별 답안 조회 (ExamScore 사용)
 		List<QuestionResultDto> questionResults = examResult.getScores().stream()
 				.<QuestionResultDto>map(score -> QuestionResultDto.builder()
-					.questionId(score.getQuestion().getId())
-					.questionTitle(score.getQuestion().getQuestionText())  // title -> questionText로 변경
-					.studentAnswer(score.getStudentAnswer())
-					.score(score.getEarnedScore())
-					.build())
+						.questionId(score.getQuestion().getId())
+						.questionTitle(score.getQuestion().getQuestionText())  // title -> questionText로 변경
+						.studentAnswer(score.getStudentAnswer())
+						.score(score.getEarnedScore())
+						.build())
 				.collect(Collectors.toList());
-	
+
 		return ExamResultDetailDto.builder()
 				.examId(examId)
 				.examTitle(exam.getTitle())
@@ -268,6 +268,7 @@ public class ExamSubmissionService {
 	public List<ExamResultSummaryDto> getExamResults(Long courseId, Long examId) {
 		return examResultRepository.findByExamId(examId).stream()
 				.map(result -> ExamResultSummaryDto.builder()
+						.id(result.getId())
 						.studentName(result.getStudent().getName())
 						.studentEmail(result.getStudent().getEmail())
 						.status(result.getStatus())
@@ -275,6 +276,46 @@ public class ExamSubmissionService {
 						.submittedAt(result.getSubmitTime())
 						.build())
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * 강사가 결과 resultid로 상세 조회
+	 */
+	public ExamResultDetailDto getStudentExamResultById(Long resultId) {
+		// 1. 시험 결과 조회
+		ExamResult examResult = examResultRepository.findById(resultId)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
+
+		// 2. 시험 정보 조회
+		Exam exam = examRepository.findById(examResult.getExam().getId())
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_FOUND));
+
+		// 3. 문제별 답안 조회 (ExamScore 사용)
+		List<QuestionResultDto> questionResults = examResult.getScores().stream()
+				.map(score -> {
+					ExamQuestion question = score.getQuestion();
+					return QuestionResultDto.builder()
+							.questionId(question.getId())
+							.questionTitle(question.getQuestionText())
+							.questionText(question.getQuestionText())
+							.type(question.getType())  // ExamQuestionType enum 사용
+							.score(question.getScore()) // 배점
+							.earnedScore(score.getEarnedScore()) // 획득 점수
+							.correctAnswer(question.getCorrectAnswer()) // 정답
+							.studentAnswer(score.getStudentAnswer()) // 학생 답안
+							.build();
+				})
+				.collect(Collectors.toList());
+
+		return ExamResultDetailDto.builder()
+				.examId(exam.getId())
+				.examTitle(exam.getTitle())
+				.startTime(examResult.getCreatedAt())
+				.endTime(examResult.getSubmitTime())
+				.status(examResult.getStatus())
+				.totalScore(examResult.getEarnedScore())
+				.questionResults(questionResults)
+				.build();
 	}
 
 }
