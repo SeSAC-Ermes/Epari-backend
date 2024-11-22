@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,12 +19,14 @@ import com.example.epari.course.dto.course.CourseResponseDto;
 import com.example.epari.course.service.CourseService;
 import com.example.epari.global.annotation.CurrentUserEmail;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/courses")
 @RequiredArgsConstructor
-@EnableMethodSecurity
+@Slf4j
 public class CourseController {
 
 	private final CourseService courseService;
@@ -38,7 +39,8 @@ public class CourseController {
 	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<CourseResponseDto> createCourse(
 			@RequestParam Long instructorId,
-			@RequestBody CourseRequestDto request) {
+			@Valid @RequestBody CourseRequestDto request) {
+		log.info("Creating course request received for instructor: {}", instructorId);
 		return ResponseEntity.ok(courseService.createCourse(instructorId, request));
 	}
 
@@ -47,6 +49,7 @@ public class CourseController {
 	 */
 	@GetMapping("/{id}")
 	public ResponseEntity<CourseResponseDto> getCourse(@PathVariable Long id) {
+		log.info("Fetching course details for id: {}", id);
 		return ResponseEntity.ok(courseService.getCourse(id));
 	}
 
@@ -56,9 +59,8 @@ public class CourseController {
 	@GetMapping("/usercourses")
 	public ResponseEntity<List<CourseResponseDto>> getMyCourses(
 			@CurrentUserEmail String email) {
-
-		List<CourseResponseDto> courses = courseService.getMyCourses(email);
-		return ResponseEntity.ok(courses);
+		log.info("Fetching courses for user: {}", email);
+		return ResponseEntity.ok(courseService.getMyCourses(email));
 	}
 
 	/**
@@ -70,8 +72,8 @@ public class CourseController {
 	public ResponseEntity<CourseResponseDto> updateCourse(
 			@PathVariable Long id,
 			@RequestParam Long instructorId,
-			@RequestBody CourseRequestDto request
-	) {
+			@Valid @RequestBody CourseRequestDto request) {
+		log.info("Updating course: {} by instructor: {}", id, instructorId);
 		return ResponseEntity.ok(courseService.updateCourse(id, instructorId, request));
 	}
 
@@ -83,8 +85,8 @@ public class CourseController {
 	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<Void> deleteCourse(
 			@PathVariable Long id,
-			@RequestParam Long instructorId
-	) {
+			@RequestParam Long instructorId) {
+		log.info("Deleting course: {} by instructor: {}", id, instructorId);
 		courseService.deleteCourse(id, instructorId);
 		return ResponseEntity.ok().build();
 	}

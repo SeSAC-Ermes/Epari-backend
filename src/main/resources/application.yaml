@@ -1,3 +1,7 @@
 spring:
   application:
     name: Epari-backend
+  task:
+    scheduling:
+      pool:
+        size: 5 

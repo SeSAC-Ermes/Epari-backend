@@ -3,8 +3,11 @@ package com.example.epari.assignment.controller;
 import com.example.epari.assignment.dto.assignment.AssignmentRequestDto;
 import com.example.epari.assignment.dto.assignment.AssignmentResponseDto;
 import com.example.epari.assignment.service.AssignmentService;
+import com.example.epari.global.annotation.CurrentUserEmail;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -24,12 +27,10 @@ public class AssignmentController {
 	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<AssignmentResponseDto> addAssignment(
 			@PathVariable Long courseId,
-			@RequestParam Long instructorId,
+			@CurrentUserEmail String email,
 			@ModelAttribute AssignmentRequestDto requestDto) {
-		log.info("과제 생성 요청: courseId = {}, 제목 = {}, instructorId = {}",
-				courseId, requestDto.getTitle(), instructorId);
-		AssignmentResponseDto responseDto = assignmentService.addAssignment(courseId, requestDto, instructorId);
-
+		log.info("과제 생성 요청: courseId = {}, 제목 = {}", courseId, requestDto.getTitle());
+		AssignmentResponseDto responseDto = assignmentService.addAssignment(courseId, requestDto, email);
 		log.info("과제 생성 완료: ID = {}", responseDto.getId());
 		return ResponseEntity.ok(responseDto);
 	}
@@ -56,11 +57,13 @@ public class AssignmentController {
 	@PutMapping("/{assignmentId}")
 	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<AssignmentResponseDto> updateAssignment(
+			@PathVariable Long courseId,
 			@PathVariable Long assignmentId,
-			@RequestParam Long instructorId,
-			@RequestBody AssignmentRequestDto requestDto) {
+			@CurrentUserEmail String email,
+			@ModelAttribute AssignmentRequestDto requestDto) {
 		log.info("과제 수정 요청: ID = {}, 제목 = {}", assignmentId, requestDto.getTitle());
-		AssignmentResponseDto responseDto = assignmentService.updateAssignment(assignmentId, requestDto, instructorId);
+		AssignmentResponseDto responseDto = assignmentService.updateAssignment(courseId, assignmentId, requestDto,
+				email);
 		log.info("과제 수정 완료: ID = {}", assignmentId);
 		return ResponseEntity.ok(responseDto);
 	}
@@ -69,10 +72,11 @@ public class AssignmentController {
 	@DeleteMapping("/{assignmentId}")
 	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<Void> deleteAssignment(
+			@PathVariable Long courseId,
 			@PathVariable Long assignmentId,
-			@RequestParam Long instructorId) {
-		log.info("과제 삭제 요청: ID = {}, instructorId = {}", assignmentId, instructorId);
-		assignmentService.deleteAssignment(assignmentId, instructorId);
+			@CurrentUserEmail String email) {
+		log.info("과제 삭제 요청: ID = {}", assignmentId);
+		assignmentService.deleteAssignment(assignmentId, email);
 		log.info("과제 삭제 완료: ID = {}", assignmentId);
 		return ResponseEntity.ok().build();
 	}

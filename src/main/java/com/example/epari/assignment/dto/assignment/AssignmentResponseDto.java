@@ -1,15 +1,14 @@
 package com.example.epari.assignment.dto.assignment;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.example.epari.assignment.domain.Assignment;
 import com.example.epari.assignment.dto.file.AssignmentFileResponseDto;
 import com.example.epari.user.domain.Instructor;
-
 import lombok.Builder;
 import lombok.Getter;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Builder
@@ -46,7 +45,6 @@ public class AssignmentResponseDto {
 					.id(instructor.getId())
 					.name(instructor.getName())
 					.email(instructor.getEmail())
-					.phoneNumber(instructor.getPhoneNumber())
 					.build();
 		}
 

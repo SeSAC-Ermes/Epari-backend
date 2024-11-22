@@ -2,6 +2,7 @@ package com.example.epari.course.service;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,11 @@ public class CurriculumService {
 	/**
 	 * 특정 강의 커리큘럼 조회
 	 */
+	@Cacheable(
+			value = "curriculums",
+			key = "#courseId",
+			unless = "#result.isEmpty()"
+	)
 	public List<CurriculumResponseDto> getCurriculumsByCourseId(Long courseId) {
 		return curriculumRepository.findAllByCourseId(courseId);
 	}

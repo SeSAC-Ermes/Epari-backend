@@ -4,12 +4,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.epari.global.common.base.BaseTimeEntity;
 import com.example.epari.course.domain.Course;
+import com.example.epari.global.common.base.BaseTimeEntity;
+import com.example.epari.global.common.enums.ExamStatus;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -59,14 +62,24 @@ public class Exam extends BaseTimeEntity {
 	private List<ExamQuestion> questions = new ArrayList<>();
 
 	@Builder
-	private Exam(String title, LocalDateTime examDateTime, Integer duration,
-			Integer totalScore, String description, Course course) {
+	private Exam(String title, LocalDateTime examDateTime,
+			Integer duration, Integer totalScore, String description, Course course) {
 		this.title = title;
 		this.examDateTime = examDateTime;
 		this.duration = duration;
 		this.totalScore = totalScore;
 		this.description = description;
 		this.course = course;
+	}
+
+	public LocalDateTime getEndDateTime() {
+		if (examDateTime == null || duration == null) {
+			throw new IllegalStateException("시험 시작 시간 또는 시험 시간이 설정되지 않았습니다.");
+		}
+		if (duration <= 0) {
+			throw new IllegalStateException("시험 시간은 0보다 커야 합니다.");
+		}
+		return examDateTime.plusMinutes(duration);
 	}
 
 	public void updateExam(String title, LocalDateTime examDateTime,
@@ -81,6 +94,79 @@ public class Exam extends BaseTimeEntity {
 	public void addQuestion(ExamQuestion question) {
 		this.questions.add(question);
 		question.setExam(this);
+	}
+
+	public void reorderQuestions(Long questionId, int newNumber) {
+		// 1. 이동할 문제 찾기
+		ExamQuestion targetQuestion = questions.stream()
+				.filter(q -> q.getId().equals(questionId))
+				.findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("문제를 찾을 수 없습니다. ID: " + questionId));
+
+		// 2. 현재 문제 번호
+		int currentNumber = targetQuestion.getExamNumber();
+
+		// 3. 유효성 검사
+		if (newNumber < 1 || newNumber > questions.size()) {
+			throw new IllegalArgumentException("유효하지 않은 문제 번호입니다: " + newNumber);
+		}
+
+		// 4. 문제 번호 재정렬
+		if (currentNumber < newNumber) {
+			// 현재 위치에서 뒤로 이동하는 경우
+			questions.stream()
+					.filter(q -> q.getExamNumber() > currentNumber && q.getExamNumber() <= newNumber)
+					.forEach(q -> q.updateExamNumber(q.getExamNumber() - 1));
+		} else if (currentNumber > newNumber) {
+			// 현재 위치에서 앞으로 이동하는 경우
+			questions.stream()
+					.filter(q -> q.getExamNumber() >= newNumber && q.getExamNumber() < currentNumber)
+					.forEach(q -> q.updateExamNumber(q.getExamNumber() + 1));
+		}
+
+		// 5. 대상 문제의 번호 업데이트
+		targetQuestion.updateExamNumber(newNumber);
+	}
+
+	public void reorderQuestionsAfterDelete(int deletedNumber) {
+		questions.stream()
+				.filter(q -> q.getExamNumber() > deletedNumber)
+				.forEach(q -> q.updateExamNumber(q.getExamNumber() - 1));
+	}
+
+	public boolean isBeforeExam() {
+		if (examDateTime == null) {
+			throw new IllegalStateException("시험 시작 시간이 설정되지 않았습니다.");
+		}
+		return LocalDateTime.now().isBefore(examDateTime);
+	}
+
+	public boolean isAfterExam() {
+		return LocalDateTime.now().isAfter(getEndDateTime());
+	}
+
+	public boolean isDuringExam() {
+		LocalDateTime now = LocalDateTime.now();
+		return !isBeforeExam() && !isAfterExam();
+	}
+
+	@Enumerated(EnumType.STRING)
+	private ExamStatus status = ExamStatus.SCHEDULED;
+
+	// 상태 변경 메서드 추가
+	public void updateStatus(ExamStatus newStatus) {
+		this.status = newStatus;
+	}
+
+	// 시험 상태 검증 메서드
+	public boolean canChangeStatusTo(ExamStatus newStatus) {
+		return switch (this.status) {
+			case SCHEDULED -> newStatus == ExamStatus.IN_PROGRESS;
+			case IN_PROGRESS -> newStatus == ExamStatus.GRADING;
+			case GRADING -> newStatus == ExamStatus.GRADED;
+			case GRADED -> newStatus == ExamStatus.COMPLETED;
+			default -> false;
+		};
 	}
 
 }

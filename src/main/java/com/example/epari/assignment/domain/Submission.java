@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.epari.global.common.base.BaseTimeEntity;
+import com.example.epari.global.common.enums.SubmissionGrade;
 import com.example.epari.global.common.enums.SubmissionStatus;
 import com.example.epari.user.domain.Student;
 
@@ -17,7 +18,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import lombok.AccessLevel;
@@ -35,19 +35,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Submission extends BaseTimeEntity {
 
-	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column
-	private String title;
-
-	@Column
-	@Lob
+	@Column(columnDefinition = "LONGTEXT")
 	private String description;
 
 	@Column
-	private int score;
+	private SubmissionGrade grade;
 
+	@Column
 	private String feedback;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -66,29 +64,35 @@ public class Submission extends BaseTimeEntity {
 	private SubmissionStatus status = SubmissionStatus.SUBMITTED;
 
 	@Builder
-	private Submission(String title, String description, Assignment assignment, Student student) {
-		this.title = title;
+	private Submission(String description, Assignment assignment, Student student, SubmissionGrade grade) {
 		this.description = description;
 		this.assignment = assignment;
 		this.student = student;
-		this.score = 0;
+		this.grade = SubmissionGrade.UNDER_REVIEW;
 		this.status = SubmissionStatus.SUBMITTED;
 	}
 
-
-	public static Submission createSubmission(String title, String description,
+	public static Submission createSubmission(String description,
 			Assignment assignment, Student student) {
-		return Submission.builder()
-				.title(title)
+		Submission submission = Submission.builder()
 				.description(description)
 				.assignment(assignment)
 				.student(student)
 				.build();
+		submission.submit();
+		return submission;
 	}
 
+	public void submit() {
+		this.status = SubmissionStatus.SUBMITTED;
+	}
 
-	public void updateScore(Integer score, String feedback) {
-		this.score = score;
+	public void updateSubmission(String description) {
+		this.description = description;
+	}
+
+	public void updateGrade(SubmissionGrade grade, String feedback) {
+		this.grade = grade;
 		this.feedback = feedback;
 		this.status = SubmissionStatus.GRADED;
 	}
@@ -96,6 +100,11 @@ public class Submission extends BaseTimeEntity {
 	// 파일 추가
 	public void addFile(SubmissionFile file) {
 		this.files.add(file);
+	}
+
+	// 파일 제거
+	public void removeFile(SubmissionFile file) {
+		this.files.remove(file);
 	}
 
 }

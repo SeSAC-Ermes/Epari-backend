@@ -28,20 +28,28 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    // Spring Data Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // Cache
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     // Spring Security & OAuth2
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
-    // AWS SDK V2 for Cognito
-    implementation 'software.amazon.awssdk:cognitoidentityprovider:2.24.0'
     // AWS SDK V2 for S3
     implementation platform('software.amazon.awssdk:bom:2.24.1')
     implementation 'software.amazon.awssdk:s3'
+    // AWS SDK V2 for SES
+    implementation 'software.amazon.awssdk:ses'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
     testRuntimeOnly 'com.h2database:h2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation 'org.springframework.boot:spring-boot-configuration-processor'
+    implementation 'software.amazon.awssdk:cognitoidentityprovider'
 }
 
 tasks.named('test') {
