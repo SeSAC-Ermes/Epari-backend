@@ -1,5 +1,6 @@
 package com.example.epari.exam.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.example.epari.exam.domain.Exam;
+import com.example.epari.global.common.enums.ExamStatus;
 
 /**
  * 시험 정보에 대한 데이터베이스 접근을 담당하는 Repository 인터페이스
@@ -46,5 +48,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 			"LEFT JOIN FETCH q.image " +
 			"WHERE e.id = :examId")
 	Optional<Exam> findByIdWithQuestionsAndCourse(@Param("examId") Long examId);
+
+	List<Exam> findByStatus(ExamStatus status);
+
+	List<Exam> findByStatusIn(Collection<ExamStatus> statuses);
 
 }

@@ -43,7 +43,7 @@ public class AttendanceStatisticsService {
 
 		// 강의 정보 조회
 		Course course = courseRepository.findById(courseId)
-				.orElseThrow(() -> new CourseNotFoundException());
+				.orElseThrow(CourseNotFoundException::new);
 
 		// 날짜 유효성 검사
 		validateCourseDate(course);

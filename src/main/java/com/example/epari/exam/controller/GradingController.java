@@ -21,7 +21,6 @@ import com.example.epari.global.exception.ErrorResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-
 /**
  * 시험 채점 및 성적 통계 관련 요청을 처리하는 Controller
  */
@@ -93,20 +92,21 @@ public class GradingController {
 	}
 
 	@ExceptionHandler(GradingException.class)
-    public ResponseEntity<ErrorResponse> handleGradingException(GradingException e) {
-        log.error("채점 처리 중 오류 발생", e);
-        return ErrorResponse.toResponseEntity(ErrorCode.GRADING_FAILED);
-    }
+	public ResponseEntity<ErrorResponse> handleGradingException(GradingException e) {
+		log.error("채점 처리 중 오류 발생", e);
+		return ErrorResponse.toResponseEntity(ErrorCode.GRADING_FAILED);
+	}
 
-    @ExceptionHandler(GradingNotPossibleException.class)
-    public ResponseEntity<ErrorResponse> handleGradingNotPossibleException(GradingNotPossibleException e) {
-        log.error("채점 불가능한 상태", e);
-        return ErrorResponse.toResponseEntity(ErrorCode.EXAM_NOT_SUBMITTED);
-    }
+	@ExceptionHandler(GradingNotPossibleException.class)
+	public ResponseEntity<ErrorResponse> handleGradingNotPossibleException(GradingNotPossibleException e) {
+		log.error("채점 불가능한 상태", e);
+		return ErrorResponse.toResponseEntity(ErrorCode.EXAM_NOT_SUBMITTED);
+	}
 
-    @ExceptionHandler(InvalidScoreException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidScoreException(InvalidScoreException e) {
-        log.error("유효하지 않은 점수", e);
-        return ErrorResponse.toResponseEntity(ErrorCode.INVALID_SCORE_VALUE);
-    }
+	@ExceptionHandler(InvalidScoreException.class)
+	public ResponseEntity<ErrorResponse> handleInvalidScoreException(InvalidScoreException e) {
+		log.error("유효하지 않은 점수", e);
+		return ErrorResponse.toResponseEntity(ErrorCode.INVALID_SCORE_VALUE);
+	}
+
 }

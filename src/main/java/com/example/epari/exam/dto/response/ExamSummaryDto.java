@@ -92,7 +92,7 @@ public class ExamSummaryDto {
 				.totalScore(exam.getTotalScore())
 				.createdAt(exam.getCreatedAt())  // 출제일자 추가
 				.instructor(InstructorInfo.from(exam.getCourse().getInstructor()))  // 작성자 정보 추가
-				.status(result != null ? result.getStatus() : null)
+				.status(result != null ? result.getStatus() : ExamStatus.NOT_SUBMITTED)
 				.earnedScore(result != null ? result.getEarnedScore() : null)
 				.submittedAt(result != null ? result.getSubmitTime() : null)
 				.build();

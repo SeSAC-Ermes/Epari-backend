@@ -16,6 +16,12 @@ import com.example.epari.course.dto.content.CourseContentResponseDto;
 import com.example.epari.course.repository.CourseContentRepository;
 import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.global.common.service.S3FileService;
+import com.example.epari.global.exception.course.CourseNotFoundException;
+import com.example.epari.global.exception.file.CourseContentNotFoundException;
+import com.example.epari.global.exception.file.CourseFileNotFoundException;
+import com.example.epari.global.exception.file.FileDeleteFailedException;
+import com.example.epari.global.exception.file.FileDownloadFailedException;
+import com.example.epari.global.exception.file.FileUploadFailedException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +46,10 @@ public class CourseContentService {
 
 	@Transactional
 	public CourseContentResponseDto uploadContent(Long courseId, CourseContentRequestDto.Upload request) {
+		log.info("Uploading content for course: {}", courseId);
+
 		Course course = courseRepository.findById(courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다."));
+				.orElseThrow(CourseNotFoundException::new);
 
 		CourseContent content = CourseContent.builder()
 				.title(request.getTitle())
@@ -53,26 +61,31 @@ public class CourseContentService {
 		// 파일 업로드 처리
 		if (request.getFiles() != null && !request.getFiles().isEmpty()) {
 			for (MultipartFile file : request.getFiles()) {
-				String fileUrl = s3FileService.uploadFile(UPLOAD_DIR, file);
-
-				CourseContentFile contentFile = CourseContentFile.createAttachment(
-						file.getOriginalFilename(),
-						extractStoredFileName(fileUrl),
-						fileUrl,
-						file.getSize(),
-						content
-				);
-
-				content.addFile(contentFile);
+				try {
+					String fileUrl = s3FileService.uploadFile(UPLOAD_DIR, file);
+					CourseContentFile contentFile = CourseContentFile.createAttachment(
+							file.getOriginalFilename(),
+							extractStoredFileName(fileUrl),
+							fileUrl,
+							file.getSize(),
+							content
+					);
+					content.addFile(contentFile);
+				} catch (Exception e) {
+					log.error("File upload failed for course: {}", courseId, e);
+					throw new FileUploadFailedException();
+				}
 			}
 		}
 
-		return CourseContentResponseDto.from(courseContentRepository.save(content));
+		CourseContent savedContent = courseContentRepository.save(content);
+		log.info("Content uploaded successfully for course: {}", courseId);
+		return CourseContentResponseDto.from(savedContent);
 	}
 
 	public CourseContentResponseDto getContent(Long courseId, Long contentId) {
 		CourseContent content = courseContentRepository.findByIdAndCourseId(contentId, courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의 자료를 찾을 수 없습니다."));
+				.orElseThrow(CourseNotFoundException::new);
 		return CourseContentResponseDto.from(content);
 	}
 
@@ -85,47 +98,55 @@ public class CourseContentService {
 	@Transactional
 	public CourseContentResponseDto updateContent(Long courseId, Long contentId,
 			CourseContentRequestDto.Update request) {
+		log.info("Updating content: {} for course: {}", contentId, courseId);
+
 		CourseContent content = courseContentRepository.findByIdAndCourseId(contentId, courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의 자료를 찾을 수 없습니다."));
+				.orElseThrow(() -> new CourseContentNotFoundException());
 
 		content.updateContent(request.getTitle(), request.getContent());
 
-		// 새로운 파일이 있다면 업로드
 		if (request.getFiles() != null && !request.getFiles().isEmpty()) {
 			for (MultipartFile file : request.getFiles()) {
-				String fileUrl = s3FileService.uploadFile(UPLOAD_DIR, file);
-
-				CourseContentFile contentFile = CourseContentFile.createAttachment(
-						file.getOriginalFilename(),
-						extractStoredFileName(fileUrl),
-						fileUrl,
-						file.getSize(),
-						content
-				);
-
-				content.addFile(contentFile);
+				try {
+					String fileUrl = s3FileService.uploadFile(UPLOAD_DIR, file);
+					CourseContentFile contentFile = CourseContentFile.createAttachment(
+							file.getOriginalFilename(),
+							extractStoredFileName(fileUrl),
+							fileUrl,
+							file.getSize(),
+							content
+					);
+					content.addFile(contentFile);
+				} catch (Exception e) {
+					log.error("File upload failed during content update - courseId: {}, contentId: {}",
+							courseId, contentId, e);
+					throw new FileUploadFailedException();
+				}
 			}
 		}
 
+		log.info("Content updated successfully - courseId: {}, contentId: {}", courseId, contentId);
 		return CourseContentResponseDto.from(content);
 	}
 
 	@Transactional
 	public void deleteContent(Long courseId, Long contentId) {
-		CourseContent content = courseContentRepository.findByIdAndCourseId(contentId, courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의 자료를 찾을 수 없습니다."));
+		log.info("Deleting content: {} from course: {}", contentId, courseId);
 
-		// S3에서 모든 첨부 파일 삭제
+		CourseContent content = courseContentRepository.findByIdAndCourseId(contentId, courseId)
+				.orElseThrow(CourseContentNotFoundException::new);
+
 		for (CourseContentFile file : content.getFiles()) {
 			try {
 				s3FileService.deleteFile(file.getFileUrl());
 			} catch (Exception e) {
 				log.error("Failed to delete file from S3: {}", file.getFileUrl(), e);
+				throw new FileDeleteFailedException();
 			}
 		}
 
-		// DB에서 컨텐츠 삭제 (cascade로 인해 파일 엔티티도 함께 삭제됨)
 		courseContentRepository.delete(content);
+		log.info("Content deleted successfully - courseId: {}, contentId: {}", courseId, contentId);
 	}
 
 	/**
@@ -133,26 +154,29 @@ public class CourseContentService {
 	 */
 	@Transactional
 	public void deleteContents(Long courseId, List<Long> contentIds) {
-		for (Long contentId : contentIds) {
-			deleteContent(courseId, contentId);
-		}
+		log.info("Batch deleting contents: {} from course: {}", contentIds, courseId);
+		contentIds.forEach(contentId -> deleteContent(courseId, contentId));
 	}
 
 	/**
 	 * 다운로드
 	 */
 	public String downloadContent(Long courseId, Long contentId, Long fileId) {
-		// 강의 자료 확인
 		CourseContent content = courseContentRepository.findByIdAndCourseId(contentId, courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의 자료를 찾을 수 없습니다."));
+				.orElseThrow(CourseContentNotFoundException::new);
 
-		// 파일 확인
 		CourseContentFile file = content.getFiles().stream()
 				.filter(f -> f.getId().equals(fileId))
 				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("파일을 찾을 수 없습니다."));
+				.orElseThrow(CourseFileNotFoundException::new);
 
-		return s3FileService.generatePresignedUrl(file.getFileUrl(), Duration.ofDays(7));
+		try {
+			return s3FileService.generatePresignedUrl(file.getFileUrl(), Duration.ofDays(7));
+		} catch (Exception e) {
+			log.error("Failed to generate download URL - courseId: {}, contentId: {}, fileId: {}",
+					courseId, contentId, fileId, e);
+			throw new FileDownloadFailedException();
+		}
 	}
 
 	/**

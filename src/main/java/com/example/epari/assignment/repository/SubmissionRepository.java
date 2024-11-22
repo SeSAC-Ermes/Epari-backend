@@ -20,4 +20,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 			"JOIN a.course c " +
 			"WHERE c.id = :courseId")
 	List<Submission> findByCourseId(Long courseId);
+
+	@Query("SELECT s FROM Submission s " +
+			"LEFT JOIN FETCH s.student " +
+			"JOIN FETCH s.assignment a " +
+			"JOIN FETCH a.course c " +
+			"WHERE a.id = :assignmentId " +
+			"AND c.id = :courseId")
+	List<Submission> findByAssignmentIdAndCourseIdWithStudent(Long assignmentId, Long courseId);
 }

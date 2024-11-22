@@ -13,10 +13,15 @@ import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.global.common.base.BaseUser;
 import com.example.epari.global.common.enums.UserRole;
 import com.example.epari.global.common.repository.BaseUserRepository;
+import com.example.epari.global.exception.auth.AuthUserNotFoundException;
+import com.example.epari.global.exception.auth.InstructorNotFoundException;
+import com.example.epari.global.exception.course.CourseInstructorMismatchException;
+import com.example.epari.global.exception.course.CourseNotFoundException;
 import com.example.epari.user.domain.Instructor;
 import com.example.epari.user.repository.InstructorRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 강의 관련 비즈니스 로직을 처리하는 Service 클래스
@@ -24,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
+@Slf4j
 public class CourseService {
 
 	private final CourseRepository courseRepository;
@@ -38,7 +44,7 @@ public class CourseService {
 	@Transactional
 	public CourseResponseDto createCourse(Long instructorId, CourseRequestDto request) {
 		Instructor instructor = instructorRepository.findById(instructorId)
-				.orElseThrow(() -> new IllegalArgumentException("강사를 찾을 수 없습니다. ID: " + instructorId));
+				.orElseThrow(InstructorNotFoundException::new);
 
 		Course course = Course.createCourse(
 				request.getName(),
@@ -47,6 +53,8 @@ public class CourseService {
 				request.getClassroom(),
 				instructor
 		);
+
+		log.info("Creating new course: {} for instructor: {}", request.getName(), instructorId);
 		return CourseResponseDto.from(courseRepository.save(course));
 	}
 
@@ -55,7 +63,7 @@ public class CourseService {
 	 */
 	public CourseResponseDto getCourse(Long courseId) {
 		Course course = courseRepository.findById(courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + courseId));
+				.orElseThrow(CourseNotFoundException::new);
 		return CourseResponseDto.from(course);
 	}
 
@@ -65,17 +73,18 @@ public class CourseService {
 	 */
 	public List<CourseResponseDto> getMyCourses(String email) {
 		BaseUser user = baseUserRepository.findByEmail(email)
-				.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+				.orElseThrow(AuthUserNotFoundException::new);
 
+		List<Course> courses;
 		if (user.getRole() == UserRole.INSTRUCTOR) {
-			return courseRepository.findAllByInstructorId(user.getId()).stream()
-					.map(CourseResponseDto::from)
-					.collect(Collectors.toList());
+			courses = courseRepository.findAllByInstructorId(user.getId());
 		} else {
-			return courseRepository.findAllByStudentId(user.getId()).stream()
-					.map(CourseResponseDto::from)
-					.collect(Collectors.toList());
+			courses = courseRepository.findAllByStudentId(user.getId());
 		}
+
+		return courses.stream()
+				.map(CourseResponseDto::from)
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -93,10 +102,11 @@ public class CourseService {
 	@Transactional
 	public CourseResponseDto updateCourse(Long courseId, Long instructorId, CourseRequestDto request) {
 		Course course = courseRepository.findById(courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + courseId));
+				.orElseThrow(CourseNotFoundException::new);
 
 		if (!course.getInstructor().getId().equals(instructorId)) {
-			throw new IllegalArgumentException("해당 강의에 대한 권한이 없습니다.");
+			log.warn("Instructor {} attempted to update unauthorized course {}", instructorId, courseId);
+			throw new CourseInstructorMismatchException();
 		}
 
 		course.updateCourse(
@@ -105,6 +115,8 @@ public class CourseService {
 				request.getEndDate(),
 				request.getClassroom()
 		);
+
+		log.info("Updated course: {} by instructor: {}", courseId, instructorId);
 		return CourseResponseDto.from(course);
 	}
 
@@ -114,12 +126,14 @@ public class CourseService {
 	@Transactional
 	public void deleteCourse(Long courseId, Long instructorId) {
 		Course course = courseRepository.findById(courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다. ID: " + courseId));
+				.orElseThrow(CourseNotFoundException::new);
 
 		if (!course.getInstructor().getId().equals(instructorId)) {
-			throw new IllegalArgumentException("해당 강의에 대한 권한이 없습니다.");
+			log.warn("Instructor {} attempted to delete unauthorized course {}", instructorId, courseId);
+			throw new CourseInstructorMismatchException();
 		}
 
+		log.info("Deleting course: {} by instructor: {}", courseId, instructorId);
 		courseRepository.deleteById(courseId);
 	}
 
