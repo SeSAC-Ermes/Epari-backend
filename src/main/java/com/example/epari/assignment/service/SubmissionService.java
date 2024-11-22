@@ -229,6 +229,40 @@ public class SubmissionService {
 	}
 
 	/**
+	 * 전체 학생 조회
+	 */
+	public List<SubmissionResponseDto> getSubmissionsWithStudents(Long courseId, Long assignmentId) {
+		// 과제 정보 조회
+		Assignment assignment = assignmentRepository.findById(assignmentId)
+				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
+
+		// 과제가 해당 코스의 것인지 확인
+		if (!assignment.getCourse().getId().equals(courseId)) {
+			throw new IllegalArgumentException("해당 코스의 과제가 아닙니다.");
+		}
+
+		// 제출된 과제 목록 조회
+		List<Submission> submissions = submissionRepository
+				.findByAssignmentIdAndCourseIdWithStudent(assignmentId, courseId);
+
+		// 해당 코스의 모든 학생 목록 조회
+		List<Student> enrolledStudents = studentRepository.findByCourseId(courseId);
+
+		// 제출/미제출 학생 모두 포함한 응답 DTO 생성
+		return enrolledStudents.stream()
+				.map(student -> {
+					Optional<Submission> studentSubmission = submissions.stream()
+							.filter(sub -> sub.getStudent().getId().equals(student.getId()))
+							.findFirst();
+
+					return studentSubmission
+							.map(SubmissionResponseDto::from)
+							.orElse(SubmissionResponseDto.createUnsubmitted(student, assignment));
+				})
+				.collect(Collectors.toList());
+	}
+
+	/**
 	 * 파일 다운로드
 	 */
 	public String downloadFile(Long courseId, Long assignmentId, Long submissionId, Long fileId) {
