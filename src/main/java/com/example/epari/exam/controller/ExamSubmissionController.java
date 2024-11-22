@@ -101,7 +101,7 @@ public class ExamSubmissionController {
 
 	// 학생 결과
 	@GetMapping("/result")
-	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.checkStudentAccess(#courseId, #studentEmail)")
+	@PreAuthorize("@courseSecurityChecker.checkStudentAccess(#courseId, #studentEmail)")
 	public ResponseEntity<ExamResultDetailDto> getStudentExamResult(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -110,6 +110,20 @@ public class ExamSubmissionController {
 		ExamResultDetailDto result = examSubmissionService.getStudentExamResult(courseId, examId, studentEmail);
 		return ResponseEntity.ok(result);
 	}
+
+	// 강사용 학생 시험 결과 상세 조회
+	@GetMapping("/results/{resultId}/detail")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
+	public ResponseEntity<ExamResultDetailDto> getStudentExamResultByInstructor(
+			@PathVariable Long courseId,
+			@PathVariable Long examId,
+			@PathVariable Long resultId,
+			@CurrentUserEmail String instructorEmail) {
+
+		ExamResultDetailDto result = examSubmissionService.getStudentExamResultById(resultId);
+		return ResponseEntity.ok(result);
+	}
+
 
 	// 시험 결과
 	@GetMapping("/results")
