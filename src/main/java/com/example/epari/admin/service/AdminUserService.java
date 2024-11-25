@@ -7,12 +7,12 @@ import com.example.epari.admin.dto.InstructorApprovalRequestDTO;
 import com.example.epari.admin.dto.StudentApprovalRequestDTO;
 import com.example.epari.admin.exception.CourseNotFoundException;
 import com.example.epari.admin.repository.AdminCourseStudentRepository;
+import com.example.epari.admin.repository.AdminInstructorRepository;
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.domain.CourseStudent;
 import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.user.domain.Instructor;
 import com.example.epari.user.domain.Student;
-import com.example.epari.user.repository.InstructorRepository;
 import com.example.epari.user.repository.StudentRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class AdminUserService {
 
 	private final AdminCourseStudentRepository courseStudentRepository;
 
-	private final InstructorRepository instructorRepository;
+	private final AdminInstructorRepository instructorRepository;
 
 	/**
 	 * 수강생 승인 처리 메서드
@@ -40,8 +40,7 @@ public class AdminUserService {
 	@Transactional
 	public String approveStudent(String email, StudentApprovalRequestDTO request) {
 		// 1. 사용자 저장
-		Student student = Student
-				.createStudent(email, request.getName());
+		Student student = Student.createStudent(email, request.getName());
 
 		studentRepository.save(student);
 
@@ -61,6 +60,30 @@ public class AdminUserService {
 	public void approveInstructor(String email, InstructorApprovalRequestDTO request) {
 		// 1. 사용자 저장
 		instructorRepository.save(Instructor.createInstructor(email, request.getName()));
+	}
+
+	/**
+	 * 수강생의 정보를 롤백하는 메서드
+	 * 	1. 매핑된 강의 목록 조회 후 제거
+	 * 	2. 수강생 정보 제거
+	 */
+	@Transactional
+	public void rollbackStudentApproval(String email) {
+		studentRepository.findByEmail(email)
+				.ifPresent(student -> {
+					courseStudentRepository.deleteByStudent(student);
+					studentRepository.delete(student);
+				});
+	}
+
+	/**
+	 * 강사의 정보를 롤백하는 메서드
+	 * 강사 정보 제거
+	 */
+	@Transactional
+	public void rollbackInstructorApproval(String email) {
+		instructorRepository.findByEmail(email)
+				.ifPresent(instructorRepository::delete);
 	}
 
 }
