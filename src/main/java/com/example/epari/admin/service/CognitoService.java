@@ -67,24 +67,33 @@ public class CognitoService {
 	/**
 	 * 사용자 그룹을 변경
 	 */
-	public void changeUserGroup(String username, String groupName) {
-		// 1. 현재 그룹에서 제거
-		AdminRemoveUserFromGroupRequest removeRequest = AdminRemoveUserFromGroupRequest.builder()
-				.userPoolId(userPoolId)
-				.username(username)
-				.groupName("PENDING_ROLES")
-				.build();
+	public void changeUserGroup(String username, String newGroup) {
+		try {
+			// 기존 그룹에서 제거
+			AdminRemoveUserFromGroupRequest removeRequest = AdminRemoveUserFromGroupRequest.builder()
+					.userPoolId(userPoolId)
+					.username(username)
+					.groupName("PENDING_ROLES")
+					.build();
 
-		cognitoClient.adminRemoveUserFromGroup(removeRequest);
+			cognitoClient.adminRemoveUserFromGroup(removeRequest);
 
-		// 2. 새 그룹에 추가
-		AdminAddUserToGroupRequest addRequest = AdminAddUserToGroupRequest.builder()
-				.userPoolId(userPoolId)
-				.username(username)
-				.groupName(groupName)
-				.build();
+			// 새 그룹에 추가
+			AdminAddUserToGroupRequest addRequest = AdminAddUserToGroupRequest.builder()
+					.userPoolId(userPoolId)
+					.username(username)
+					.groupName(newGroup)
+					.build();
 
-		cognitoClient.adminAddUserToGroup(addRequest);
+			cognitoClient.adminAddUserToGroup(addRequest);
+
+		} catch (UserNotFoundException e) {
+			log.error("User not found in Cognito: {}", username, e);
+			throw new CognitoException(ErrorCode.COGNITO_USER_NOT_FOUND);
+		} catch (CognitoIdentityProviderException e) {
+			log.error("Failed to change user group in Cognito: {}", username, e);
+			throw new CognitoException(ErrorCode.COGNITO_UPDATE_FAILED);
+		}
 	}
 
 	/**
