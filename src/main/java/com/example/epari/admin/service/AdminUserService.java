@@ -9,7 +9,9 @@ import com.example.epari.course.domain.Course;
 import com.example.epari.course.domain.CourseStudent;
 import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.course.repository.CourseStudentRepository;
+import com.example.epari.user.domain.Instructor;
 import com.example.epari.user.domain.Student;
+import com.example.epari.user.repository.InstructorRepository;
 import com.example.epari.user.repository.StudentRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,8 @@ public class AdminUserService {
 	private final CourseRepository courseRepository;
 
 	private final CourseStudentRepository courseStudentRepository;
+
+	private final InstructorRepository instructorRepository;
 
 	/**
 	 * 수강생 승인 처리 메서드
@@ -47,6 +51,15 @@ public class AdminUserService {
 		courseStudentRepository.save(new CourseStudent(course, student));
 
 		return course.getName();
+	}
+
+	/**
+	 * 강사 승인 처리 메서드
+	 */
+	@Transactional
+	public void approveInstructor(String email, ApprovalRequestDTO request) {
+		// 1. 사용자 저장
+		instructorRepository.save(Instructor.createInstructor(email, request.getName()));
 	}
 
 }

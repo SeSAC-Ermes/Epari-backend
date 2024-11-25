@@ -53,7 +53,7 @@ public class AdminUserManagementController {
 	 * 임시 그룹에 속한 수강생을 승인하는 엔드포인트
 	 * 특정 강의와의 매핑 작업을 수행
 	 */
-	@PostMapping("/{userEmail}/approve")
+	@PostMapping("/{userEmail}/approve/student")
 	public ResponseEntity<Void> approveStudent(
 			@PathVariable("userEmail") String email,
 			@RequestBody ApprovalRequestDTO request
@@ -65,9 +65,33 @@ public class AdminUserManagementController {
 		cognitoService.changeUserGroup(request.getUsername(), "STUDENT");
 
 		// 3. 이메일 발송
-		NotificationEvent event = NotificationEvent.of(email, NotificationType.USER_APPROVED)
+		NotificationEvent event = NotificationEvent.of(email, NotificationType.STUDENT_APPROVED)
 				.addProperty("name", request.getName())
 				.addProperty("courseName", courseName);
+
+		eventPublisher.publishEvent(event);
+
+		return ResponseEntity.ok().build();
+	}
+
+	/**
+	 * 임시 그룹에 속한 수강생을 승인하는 엔드포인트
+	 * 특정 강의와의 매핑 작업을 수행
+	 */
+	@PostMapping("/{userEmail}/approve/instructor")
+	public ResponseEntity<Void> approveInstructor(
+			@PathVariable("userEmail") String email,
+			@RequestBody ApprovalRequestDTO request
+	) {
+		// 1. 백엔드 DB에 승인 상태 업데이트
+		adminUserService.approveInstructor(email, request);
+
+		// 2. Cognito 그룹 변경
+		cognitoService.changeUserGroup(request.getUsername(), "INSTRUCTOR");
+
+		// 3. 이메일 발송
+		NotificationEvent event = NotificationEvent.of(email, NotificationType.INSTRUCTOR_APPROVED)
+				.addProperty("name", request.getName());
 
 		eventPublisher.publishEvent(event);
 
