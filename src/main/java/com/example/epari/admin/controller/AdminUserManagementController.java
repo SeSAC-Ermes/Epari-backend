@@ -11,9 +11,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.epari.admin.dto.ApprovalRequestDTO;
 import com.example.epari.admin.dto.CognitoUserDTO;
+import com.example.epari.admin.dto.InstructorApprovalRequestDTO;
 import com.example.epari.admin.dto.RejectionRequestDTO;
+import com.example.epari.admin.dto.StudentApprovalRequestDTO;
 import com.example.epari.admin.service.AdminUserService;
 import com.example.epari.admin.service.CognitoService;
 import com.example.epari.global.event.NotificationEvent;
@@ -56,7 +57,7 @@ public class AdminUserManagementController {
 	@PostMapping("/{userEmail}/approve/student")
 	public ResponseEntity<Void> approveStudent(
 			@PathVariable("userEmail") String email,
-			@RequestBody ApprovalRequestDTO request
+			@RequestBody StudentApprovalRequestDTO request
 	) {
 		// 1. 백엔드 DB에 승인 상태 업데이트
 		String courseName = adminUserService.approveStudent(email, request);
@@ -81,7 +82,7 @@ public class AdminUserManagementController {
 	@PostMapping("/{userEmail}/approve/instructor")
 	public ResponseEntity<Void> approveInstructor(
 			@PathVariable("userEmail") String email,
-			@RequestBody ApprovalRequestDTO request
+			@RequestBody InstructorApprovalRequestDTO request
 	) {
 		// 1. 백엔드 DB에 승인 상태 업데이트
 		adminUserService.approveInstructor(email, request);

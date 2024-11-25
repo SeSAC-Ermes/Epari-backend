@@ -3,7 +3,8 @@ package com.example.epari.admin.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.epari.admin.dto.ApprovalRequestDTO;
+import com.example.epari.admin.dto.InstructorApprovalRequestDTO;
+import com.example.epari.admin.dto.StudentApprovalRequestDTO;
 import com.example.epari.admin.exception.CourseNotFoundException;
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.domain.CourseStudent;
@@ -37,7 +38,7 @@ public class AdminUserService {
 	 * 수강생 저장 및 과목 매핑 수행
 	 */
 	@Transactional
-	public String approveStudent(String email, ApprovalRequestDTO request) {
+	public String approveStudent(String email, StudentApprovalRequestDTO request) {
 		// 1. 사용자 저장
 		Student student = Student
 				.createStudent(email, request.getName());
@@ -57,7 +58,7 @@ public class AdminUserService {
 	 * 강사 승인 처리 메서드
 	 */
 	@Transactional
-	public void approveInstructor(String email, ApprovalRequestDTO request) {
+	public void approveInstructor(String email, InstructorApprovalRequestDTO request) {
 		// 1. 사용자 저장
 		instructorRepository.save(Instructor.createInstructor(email, request.getName()));
 	}
