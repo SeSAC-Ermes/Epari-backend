@@ -15,8 +15,8 @@ import com.example.epari.admin.dto.CognitoUserDTO;
 import com.example.epari.admin.dto.InstructorApprovalRequestDTO;
 import com.example.epari.admin.dto.RejectionRequestDTO;
 import com.example.epari.admin.dto.StudentApprovalRequestDTO;
-import com.example.epari.admin.service.AdminUserService;
 import com.example.epari.admin.service.CognitoService;
+import com.example.epari.admin.service.UserApprovalManager;
 import com.example.epari.global.event.NotificationEvent;
 import com.example.epari.global.event.NotificationType;
 
@@ -35,7 +35,7 @@ public class AdminUserManagementController {
 
 	private final CognitoService cognitoService;
 
-	private final AdminUserService adminUserService;
+	private final UserApprovalManager userApprovalManager;
 
 	private final ApplicationEventPublisher eventPublisher;
 
@@ -59,13 +59,10 @@ public class AdminUserManagementController {
 			@PathVariable("userEmail") String email,
 			@RequestBody StudentApprovalRequestDTO request
 	) {
-		// 1. 백엔드 DB에 승인 상태 업데이트
-		String courseName = adminUserService.approveStudent(email, request);
+		// 1. DB에 학생 정보를 등록하고 Cognito 사용자 그룹을 'STUDENT'로 변경
+		String courseName = userApprovalManager.approveStudent(email, request);
 
-		// 2. Cognito 그룹 변경
-		cognitoService.changeUserGroup(request.getUsername(), "STUDENT");
-
-		// 3. 이메일 발송
+		// 2. 이메일 발송
 		NotificationEvent event = NotificationEvent.of(email, NotificationType.STUDENT_APPROVED)
 				.addProperty("name", request.getName())
 				.addProperty("courseName", courseName);
@@ -84,13 +81,10 @@ public class AdminUserManagementController {
 			@PathVariable("userEmail") String email,
 			@RequestBody InstructorApprovalRequestDTO request
 	) {
-		// 1. 백엔드 DB에 승인 상태 업데이트
-		adminUserService.approveInstructor(email, request);
+		// 1. DB에 강사 정보를 등록하고 Cognito 사용자 그룹을 'INSTRUCTOR'로 변경
+		userApprovalManager.approveInstructor(email, request);
 
-		// 2. Cognito 그룹 변경
-		cognitoService.changeUserGroup(request.getUsername(), "INSTRUCTOR");
-
-		// 3. 이메일 발송
+		// 2. 이메일 발송
 		NotificationEvent event = NotificationEvent.of(email, NotificationType.INSTRUCTOR_APPROVED)
 				.addProperty("name", request.getName());
 
