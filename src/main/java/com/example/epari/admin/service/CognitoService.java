@@ -91,23 +91,23 @@ public class CognitoService {
 	 * 사용자 풀에서 특정 사용자를 삭제하는 메서드
 	 */
 	@Transactional
-	public void deleteUser(String email) {
+	public void deleteUser(String username) {
 		try {
 			// AdminDeleteUserRequest 생성
 			AdminDeleteUserRequest deleteRequest = AdminDeleteUserRequest.builder()
 					.userPoolId(userPoolId)
-					.username(email)
+					.username(username)
 					.build();
 
 			// Cognito API를 통해 사용자 삭제 요청
 			cognitoClient.adminDeleteUser(deleteRequest);
 
-			log.info("Successfully deleted user from Cognito: {}", email);
+			log.info("Successfully deleted user from Cognito: {}", username);
 		} catch (UserNotFoundException ex) {
-			log.error("User not found in Cognito: {}", email, ex);
+			log.error("User not found in Cognito: {}", username, ex);
 			throw new CognitoException(ErrorCode.COGNITO_USER_NOT_FOUND);
 		} catch (CognitoIdentityProviderException ex) {
-			log.error("Failed to delete user from Cognito: {}", email, ex);
+			log.error("Failed to delete user from Cognito: {}", username, ex);
 			throw new CognitoException(ErrorCode.COGNITO_USER_DELETE_ERROR);
 		}
 	}

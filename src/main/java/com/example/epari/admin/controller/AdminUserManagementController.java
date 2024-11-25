@@ -108,7 +108,7 @@ public class AdminUserManagementController {
 			@RequestBody RejectionRequestDTO request
 	) {
 		// 1. Cognito에서 사용자 삭제
-		cognitoService.deleteUser(email);
+		cognitoService.deleteUser(request.getUsername());
 
 		// 2. 이메일 발송
 		NotificationEvent event = NotificationEvent.of(email, NotificationType.USER_REJECTED)
