@@ -6,10 +6,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.epari.admin.dto.InstructorApprovalRequestDTO;
 import com.example.epari.admin.dto.StudentApprovalRequestDTO;
 import com.example.epari.admin.exception.CourseNotFoundException;
+import com.example.epari.admin.repository.AdminCourseStudentRepository;
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.domain.CourseStudent;
 import com.example.epari.course.repository.CourseRepository;
-import com.example.epari.course.repository.CourseStudentRepository;
 import com.example.epari.user.domain.Instructor;
 import com.example.epari.user.domain.Student;
 import com.example.epari.user.repository.InstructorRepository;
@@ -29,7 +29,7 @@ public class AdminUserService {
 
 	private final CourseRepository courseRepository;
 
-	private final CourseStudentRepository courseStudentRepository;
+	private final AdminCourseStudentRepository courseStudentRepository;
 
 	private final InstructorRepository instructorRepository;
 
