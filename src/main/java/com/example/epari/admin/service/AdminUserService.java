@@ -29,11 +29,11 @@ public class AdminUserService {
 	private final CourseStudentRepository courseStudentRepository;
 
 	/**
-	 * 사용자 승인 처리 메서드
-	 * 사용자 저장 및 과목 매핑 수행
+	 * 수강생 승인 처리 메서드
+	 * 수강생 저장 및 과목 매핑 수행
 	 */
 	@Transactional
-	public String approveUser(String email, ApprovalRequestDTO request) {
+	public String approveStudent(String email, ApprovalRequestDTO request) {
 		// 1. 사용자 저장
 		Student student = Student
 				.createStudent(email, request.getName());

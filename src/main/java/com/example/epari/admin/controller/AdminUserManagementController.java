@@ -50,16 +50,16 @@ public class AdminUserManagementController {
 	}
 
 	/**
-	 * 임시 그룹에 속한 사용자를 승인하는 엔드포인트
+	 * 임시 그룹에 속한 수강생을 승인하는 엔드포인트
 	 * 특정 강의와의 매핑 작업을 수행
 	 */
 	@PostMapping("/{userEmail}/approve")
-	public ResponseEntity<Void> approveUser(
+	public ResponseEntity<Void> approveStudent(
 			@PathVariable("userEmail") String email,
 			@RequestBody ApprovalRequestDTO request
 	) {
 		// 1. 백엔드 DB에 승인 상태 업데이트
-		String courseName = adminUserService.approveUser(email, request);
+		String courseName = adminUserService.approveStudent(email, request);
 
 		// 2. Cognito 그룹 변경
 		cognitoService.changeUserGroup(request.getUsername(), "STUDENT");
