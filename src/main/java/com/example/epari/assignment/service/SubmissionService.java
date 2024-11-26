@@ -58,8 +58,8 @@ public class SubmissionService {
 
 	private final ApplicationEventPublisher eventPublisher;
 
-	@Value("${app.domain}")
-	private String domain;
+	@Value("${app.frontend_url}")
+	private String frontendUrl;
 
 	/**
 	 * 과제 제출
@@ -237,7 +237,7 @@ public class SubmissionService {
 				.addProperty("feedback", requestDto.getFeedback())
 				.addProperty("assignmentUrl",
 						String.format("%s/courses/%d/assignments/%d",
-								domain,
+								frontendUrl,
 								submission.getAssignment().getCourse().getId(),
 								submission.getAssignment().getId()));
 
