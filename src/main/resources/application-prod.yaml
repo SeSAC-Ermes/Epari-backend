@@ -29,8 +29,8 @@ spring:
   ### Multipart File Upload Configuration ###
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+      max-file-size: 50MB
+      max-request-size: 50MB
 
   data:
     redis:
@@ -52,6 +52,10 @@ aws:
     # accesskey, secretkey는 환경변수로 주입
     bucket: epari-prod  # 또는 환경변수로 주입
     region: ap-northeast-2
+
+### AWS Domain ###
+app:
+  frontend-url: ${APP_FRONTEND_URL}
 
 ### AWS SDK Logging Configuration ###
 logging:
