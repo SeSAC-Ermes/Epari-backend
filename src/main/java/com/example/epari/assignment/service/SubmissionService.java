@@ -1,5 +1,6 @@
 package com.example.epari.assignment.service;
 
+import com.example.epari.admin.exception.CourseNotFoundException;
 import com.example.epari.assignment.domain.Assignment;
 import com.example.epari.assignment.domain.Submission;
 import com.example.epari.assignment.domain.SubmissionFile;
@@ -11,6 +12,11 @@ import com.example.epari.course.domain.Course;
 import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.global.common.enums.SubmissionGrade;
 import com.example.epari.global.common.service.S3FileService;
+import com.example.epari.global.exception.BusinessBaseException;
+import com.example.epari.global.exception.ErrorCode;
+import com.example.epari.global.exception.assignment.*;
+import com.example.epari.global.exception.file.FileDeleteFailedException;
+import com.example.epari.global.exception.file.SubmissionFileNotFoundException;
 import com.example.epari.user.domain.Student;
 import com.example.epari.user.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
@@ -47,13 +53,13 @@ public class SubmissionService {
 	public SubmissionResponseDto addSubmission(Long courseId, Long assignmentId, SubmissionRequestDto requestDto,
 											   Long studentId) {
 		Course course = courseRepository.findById(courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다."));
+				.orElseThrow(CourseNotFoundException::new);
 
 		Assignment assignment = assignmentRepository.findById(assignmentId)
-				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
+				.orElseThrow(AssignmentNotFoundException::new);
 
 		Student student = studentRepository.findById(studentId)
-				.orElseThrow(() -> new IllegalArgumentException("학생 정보를 찾을 수 없습니다."));
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.STUDENT_NOT_FOUND));
 
 		// 기존 제출물이 있는지 확인
 		Optional<Submission> existingSubmission = submissionRepository
@@ -96,14 +102,14 @@ public class SubmissionService {
 	 */
 	public SubmissionResponseDto getSubmissionById(Long courseId, Long assignmentId, Long submissionId) {
 		Submission submission = submissionRepository.findById(submissionId)
-				.orElseThrow(() -> new IllegalArgumentException("제출된 과제를 찾을 수 없습니다."));
+				.orElseThrow(SubmissionNotFoundException::new);
 
 		// 제출된 과제가 해당 코스와 과제에 속하는지 확인
 		if (!submission.getAssignment().getId().equals(assignmentId) || !submission.getAssignment()
 				.getCourse()
 				.getId()
 				.equals(courseId)) {
-			throw new IllegalArgumentException("해당 과제의 제출물이 아닙니다.");
+			throw new SubmissionInvalidException();
 		}
 
 		return SubmissionResponseDto.from(submission);
@@ -123,7 +129,7 @@ public class SubmissionService {
 		Submission foundSubmission = submission.get();
 		// 제출된 과제가 해당 코스에 속하는지 확인
 		if (!foundSubmission.getAssignment().getCourse().getId().equals(courseId)) {
-			throw new IllegalArgumentException("해당 과제의 제출물이 아닙니다.");
+			throw new SubmissionInvalidException();
 		}
 
 		return SubmissionResponseDto.from(foundSubmission);
@@ -145,7 +151,7 @@ public class SubmissionService {
 	public List<SubmissionResponseDto> getSubmissionsByCourse(Long courseId) {
 		// 강의 존재 여부 확인
 		Course course = courseRepository.findById(courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다."));
+				.orElseThrow(CourseNotFoundException::new);
 
 		List<Submission> submissions = submissionRepository.findByCourseId(courseId);
 		return submissions.stream()
@@ -160,11 +166,11 @@ public class SubmissionService {
 	public SubmissionResponseDto updateSubmission(Long courseId, Long assignmentId, Long submissionId,
 												  SubmissionRequestDto requestDto, Long studentId) {
 		Submission submission = submissionRepository.findById(submissionId)
-				.orElseThrow(() -> new IllegalArgumentException("제출된 과제를 찾을 수 없습니다."));
+				.orElseThrow(SubmissionNotFoundException::new);
 
 		// 수정 권한 검증
 		if (!submission.getStudent().getId().equals(studentId)) {
-			throw new IllegalArgumentException("해당 과제의 수정 권한이 없습니다.");
+			throw new SubmissionStudentMismatchException();
 		}
 
 		submission.updateSubmission(requestDto.getDescription());
@@ -190,7 +196,7 @@ public class SubmissionService {
 	@Transactional
 	public SubmissionResponseDto gradeSubmission(Long submissionId, SubmissionGrade grade, String feedback) {
 		Submission submission = submissionRepository.findById(submissionId)
-				.orElseThrow(() -> new IllegalArgumentException("제출된 과제를 찾을 수 없습니다."));
+				.orElseThrow(SubmissionNotFoundException::new);
 
 		submission.updateGrade(grade, feedback);
 
@@ -203,17 +209,17 @@ public class SubmissionService {
 	@Transactional
 	public void deleteSubmission(Long courseId, Long assignmentId, Long submissionId, Long studentId) {
 		Submission submission = submissionRepository.findById(submissionId)
-				.orElseThrow(() -> new IllegalArgumentException("제출된 과제를 찾을 수 없습니다."));
+				.orElseThrow(SubmissionNotFoundException::new);
 
 		// 삭제 권한 검증
 		if (!submission.getStudent().getId().equals(studentId)) {
-			throw new IllegalArgumentException("해당 과제의 삭제 권한이 없습니다.");
+			throw new SubmissionAccessDeniedException();
 		}
 
 		// 과제가 해당 코스와 과제에 속하는지 확인
 		if (!submission.getAssignment().getId().equals(assignmentId) ||
 				!submission.getAssignment().getCourse().getId().equals(courseId)) {
-			throw new IllegalArgumentException("해당 과제의 제출물이 아닙니다.");
+			throw new SubmissionInvalidException();
 		}
 
 		// S3에서 관련 파일들 삭제
@@ -222,6 +228,7 @@ public class SubmissionService {
 				s3FileService.deleteFile(submissionFile.getFileUrl());
 			} catch (Exception e) {
 				log.error("S3에서 파일 삭제를 실패했습니다: {}", submissionFile.getFileUrl(), e);
+				throw new FileDeleteFailedException();
 			}
 		}
 
@@ -234,11 +241,11 @@ public class SubmissionService {
 	public List<SubmissionResponseDto> getSubmissionsWithStudents(Long courseId, Long assignmentId) {
 		// 과제 정보 조회
 		Assignment assignment = assignmentRepository.findById(assignmentId)
-				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
+				.orElseThrow(AssignmentNotFoundException::new);
 
 		// 과제가 해당 코스의 것인지 확인
 		if (!assignment.getCourse().getId().equals(courseId)) {
-			throw new IllegalArgumentException("해당 코스의 과제가 아닙니다.");
+			throw new AssignmentInvalidException();
 		}
 
 		// 제출된 과제 목록 조회
@@ -267,13 +274,13 @@ public class SubmissionService {
 	 */
 	public String downloadFile(Long courseId, Long assignmentId, Long submissionId, Long fileId) {
 		Submission submission = submissionRepository.findById(submissionId)
-				.orElseThrow(() -> new IllegalArgumentException("제출된 과제를 찾을 수 없습니다."));
+				.orElseThrow(SubmissionNotFoundException::new);
 
 		SubmissionFile submissionFile = submission.getFiles()
 				.stream()
 				.filter(f -> f.getId().equals(fileId))
 				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("파일을 찾을 수 없습니다."));
+				.orElseThrow(SubmissionFileNotFoundException::new);
 
 		return s3FileService.generatePresignedUrl(submissionFile.getFileUrl(), Duration.ofDays(7));
 	}
@@ -284,17 +291,18 @@ public class SubmissionService {
 	@Transactional
 	public SubmissionResponseDto deleteFile(Long courseId, Long assignmentId, Long submissionId, Long fileId) {
 		Submission submission = submissionRepository.findById(submissionId)
-				.orElseThrow(() -> new IllegalArgumentException("제출된 과제를 찾을 수 없습니다."));
+				.orElseThrow(SubmissionNotFoundException::new);
 
 		SubmissionFile file = submission.getFiles().stream()
 				.filter(f -> f.getId().equals(fileId))
 				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("파일을 찾을 수 없습니다."));
+				.orElseThrow(SubmissionFileNotFoundException::new);
 
 		try {
 			s3FileService.deleteFile(file.getFileUrl());
 		} catch (Exception e) {
 			log.error("S3에서 파일 삭제를 실패했습니다: {}", file.getFileUrl(), e);
+			throw new FileDeleteFailedException();
 		}
 
 		submission.removeFile(file);
