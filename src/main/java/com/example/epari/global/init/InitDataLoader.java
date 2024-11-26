@@ -20,13 +20,13 @@ import com.example.epari.assignment.domain.Assignment;
 import com.example.epari.assignment.domain.Submission;
 import com.example.epari.assignment.repository.AssignmentRepository;
 import com.example.epari.assignment.repository.SubmissionRepository;
-import com.example.epari.assignment.service.AssignmentService;
-import com.example.epari.assignment.service.SubmissionService;
 import com.example.epari.course.domain.Attendance;
 import com.example.epari.course.domain.Course;
+import com.example.epari.course.domain.CourseContent;
 import com.example.epari.course.domain.CourseStudent;
 import com.example.epari.course.domain.Curriculum;
 import com.example.epari.course.repository.AttendanceRepository;
+import com.example.epari.course.repository.CourseContentRepository;
 import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.course.repository.CourseStudentRepository;
 import com.example.epari.course.repository.CurriculumRepository;
@@ -79,6 +79,8 @@ public class InitDataLoader implements ApplicationRunner {
 
 	private final SubmissionRepository submissionRepository;
 
+	private final CourseContentRepository courseContentRepository;
+
 	@Transactional
 	@Override
 	public void run(ApplicationArguments args) {
@@ -95,6 +97,8 @@ public class InitDataLoader implements ApplicationRunner {
 		for (Course course : courses) {
 			createCurriculums(course);
 		}
+
+		createCourseContents(courses);
 
 		// 5. 수강 신청 데이터 생성
 		// 첫 번째 강의: 모든 학생 수강
@@ -1648,6 +1652,216 @@ public class InitDataLoader implements ApplicationRunner {
 				"코드 재사용성을 고려해야 합니다."
 		};
 		return negativePoints[new Random().nextInt(negativePoints.length)];
+	}
+
+	// 강의 자료 생성
+	private void createCourseContents(List<Course> courses) {
+		// AWS 과정 강의 자료 생성
+		createAwsCourseContents(courses.get(0));
+
+		// 풀스택 과정 강의 자료 생성
+		createFullstackCourseContents(courses.get(0));
+	}
+
+	private void createAwsCourseContents(Course course) {
+		// 1. Java & Database (2024-07-03 ~ 2024-07-23)
+		createContent(course, LocalDate.of(2024, 7, 3),
+				"Java 기초 - 변수와 데이터 타입",
+				"Java의 기본 문법과 변수 선언, 데이터 타입에 대해 학습합니다. 기본형과 참조형 변수의 차이점과 형변환에 대해 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 7, 5),
+				"Java 객체지향 프로그래밍 - 클래스와 객체",
+				"객체지향의 핵심 개념과 클래스 설계 방법에 대해 학습합니다. 캡슐화, 상속, 다형성의 개념과 실제 활용 사례를 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 7, 8),
+				"Java 컬렉션 프레임워크",
+				"List, Set, Map 등 주요 컬렉션의 특징과 사용법을 학습합니다. 각 자료구조의 성능 특성과 적절한 사용 시기를 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 7, 10),
+				"Java Stream API와 람다식",
+				"함수형 프로그래밍과 Stream API의 활용법을 학습합니다. 람다식을 이용한 간결한 코드 작성과 데이터 처리 방법을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 7, 12),
+				"Database 기초와 SQL",
+				"관계형 데이터베이스의 기본 개념과 SQL 문법을 학습합니다. DDL, DML, DCL의 차이와 실제 쿼리 작성 방법을 다룹니다.");
+
+		// 2. Front-End (2024-07-24 ~ 2024-08-14)
+		createContent(course, LocalDate.of(2024, 7, 24),
+				"HTML5 기초와 시맨틱 마크업",
+				"웹 표준과 시맨틱 태그의 활용법을 학습합니다. 접근성과 SEO를 고려한 마크업 작성 방법을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 7, 26),
+				"CSS3 레이아웃과 반응형 웹",
+				"Flexbox, Grid 및 미디어 쿼리를 활용한 반응형 웹 디자인을 학습합니다. 모바일 퍼스트 접근법과 브라우저 호환성을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 7, 29),
+				"JavaScript ES6+ 기초",
+				"모던 자바스크립트의 주요 문법과 활용법을 학습합니다. 변수 스코프, 호이스팅, 클로저의 개념을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 8, 1),
+				"React 컴포넌트와 Props",
+				"React의 기본 개념과 컴포넌트 설계 방법을 학습합니다. Props를 통한 데이터 전달과 컴포넌트 재사용성을 다룹니다.");
+
+		// 3. Spring Boot (2024-08-19 ~ 2024-09-13)
+		createContent(course, LocalDate.of(2024, 8, 19),
+				"Spring Boot 핵심 원리",
+				"Spring Boot의 동작 원리와 주요 기능을 학습합니다. 자동 설정, 의존성 관리, 내장 서버의 특징을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 8, 21),
+				"Spring Data JPA 활용",
+				"JPA를 이용한 데이터 접근 계층 구현 방법을 학습합니다. 엔티티 매핑, 연관관계 설정, 쿼리 메소드를 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 8, 23),
+				"Spring Security와 인증/인가",
+				"보안 설정과 JWT 기반 인증 구현 방법을 학습합니다. OAuth2.0 소셜 로그인과 권한 관리를 다룹니다.");
+
+		// 4. Linux & Network (2024-09-19 ~ 2024-09-25)
+		createContent(course, LocalDate.of(2024, 9, 19),
+				"Linux 기본 명령어와 쉘 스크립트",
+				"리눅스 시스템 관리와 쉘 스크립트 작성법을 학습합니다. 파일 시스템, 프로세스 관리, 네트워크 설정을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 9, 20),
+				"네트워크 프로토콜과 보안",
+				"TCP/IP 프로토콜과 네트워크 보안 기초를 학습합니다. OSI 7계층, HTTP/HTTPS, 방화벽 설정을 다룹니다.");
+
+		// 5. Docker & Kubernetes (2024-09-26 ~ 2024-10-07)
+		createContent(course, LocalDate.of(2024, 9, 26),
+				"Docker 컨테이너 기초",
+				"Docker의 기본 개념과 컨테이너 운영 방법을 학습합니다. Dockerfile 작성, 이미지 빌드, 컨테이너 배포를 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 9, 28),
+				"Kubernetes 클러스터 운영",
+				"K8s 클러스터 구축과 운영 방법을 학습합니다. Pod, Service, Deployment 등 주요 리소스 관리를 다룹니다.");
+
+		// 6. AWS 서비스 (2024-10-08 ~ 2024-10-17)
+		createContent(course, LocalDate.of(2024, 10, 8),
+				"AWS EC2와 VPC 구성",
+				"AWS 기본 인프라 구성 방법을 학습합니다. EC2 인스턴스 관리, VPC 네트워크 설정, 보안 그룹 구성을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 10, 10),
+				"AWS ECS와 EKS 활용",
+				"AWS 컨테이너 서비스 운영 방법을 학습합니다. ECS 클러스터 구성, EKS 워크로드 배포, 오토스케일링을 다룹니다.");
+
+		// 7. MSA (2024-10-18 ~ 2024-10-29)
+		createContent(course, LocalDate.of(2024, 10, 18),
+				"MSA 설계 원칙과 패턴",
+				"마이크로서비스 아키텍처의 핵심 개념을 학습합니다. 서비스 분리, 통신 방식, 데이터 관리 전략을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 10, 21),
+				"Spring Cloud 활용",
+				"Spring Cloud를 이용한 MSA 구현 방법을 학습합니다. Service Discovery, Config Server, API Gateway 등의 구성 요소를 다룹니다.");
+	}
+
+	private void createFullstackCourseContents(Course course) {
+		// 1. JavaScript & ES6+ (2024-08-05 ~ 2024-08-30)
+		createContent(course, LocalDate.of(2024, 8, 5),
+				"JavaScript 기초와 DOM",
+				"자바스크립트의 기본 문법과 DOM 조작 방법을 학습합니다. 이벤트 처리와 DOM API의 주요 메서드를 실습합니다.");
+
+		createContent(course, LocalDate.of(2024, 8, 7),
+				"ES6+ 새로운 기능",
+				"화살표 함수, 구조 분해, 모듈 시스템 등 ES6+의 새로운 기능을 학습합니다. 실제 프로젝트에서의 활용 사례를 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 8, 9),
+				"비동기 프로그래밍",
+				"Promise, async/await를 활용한 비동기 처리를 학습합니다. 콜백 지옥 해결과 에러 처리 방법을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 8, 12),
+				"함수형 프로그래밍",
+				"순수 함수와 불변성 원칙을 학습합니다. 고차 함수, 클로저, 커링의 개념과 활용법을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 8, 14),
+				"TypeScript 기초",
+				"TypeScript의 기본 문법과 타입 시스템을 학습합니다. 인터페이스, 제네릭, 데코레이터의 활용법을 다룹니다.");
+
+		// 2. React (2024-09-02 ~ 2024-09-27)
+		createContent(course, LocalDate.of(2024, 9, 2),
+				"React Hooks 활용",
+				"useState, useEffect 등 주요 Hook의 활용법을 학습합니다. 커스텀 Hook 작성과 성능 최적화를 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 9, 4),
+				"상태 관리와 Redux",
+				"Redux를 이용한 전역 상태 관리를 학습합니다. 액션, 리듀서, 미들웨어의 개념과 구현 방법을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 9, 6),
+				"React Router와 SPA",
+				"라우팅 설정과 SPA 구현 방법을 학습합니다. 동적 라우팅, 중첩 라우팅, 보호된 라우트를 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 9, 9),
+				"성능 최적화",
+				"메모이제이션과 렌더링 최적화 기법을 학습합니다. React.memo, useMemo, useCallback의 활용법을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 9, 11),
+				"테스트와 디버깅",
+				"React 컴포넌트 테스트 방법을 학습합니다. Jest와 React Testing Library를 이용한 단위 테스트를 다룹니다.");
+
+		// 3. Spring Boot & JPA (2024-09-30 ~ 2024-10-25)
+		createContent(course, LocalDate.of(2024, 9, 30),
+				"Spring Boot 기초",
+				"스프링 부트의 핵심 기능과 설정 방법을 학습합니다. 의존성 관리, 자동 설정, 프로파일 관리를 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 10, 2),
+				"JPA 엔티티 매핑",
+				"JPA 엔티티 설계와 연관관계 매핑을 학습합니다. 영속성 컨텍스트, 지연 로딩, 캐시 전략을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 10, 4),
+				"Spring Data JPA",
+				"리포지토리 설계와 쿼리 메소드 활용법을 학습합니다. 페이징, 정렬, 벌크 연산의 구현 방법을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 10, 7),
+				"트랜잭션 관리",
+				"스프링의 트랜잭션 관리 방법을 학습합니다. 전파 속성, 격리 수준, 롤백 처리를 다룹니다.");
+
+		// 4. REST API (2024-10-28 ~ 2024-11-22)
+		createContent(course, LocalDate.of(2024, 10, 28),
+				"REST API 설계",
+				"RESTful API 설계 원칙과 방법론을 학습합니다. 리소스 모델링, URL 설계, HTTP 메소드 활용을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 10, 30),
+				"API 문서화",
+				"Swagger를 이용한 API 문서 자동화를 학습합니다. OpenAPI 스펙, API 테스트, 문서 배포 방법을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 11, 1),
+				"예외 처리와 검증",
+				"API 예외 처리와 입력값 검증 방법을 학습합니다. @Valid, ExceptionHandler, 커스텀 검증 로직을 다룹니다.");
+
+		// 5. 보안 (2024-11-25 ~ 2024-12-20)
+		createContent(course, LocalDate.of(2024, 11, 25),
+				"Spring Security 기초",
+				"인증/인가 처리와 보안 설정을 학습합니다. SecurityFilterChain, UserDetailsService, PasswordEncoder를 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 11, 27),
+				"JWT 인증",
+				"토큰 기반 인증 구현 방법을 학습합니다. JWT 생성/검증, RefreshToken, 보안 취약점 대응을 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 11, 29),
+				"OAuth2.0 소셜 로그인",
+				"소셜 로그인 구현 방법을 학습합니다. OAuth2.0 흐름, 리소스 서버 연동, 사용자 정보 처리를 다룹니다.");
+
+		// 6. 프로젝트 (2024-12-23 ~ 2025-02-28)
+		createContent(course, LocalDate.of(2024, 12, 23),
+				"프로젝트 기획",
+				"요구사항 분석과 프로젝트 범위 설정 방법을 학습합니다. 유스케이스 작성, WBS 작성, 일정 관리를 다룹니다.");
+
+		createContent(course, LocalDate.of(2024, 12, 26),
+				"Git 협업 전략",
+				"Git Flow 전략과 효과적인 협업 방식을 학습합니다. 브랜치 전략, 코드 리뷰, 충돌 해결 방법을 다룹니다.");
+	}
+
+	private void createContent(
+			Course course,
+			LocalDate date,
+			String title,
+			String content
+	) {
+		CourseContent courseContent = CourseContent.builder()
+				.title(title)
+				.content(content)
+				.date(date)
+				.course(course)
+				.build();
+
+		courseContentRepository.save(courseContent);
 	}
 
 }
