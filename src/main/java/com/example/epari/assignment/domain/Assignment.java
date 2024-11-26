@@ -53,6 +53,9 @@ public class Assignment extends BaseTimeEntity {
 	@JoinColumn(name = "instructor_id")
 	private Instructor instructor;
 
+	@OneToMany(mappedBy = "assignment", cascade = CascadeType.REMOVE)
+	private List<Submission> submissions = new ArrayList<>();
+
 	@OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<AssignmentFile> files = new ArrayList<>();
 
@@ -95,4 +98,5 @@ public class Assignment extends BaseTimeEntity {
 	public void removeFile(AssignmentFile file) {
 		this.files.remove(file);
 	}
+
 }

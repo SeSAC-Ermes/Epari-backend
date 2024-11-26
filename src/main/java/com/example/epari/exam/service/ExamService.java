@@ -77,7 +77,7 @@ public class ExamService {
 		return ExamStatistics.builder()
 				.totalStudentCount(courseStudentRepository.countByCourseId(exam.getCourse().getId()))
 				.submittedStudentCount((int)results.stream()
-						.filter(r -> r.getStatus() == ExamStatus.SUBMITTED)
+						.filter(r -> r.getStatus() == ExamStatus.SUBMITTED || r.getStatus() == ExamStatus.COMPLETED)
 						.count())
 				.averageScore(results.stream()
 						.mapToInt(ExamResult::getEarnedScore)
@@ -92,45 +92,46 @@ public class ExamService {
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
 
 		List<Exam> exams;
-	
+
 		// 권한에 따른 시험 목록 조회
 		if (role.contains("INSTRUCTOR")) {
 			exams = examRepository.findByInstructorEmail(email);
 		} else {
 			exams = examRepository.findByStudentEmail(email);
 		}
-	
+
 		// 현재 시점 기준으로 시험 분류
 		LocalDateTime now = LocalDateTime.now();
-	
+
 		List<ExamSummaryDto> scheduledExams = new ArrayList<>();
 		List<ExamSummaryDto> inProgressExams = new ArrayList<>();
 		List<ExamSummaryDto> completedExams = new ArrayList<>();
-	
+
 		for (Exam exam : exams) {
 			if (status != null && !matchesStatus(exam, status, now)) {
 				continue;  // status 필터링
 			}
-	
+
 			if (role.contains("INSTRUCTOR")) {
 				ExamStatistics statistics = calculateExamStatistics(exam);
 				ExamSummaryDto summaryDto = ExamSummaryDto.forInstructor(exam, statistics);
 				categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams, completedExams);
 			} else {
 				// 학생의 경우 ExamResult가 없으면 새로운 시험으로 처리
-				Optional<ExamResult> resultOptional = examResultRepository.findByExamIdAndStudentEmail(exam.getId(), email);
+				Optional<ExamResult> resultOptional = examResultRepository.findByExamIdAndStudentEmail(exam.getId(),
+						email);
 				ExamSummaryDto summaryDto;
-				
+
 				if (resultOptional.isPresent()) {
 					summaryDto = ExamSummaryDto.forStudent(exam, resultOptional.get());
 				} else {
 					summaryDto = ExamSummaryDto.forNewExam(exam);
 				}
-				
+
 				categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams, completedExams);
 			}
 		}
-	
+
 		return ExamListResponseDto.builder()
 				.scheduledExams(scheduledExams)
 				.inProgressExams(inProgressExams)
