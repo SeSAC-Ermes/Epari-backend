@@ -80,8 +80,9 @@
       
       <div class="grade-box">
         <strong>평가 결과:</strong>
-        <span th:if="${grade} == PASS"  th:text="통과" style="font-size: 1.2em; font-weight: bold;"></span>
-        <span th:if="${grade} == NONE_PASS"  th:text="미통과" style="color:red; font-size: 1.2em; font-weight: bold;"></span>
+        <span th:if="${grade} == PASS" th:text="통과" style="color:blue; font-size: 1.2em; font-weight: bold;"></span>
+        <span th:if="${grade} == NONE_PASS" th:text="미통과"
+              style="color:red; font-size: 1.2em; font-weight: bold;"></span>
       </div>
       
       <div class="assignment-info">
