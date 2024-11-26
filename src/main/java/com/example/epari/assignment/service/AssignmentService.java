@@ -137,16 +137,13 @@ public class AssignmentService {
 	@Transactional
 	public AssignmentResponseDto updateAssignment(Long courseId, Long assignmentId, AssignmentRequestDto requestDto,
 												  String email) {
-		BaseUser user = baseUserRepository.findByEmail(email)
-				.orElseThrow(AuthUserNotFoundException::new);
-
 		Course course = courseRepository.findById(courseId)
 				.orElseThrow(CourseNotFoundException::new);
 
 		Assignment assignment = assignmentRepository.findByIdWithInstructor(assignmentId)
 				.orElseThrow(AssignmentNotFoundException::new);
 
-		Instructor instructor = instructorRepository.findById(user.getId())
+		Instructor instructor = instructorRepository.findByEmail(email)
 				.orElseThrow(InstructorNotFoundException::new);
 
 		if (!course.getInstructor().getId().equals(instructor.getId())) {
