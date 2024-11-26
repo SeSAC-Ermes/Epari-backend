@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import com.example.epari.admin.dto.CourseStudentResponseDTO;
 import com.example.epari.course.domain.CourseStudent;
+import com.example.epari.user.domain.Student;
 
 /**
  * 관리자 - 강의와 학생 관련 정보에 대한 데이터베이스 접근을 담당하는 레포지토리 인터페이스
@@ -34,5 +35,7 @@ public interface AdminCourseStudentRepository extends JpaRepository<CourseStuden
 	void deleteByCourseIdAndStudentIdIn(Long courseId, Set<Long> studentIds);
 
 	List<CourseStudent> findByCourseId(Long courseId);
+
+	void deleteByStudent(Student student);
 
 }
