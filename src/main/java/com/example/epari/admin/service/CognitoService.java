@@ -67,47 +67,56 @@ public class CognitoService {
 	/**
 	 * 사용자 그룹을 변경
 	 */
-	public void changeUserGroup(String username, String groupName) {
-		// 1. 현재 그룹에서 제거
-		AdminRemoveUserFromGroupRequest removeRequest = AdminRemoveUserFromGroupRequest.builder()
-				.userPoolId(userPoolId)
-				.username(username)
-				.groupName("PENDING_ROLES")
-				.build();
+	public void changeUserGroup(String username, String newGroup) {
+		try {
+			// 기존 그룹에서 제거
+			AdminRemoveUserFromGroupRequest removeRequest = AdminRemoveUserFromGroupRequest.builder()
+					.userPoolId(userPoolId)
+					.username(username)
+					.groupName("PENDING_ROLES")
+					.build();
 
-		cognitoClient.adminRemoveUserFromGroup(removeRequest);
+			cognitoClient.adminRemoveUserFromGroup(removeRequest);
 
-		// 2. 새 그룹에 추가
-		AdminAddUserToGroupRequest addRequest = AdminAddUserToGroupRequest.builder()
-				.userPoolId(userPoolId)
-				.username(username)
-				.groupName(groupName)
-				.build();
+			// 새 그룹에 추가
+			AdminAddUserToGroupRequest addRequest = AdminAddUserToGroupRequest.builder()
+					.userPoolId(userPoolId)
+					.username(username)
+					.groupName(newGroup)
+					.build();
 
-		cognitoClient.adminAddUserToGroup(addRequest);
+			cognitoClient.adminAddUserToGroup(addRequest);
+
+		} catch (UserNotFoundException e) {
+			log.error("User not found in Cognito: {}", username, e);
+			throw new CognitoException(ErrorCode.COGNITO_USER_NOT_FOUND);
+		} catch (CognitoIdentityProviderException e) {
+			log.error("Failed to change user group in Cognito: {}", username, e);
+			throw new CognitoException(ErrorCode.COGNITO_UPDATE_FAILED);
+		}
 	}
 
 	/**
 	 * 사용자 풀에서 특정 사용자를 삭제하는 메서드
 	 */
 	@Transactional
-	public void deleteUser(String email) {
+	public void deleteUser(String username) {
 		try {
 			// AdminDeleteUserRequest 생성
 			AdminDeleteUserRequest deleteRequest = AdminDeleteUserRequest.builder()
 					.userPoolId(userPoolId)
-					.username(email)
+					.username(username)
 					.build();
 
 			// Cognito API를 통해 사용자 삭제 요청
 			cognitoClient.adminDeleteUser(deleteRequest);
 
-			log.info("Successfully deleted user from Cognito: {}", email);
+			log.info("Successfully deleted user from Cognito: {}", username);
 		} catch (UserNotFoundException ex) {
-			log.error("User not found in Cognito: {}", email, ex);
+			log.error("User not found in Cognito: {}", username, ex);
 			throw new CognitoException(ErrorCode.COGNITO_USER_NOT_FOUND);
 		} catch (CognitoIdentityProviderException ex) {
-			log.error("Failed to delete user from Cognito: {}", email, ex);
+			log.error("Failed to delete user from Cognito: {}", username, ex);
 			throw new CognitoException(ErrorCode.COGNITO_USER_DELETE_ERROR);
 		}
 	}

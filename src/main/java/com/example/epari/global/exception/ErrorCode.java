@@ -47,7 +47,8 @@ public enum ErrorCode {
 	INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "AUTH-018", "잘못된 파라미터가 전달되었습니다."),
 	SIGNUP_FAILED(HttpStatus.BAD_REQUEST, "AUTH-019", "회원가입 처리 중 오류가 발생했습니다."),
 	PENDING_APPROVAL(HttpStatus.BAD_REQUEST, "AUTH-020", "가입 승인 대기중입니다."),
-
+	APPROVAL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH-021", "사용자 승인에 실패했습니다."),
+	
 	// Student 관련 에러 코드(STD)
 	STUDENT_NOT_FOUND(HttpStatus.NOT_FOUND, "STD-001", "학생 정보를 찾을 수 없습니다."),
 
@@ -66,6 +67,13 @@ public enum ErrorCode {
 	// Assignment 관련 에러 코드 (ASM)
 	ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASM-001", "과제를 찾을 수 없습니다."),
 	SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "ASM-002", "과제 제출물을 찾을 수 없습니다."),
+	UNAUTHORIZED_ASSIGNMENT_ACCESS(HttpStatus.FORBIDDEN, "ASM-003", "과제에 대한 접근 권한이 없습니다."),
+	UNAUTHORIZED_SUBMISSION_ACCESS(HttpStatus.FORBIDDEN,"ASM-004","과제 제출물에 대한 접근 권한이 없습니다."),
+	ASSIGNMENT_INSTRUCTOR_MISMATCH(HttpStatus.FORBIDDEN, "ASM-005", "해당 과제에 대한 접근 권한이 없습니다."),
+	SUBMISSION_STUDENT_MISMATCH(HttpStatus.FORBIDDEN, "ASM-006", "해당 과제 제출물에 대한 접근 권한이 없습니다."),
+	ASSIGNMENT_INVALID(HttpStatus.BAD_REQUEST,"ASM-007","해당 강의의 과제가 아닙니다."),
+	SUBMISSION_INVALID(HttpStatus.BAD_REQUEST,"ASM-008","해당 과제의 제출물이 아닙니다."),
+
 
 	// Question 관련 에러 코드(EXAM)
 	QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "QST-001", "문제를 찾을 수 없습니다."),
@@ -98,6 +106,7 @@ public enum ErrorCode {
 	COGNITO_USER_FETCH_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-001", "사용자 정보 조회에 실패했습니다."),
 	COGNITO_USER_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-002", "사용자 정보를 찾을 수 없습니다."),
 	COGNITO_USER_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-003", "사용자를 삭제하는 도중 오류가 발생했습니다."),
+	COGNITO_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-004", "사용자 그룹 변경에 실패했습니다."),
 
 	// 알림 관련 에러 코드 (NTF)
 	NOTIFICATION_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "NTF-001", "알림 발송에 실패했습니다."),
@@ -110,7 +119,7 @@ public enum ErrorCode {
 	INVALID_SCORE_VALUE(HttpStatus.BAD_REQUEST, "GRD-004", "유효하지 않은 점수입니다."),
 	GRADING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "GRD-005", "채점 처리 중 오류가 발생했습니다."),
 
-	//파일 관련 에러 코드 (FILE)
+	// 파일 관련 에러 코드 (FILE)
 	FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "FILE-001", "파일을 찾을 수 없습니다."),
 	FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-002", "파일 업로드에 실패했습니다."),
 	FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-003", "파일 삭제에 실패했습니다."),

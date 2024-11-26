@@ -24,6 +24,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 사용자 인증 관련 서비스
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -168,9 +171,10 @@ public class AuthService {
 
 	private UserType findUserByEmail(String email, boolean throwExceptionIfNotFound) {
 		try {
+			// 이메일 필터 조건 수정
 			ListUsersRequest listUsersRequest = ListUsersRequest.builder()
 					.userPoolId(userPoolId)
-					.filter("email = \"" + email + "\"")
+					.filter("email = \"" + email + "\" or username = \"" + email + "\"")
 					.build();
 
 			ListUsersResponse listUsersResponse = cognitoClient.listUsers(listUsersRequest);
@@ -245,6 +249,52 @@ public class AuthService {
 			throw new AuthUserNotFoundException();
 		} catch (Exception e) {
 			log.error("Failed to get user groups", e);
+			throw new AuthenticationException(ErrorCode.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	public void addUserToPendingRole(String email) {
+		try {
+			log.info("Attempting to add user to PENDING_ROLES group: {}", email);
+
+			UserType user = findUserByEmail(email, true);
+			log.info("Found user: {}", user.username());
+
+			// 현재 사용자의 그룹 목록 확인
+			AdminListGroupsForUserRequest listGroupsRequest = AdminListGroupsForUserRequest.builder()
+					.userPoolId(userPoolId)
+					.username(user.username())
+					.build();
+
+			AdminListGroupsForUserResponse groupsResponse =
+					cognitoClient.adminListGroupsForUser(listGroupsRequest);
+
+			// 이미 PENDING_ROLES 그룹에 있는지 확인
+			boolean alreadyInPendingRole = groupsResponse.groups().stream()
+					.anyMatch(group -> "PENDING_ROLES".equals(group.groupName()));
+
+			if (!alreadyInPendingRole) {
+				// PENDING_ROLES 그룹에 추가
+				AdminAddUserToGroupRequest groupRequest = AdminAddUserToGroupRequest.builder()
+						.userPoolId(userPoolId)
+						.username(user.username())
+						.groupName("PENDING_ROLES")
+						.build();
+
+				cognitoClient.adminAddUserToGroup(groupRequest);
+				log.info("Successfully added user to PENDING_ROLES group: {}", email);
+			} else {
+				log.info("User already in PENDING_ROLES group: {}", email);
+			}
+
+		} catch (UserNotFoundException e) {
+			log.error("User not found: {}", email);
+			throw new AuthUserNotFoundException();
+		} catch (CognitoIdentityProviderException e) {
+			log.error("Cognito error while adding user to group: {}", e.getMessage());
+			throw new AuthenticationException(ErrorCode.INTERNAL_SERVER_ERROR);
+		} catch (Exception e) {
+			log.error("Unexpected error while adding user to PENDING_ROLES group", e);
 			throw new AuthenticationException(ErrorCode.INTERNAL_SERVER_ERROR);
 		}
 	}

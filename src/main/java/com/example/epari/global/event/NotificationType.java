@@ -8,7 +8,8 @@ import lombok.Getter;
 @Getter
 public enum NotificationType {
 
-	USER_APPROVED("사용자 승인", "user-approved.html"),
+	STUDENT_APPROVED("수강생 승인", "student-approved.html"),
+	INSTRUCTOR_APPROVED("강사 승인", "instructor-approved.html"),
 	USER_REJECTED("사용자 반려", "user-rejected.html");
 
 	private final String description;

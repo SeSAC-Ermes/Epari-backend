@@ -4,6 +4,7 @@ import com.example.epari.assignment.dto.submission.GradeRequestDto;
 import com.example.epari.assignment.dto.submission.SubmissionRequestDto;
 import com.example.epari.assignment.dto.submission.SubmissionResponseDto;
 import com.example.epari.assignment.service.SubmissionService;
+import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.global.annotation.CurrentUserEmail;
 import com.example.epari.user.domain.Student;
 import com.example.epari.user.repository.StudentRepository;
@@ -22,7 +23,9 @@ public class SubmissionController {
 
 	private final SubmissionService submissionService;
 
-	private final StudentRepository studentRepository; // 추가
+	private final StudentRepository studentRepository;
+
+	private final CourseRepository courseRepository;
 
 	@PreAuthorize("hasRole('STUDENT')")
 	@PostMapping
@@ -54,8 +57,15 @@ public class SubmissionController {
 	@GetMapping("/list")
 	public ResponseEntity<List<SubmissionResponseDto>> getAllSubmissions(
 			@PathVariable Long courseId,
-			@PathVariable Long assignmentId) {
-		List<SubmissionResponseDto> submissions = submissionService.getSubmissionsByAssignmentId(assignmentId);
+			@PathVariable Long assignmentId,
+			@CurrentUserEmail String email) {  // 강사 권한 검증을 위해 추가
+
+		// 강사가 해당 강의의 담당자인지 확인
+		if (!courseRepository.existsByCourseIdAndInstructorEmail(courseId, email)) {
+			throw new IllegalArgumentException("해당 강의의 조회 권한이 없습니다.");
+		}
+
+		List<SubmissionResponseDto> submissions = submissionService.getSubmissionsWithStudents(courseId, assignmentId);
 		return ResponseEntity.ok(submissions);
 	}
 

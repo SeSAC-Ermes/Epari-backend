@@ -95,4 +95,15 @@ public class SubmissionResponseDto {
 				.build();
 	}
 
+	public static SubmissionResponseDto createUnsubmitted(Student student, com.example.epari.assignment.domain.Assignment assignment) {
+		return SubmissionResponseDto.builder()
+				.description("")
+				.grade(null)
+				.feedback(null)
+				.status("미제출")
+				.files(List.of())
+				.student(StudentInfo.from(student))
+				.assignment(AssignmentInfo.from(assignment))
+				.build();
+	}
 }
