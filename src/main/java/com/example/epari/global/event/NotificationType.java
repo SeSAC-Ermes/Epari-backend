@@ -10,7 +10,10 @@ public enum NotificationType {
 
 	STUDENT_APPROVED("수강생 승인", "student-approved.html"),
 	INSTRUCTOR_APPROVED("강사 승인", "instructor-approved.html"),
-	USER_REJECTED("사용자 반려", "user-rejected.html");
+	USER_REJECTED("사용자 반려", "user-rejected.html"),
+	// 과제 채점 알림
+	GRADE("과제 평가가 완료되었습니다.", "assignment-grade.html"),;
+
 
 	private final String description;
 

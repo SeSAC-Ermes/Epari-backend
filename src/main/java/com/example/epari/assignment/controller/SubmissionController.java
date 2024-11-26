@@ -108,11 +108,13 @@ public class SubmissionController {
 			@PathVariable Long courseId,
 			@PathVariable Long assignmentId,
 			@PathVariable Long submissionId,
+			@CurrentUserEmail String email,
 			@RequestBody GradeRequestDto gradeRequestDto) {
 		return ResponseEntity.ok(
-				submissionService.gradeSubmission(submissionId,
-						gradeRequestDto.getGrade(),
-						gradeRequestDto.getFeedback())
+				submissionService.gradeSubmission(
+						submissionId,
+						gradeRequestDto,
+						email)
 		);
 	}
 
