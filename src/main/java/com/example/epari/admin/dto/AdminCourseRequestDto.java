@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -39,6 +40,7 @@ public class AdminCourseRequestDto {
 	private MultipartFile courseImage;  // 강의 이미지 (선택)
 
 	// 커리큘럼 정보
+	@Valid
 	@NotNull(message = "커리큘럼은 필수입니다.")
 	private List<CurriculumInfo> curriculums;
 
