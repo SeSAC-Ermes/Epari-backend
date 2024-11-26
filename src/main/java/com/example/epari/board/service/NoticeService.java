@@ -62,16 +62,19 @@ public class NoticeService {
 					.build());
 
 			// S3에 파일 업로드 및 NoticeFile 엔티티 생성
+			// 파일 업로드 부분
 			if (requestDto.getFiles() != null && !requestDto.getFiles().isEmpty()) {
 				for (MultipartFile file : requestDto.getFiles()) {
 					// S3에 파일 업로드
 					String s3Key = generateS3Key(file.getOriginalFilename());
 					String fileUrl = s3FileService.uploadFile("notices/files", file);
 
+					log.info("File uploaded to S3. Key: {}, URL: {}", s3Key, fileUrl);
+
 					// NoticeFile 엔티티 생성 및 저장
 					NoticeFile noticeFile = NoticeFile.createNoticeFile(
 							file.getOriginalFilename(),
-							s3Key,
+							s3Key,  // 여기서 S3 키를 정확히 저장
 							fileUrl,
 							file.getSize(),
 							notice
@@ -86,45 +89,6 @@ public class NoticeService {
 			throw new RuntimeException("공지사항 생성 중 오류가 발생했습니다.", e);
 		}
 	}
-
-//	@Transactional
-//	public Long createNotice(NoticeRequestDto requestDto) {
-//		try {
-//			Course course = courseRepository.findById(requestDto.getCourseId())
-//					.orElseThrow(() -> new EntityNotFoundException("Course not found"));
-//
-//			Instructor instructor = instructorRepository.findById(requestDto.getInstructorId())
-//					.orElseThrow(() -> new EntityNotFoundException("Instructor not found"));
-//
-//			Notice notice = noticeRepository.save(Notice.builder()
-//					.title(requestDto.getTitle())
-//					.content(requestDto.getContent())
-//					.type(requestDto.getType())
-//					.course(course)
-//					.instructor(instructor)
-//					.build());
-//
-//			// S3에 파일 업로드
-//			if (requestDto.getFiles() != null && !requestDto.getFiles().isEmpty()) {
-//				for (MultipartFile file : requestDto.getFiles()) {
-//					String fileUrl = s3FileService.uploadFile("notices", file);
-//					NoticeFile noticeFile = NoticeFile.createNoticeFile(
-//							file.getOriginalFilename(),
-//							extractKeyFromUrl(fileUrl),
-//							fileUrl,
-//							file.getSize(),
-//							notice
-//					);
-//					noticeFileRepository.save(noticeFile);
-//				}
-//			}
-//
-//			return notice.getId();
-//		} catch (Exception e) {
-//			log.error("Error creating notice", e);
-//			throw new RuntimeException("공지사항 생성 중 오류가 발생했습니다.", e);
-//		}
-//	}
 
 	// 공지사항 수정
 	@Transactional
@@ -190,54 +154,6 @@ public class NoticeService {
 	private String generateS3Key(String originalFilename) {
 		return String.format("notices/files/%s-%s", UUID.randomUUID(), originalFilename);
 	}
-//	@Transactional
-//	public Long updateNotice(Long id, NoticeRequestDto requestDto) {
-//		try {
-//			Notice notice = noticeRepository.findById(id)
-//					.orElseThrow(() -> new EntityNotFoundException("Notice not found"));
-//
-//			Course course = courseRepository.findById(requestDto.getCourseId())
-//					.orElseThrow(() -> new EntityNotFoundException("Course not found"));
-//
-//			// 기존 파일 삭제
-//			List<NoticeFile> existingFiles = new ArrayList<>(notice.getFiles());
-//			for (NoticeFile existingFile : existingFiles) {
-//				s3FileService.deleteFile(existingFile.getFileUrl());
-//				noticeFileRepository.delete(existingFile);
-//				notice.getFiles().remove(existingFile);
-//			}
-//
-//			// 새 파일 추가
-//			if (requestDto.getFiles() != null && !requestDto.getFiles().isEmpty()) {
-//				for (MultipartFile file : requestDto.getFiles()) {
-//					String fileUrl = s3FileService.uploadFile("notices", file);
-//					NoticeFile noticeFile = NoticeFile.createNoticeFile(
-//							file.getOriginalFilename(),
-//							extractKeyFromUrl(fileUrl),
-//							fileUrl,
-//							file.getSize(),
-//							notice
-//					);
-//					NoticeFile savedFile = noticeFileRepository.save(noticeFile);
-//					notice.getFiles().add(savedFile);
-//				}
-//			}
-//
-//			notice.update(
-//					requestDto.getTitle(),
-//					requestDto.getContent(),
-//					requestDto.getType(),
-//					course
-//			);
-//
-//			return noticeRepository.save(notice).getId();
-//		} catch (EntityNotFoundException e) {
-//			throw e;
-//		} catch (Exception e) {
-//			log.error("Error updating notice: " + id, e);
-//			throw new RuntimeException("공지사항 수정 중 오류가 발생했습니다.", e);
-//		}
-//	}
 
 	// 공지사항 삭제
 	@Transactional
