@@ -61,13 +61,17 @@ public class NoticeService {
 					.instructor(instructor)
 					.build());
 
-			// S3에 파일 업로드
+			// S3에 파일 업로드 및 NoticeFile 엔티티 생성
 			if (requestDto.getFiles() != null && !requestDto.getFiles().isEmpty()) {
 				for (MultipartFile file : requestDto.getFiles()) {
-					String fileUrl = s3FileService.uploadFile("notices", file);
+					// S3에 파일 업로드
+					String s3Key = generateS3Key(file.getOriginalFilename());
+					String fileUrl = s3FileService.uploadFile("notices/files", file);
+
+					// NoticeFile 엔티티 생성 및 저장
 					NoticeFile noticeFile = NoticeFile.createNoticeFile(
 							file.getOriginalFilename(),
-							extractKeyFromUrl(fileUrl),
+							s3Key,
 							fileUrl,
 							file.getSize(),
 							notice
@@ -83,6 +87,45 @@ public class NoticeService {
 		}
 	}
 
+//	@Transactional
+//	public Long createNotice(NoticeRequestDto requestDto) {
+//		try {
+//			Course course = courseRepository.findById(requestDto.getCourseId())
+//					.orElseThrow(() -> new EntityNotFoundException("Course not found"));
+//
+//			Instructor instructor = instructorRepository.findById(requestDto.getInstructorId())
+//					.orElseThrow(() -> new EntityNotFoundException("Instructor not found"));
+//
+//			Notice notice = noticeRepository.save(Notice.builder()
+//					.title(requestDto.getTitle())
+//					.content(requestDto.getContent())
+//					.type(requestDto.getType())
+//					.course(course)
+//					.instructor(instructor)
+//					.build());
+//
+//			// S3에 파일 업로드
+//			if (requestDto.getFiles() != null && !requestDto.getFiles().isEmpty()) {
+//				for (MultipartFile file : requestDto.getFiles()) {
+//					String fileUrl = s3FileService.uploadFile("notices", file);
+//					NoticeFile noticeFile = NoticeFile.createNoticeFile(
+//							file.getOriginalFilename(),
+//							extractKeyFromUrl(fileUrl),
+//							fileUrl,
+//							file.getSize(),
+//							notice
+//					);
+//					noticeFileRepository.save(noticeFile);
+//				}
+//			}
+//
+//			return notice.getId();
+//		} catch (Exception e) {
+//			log.error("Error creating notice", e);
+//			throw new RuntimeException("공지사항 생성 중 오류가 발생했습니다.", e);
+//		}
+//	}
+
 	// 공지사항 수정
 	@Transactional
 	public Long updateNotice(Long id, NoticeRequestDto requestDto) {
@@ -94,20 +137,29 @@ public class NoticeService {
 					.orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
 			// 기존 파일 삭제
-			List<NoticeFile> existingFiles = new ArrayList<>(notice.getFiles());
-			for (NoticeFile existingFile : existingFiles) {
-				s3FileService.deleteFile(existingFile.getFileUrl());
-				noticeFileRepository.delete(existingFile);
-				notice.getFiles().remove(existingFile);
+			if (requestDto.getDeleteFileIds() != null && !requestDto.getDeleteFileIds().isEmpty()) {
+				for (Long fileId : requestDto.getDeleteFileIds()) {
+					NoticeFile existingFile = noticeFileRepository.findById(fileId)
+							.orElseThrow(() -> new EntityNotFoundException("File not found: " + fileId));
+
+					// S3에서 파일 삭제
+					s3FileService.deleteFile(existingFile.getFileUrl());
+					noticeFileRepository.delete(existingFile);
+					notice.getFiles().remove(existingFile);
+				}
 			}
 
-			// 새 파일 추가
+			// 새 파일 업로드
 			if (requestDto.getFiles() != null && !requestDto.getFiles().isEmpty()) {
 				for (MultipartFile file : requestDto.getFiles()) {
-					String fileUrl = s3FileService.uploadFile("notices", file);
+					// S3에 파일 업로드
+					String s3Key = generateS3Key(file.getOriginalFilename());
+					String fileUrl = s3FileService.uploadFile("notices/files", file);
+
+					// NoticeFile 엔티티 생성 및 저장
 					NoticeFile noticeFile = NoticeFile.createNoticeFile(
 							file.getOriginalFilename(),
-							extractKeyFromUrl(fileUrl),
+							s3Key,
 							fileUrl,
 							file.getSize(),
 							notice
@@ -117,6 +169,7 @@ public class NoticeService {
 				}
 			}
 
+			// 공지사항 정보 업데이트
 			notice.update(
 					requestDto.getTitle(),
 					requestDto.getContent(),
@@ -124,7 +177,7 @@ public class NoticeService {
 					course
 			);
 
-			return noticeRepository.save(notice).getId();
+			return notice.getId();
 		} catch (EntityNotFoundException e) {
 			throw e;
 		} catch (Exception e) {
@@ -132,6 +185,59 @@ public class NoticeService {
 			throw new RuntimeException("공지사항 수정 중 오류가 발생했습니다.", e);
 		}
 	}
+
+	// S3 키 생성 메서드
+	private String generateS3Key(String originalFilename) {
+		return String.format("notices/files/%s-%s", UUID.randomUUID(), originalFilename);
+	}
+//	@Transactional
+//	public Long updateNotice(Long id, NoticeRequestDto requestDto) {
+//		try {
+//			Notice notice = noticeRepository.findById(id)
+//					.orElseThrow(() -> new EntityNotFoundException("Notice not found"));
+//
+//			Course course = courseRepository.findById(requestDto.getCourseId())
+//					.orElseThrow(() -> new EntityNotFoundException("Course not found"));
+//
+//			// 기존 파일 삭제
+//			List<NoticeFile> existingFiles = new ArrayList<>(notice.getFiles());
+//			for (NoticeFile existingFile : existingFiles) {
+//				s3FileService.deleteFile(existingFile.getFileUrl());
+//				noticeFileRepository.delete(existingFile);
+//				notice.getFiles().remove(existingFile);
+//			}
+//
+//			// 새 파일 추가
+//			if (requestDto.getFiles() != null && !requestDto.getFiles().isEmpty()) {
+//				for (MultipartFile file : requestDto.getFiles()) {
+//					String fileUrl = s3FileService.uploadFile("notices", file);
+//					NoticeFile noticeFile = NoticeFile.createNoticeFile(
+//							file.getOriginalFilename(),
+//							extractKeyFromUrl(fileUrl),
+//							fileUrl,
+//							file.getSize(),
+//							notice
+//					);
+//					NoticeFile savedFile = noticeFileRepository.save(noticeFile);
+//					notice.getFiles().add(savedFile);
+//				}
+//			}
+//
+//			notice.update(
+//					requestDto.getTitle(),
+//					requestDto.getContent(),
+//					requestDto.getType(),
+//					course
+//			);
+//
+//			return noticeRepository.save(notice).getId();
+//		} catch (EntityNotFoundException e) {
+//			throw e;
+//		} catch (Exception e) {
+//			log.error("Error updating notice: " + id, e);
+//			throw new RuntimeException("공지사항 수정 중 오류가 발생했습니다.", e);
+//		}
+//	}
 
 	// 공지사항 삭제
 	@Transactional
@@ -209,24 +315,6 @@ public class NoticeService {
 			}
 		}
 	}
-//	@Transactional
-//	public void deleteNotice(Long noticeId) {
-//		try {
-//			Notice notice = noticeRepository.findById(noticeId)
-//					.orElseThrow(() -> new EntityNotFoundException("Notice not found"));
-//
-//			// S3에서 파일 삭제
-//			List<NoticeFile> files = noticeFileRepository.findByNoticeId(noticeId);
-//			files.forEach(file -> s3FileService.deleteFile(file.getFileUrl()));
-//
-//			noticeRepository.delete(notice);
-//		} catch (EntityNotFoundException e) {
-//			throw e;
-//		} catch (Exception e) {
-//			log.error("Error deleting notice: " + noticeId, e);
-//			throw new RuntimeException("공지사항 삭제 중 오류가 발생했습니다.", e);
-//		}
-//	}
 
 	// 단일 공지사항 조회
 	@Transactional(readOnly = true)
