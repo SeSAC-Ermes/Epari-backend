@@ -47,7 +47,8 @@ public enum ErrorCode {
 	INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "AUTH-018", "잘못된 파라미터가 전달되었습니다."),
 	SIGNUP_FAILED(HttpStatus.BAD_REQUEST, "AUTH-019", "회원가입 처리 중 오류가 발생했습니다."),
 	PENDING_APPROVAL(HttpStatus.BAD_REQUEST, "AUTH-020", "가입 승인 대기중입니다."),
-
+	APPROVAL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH-021", "사용자 승인에 실패했습니다."),
+	
 	// Student 관련 에러 코드(STD)
 	STUDENT_NOT_FOUND(HttpStatus.NOT_FOUND, "STD-001", "학생 정보를 찾을 수 없습니다."),
 
@@ -105,6 +106,7 @@ public enum ErrorCode {
 	COGNITO_USER_FETCH_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-001", "사용자 정보 조회에 실패했습니다."),
 	COGNITO_USER_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-002", "사용자 정보를 찾을 수 없습니다."),
 	COGNITO_USER_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-003", "사용자를 삭제하는 도중 오류가 발생했습니다."),
+	COGNITO_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CGT-004", "사용자 그룹 변경에 실패했습니다."),
 
 	// 알림 관련 에러 코드 (NTF)
 	NOTIFICATION_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "NTF-001", "알림 발송에 실패했습니다."),
@@ -117,7 +119,7 @@ public enum ErrorCode {
 	INVALID_SCORE_VALUE(HttpStatus.BAD_REQUEST, "GRD-004", "유효하지 않은 점수입니다."),
 	GRADING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "GRD-005", "채점 처리 중 오류가 발생했습니다."),
 
-	//파일 관련 에러 코드 (FILE)
+	// 파일 관련 에러 코드 (FILE)
 	FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "FILE-001", "파일을 찾을 수 없습니다."),
 	FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-002", "파일 업로드에 실패했습니다."),
 	FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-003", "파일 삭제에 실패했습니다."),
