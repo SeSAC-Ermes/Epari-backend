@@ -33,6 +33,7 @@ public class FileController {
 
 	private final com.example.epari.global.config.aws.AwsS3Properties awsS3Properties;
 
+	// 공지사항 첨부파일 다운로드
 	@GetMapping("/{noticeId}/files/{fileId}/download")
 	public ResponseEntity<?> downloadFile(@PathVariable Long noticeId, @PathVariable Long fileId) {
 		try {
@@ -105,21 +106,3 @@ public class FileController {
 	}
 
 }
-
-
-//	@GetMapping("/{fileId}")
-//	public ResponseEntity<Resource> downloadFile(@PathVariable Long fileId) {
-//		try {
-//			NoticeFile noticeFile = noticeFileRepository.findById(fileId)
-//					.orElseThrow(() -> new EntityNotFoundException("File not found"));
-//
-//			Resource resource = fileService.loadFileAsResource(noticeFile.getStoredFileName());
-//
-//			return ResponseEntity.ok()
-//					.contentType(MediaType.APPLICATION_OCTET_STREAM)
-//					.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + noticeFile.getOriginalFileName() + "\"")
-//					.body(resource);
-//		} catch (Exception e) {
-//			throw new RuntimeException("File download failed", e);
-//		}
-//	}
