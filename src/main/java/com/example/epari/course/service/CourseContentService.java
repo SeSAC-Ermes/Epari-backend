@@ -11,8 +11,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.domain.CourseContent;
 import com.example.epari.course.domain.CourseContentFile;
+import com.example.epari.course.dto.content.CourseContentCursorDto;
+import com.example.epari.course.dto.content.CourseContentListResponseDto;
 import com.example.epari.course.dto.content.CourseContentRequestDto;
 import com.example.epari.course.dto.content.CourseContentResponseDto;
+import com.example.epari.course.dto.content.CourseContentSearchRequestDto;
 import com.example.epari.course.repository.CourseContentRepository;
 import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.global.common.service.S3FileService;
@@ -43,6 +46,8 @@ public class CourseContentService {
 	private final S3FileService s3FileService;
 
 	private static final String UPLOAD_DIR = "course-content";
+
+	private static final int PAGE_SIZE = 10;
 
 	@Transactional
 	public CourseContentResponseDto uploadContent(Long courseId, CourseContentRequestDto.Upload request) {
@@ -89,10 +94,21 @@ public class CourseContentService {
 		return CourseContentResponseDto.from(content);
 	}
 
-	public List<CourseContentResponseDto> getContents(Long courseId) {
-		return courseContentRepository.findAllByCourseId(courseId).stream()
+	/**
+	 * 특정 강의에 모든 강의 자료 조회 (무한스크롤)
+	 */
+	public CourseContentListResponseDto getContents(Long courseId, CourseContentCursorDto cursor) {
+		List<CourseContent> contents = courseContentRepository.findWithCursor(
+				courseId,
+				cursor,
+				PAGE_SIZE + 1
+		);
+
+		List<CourseContentResponseDto> responseDtos = contents.stream()
 				.map(CourseContentResponseDto::from)
 				.toList();
+
+		return CourseContentListResponseDto.of(responseDtos, PAGE_SIZE);
 	}
 
 	@Transactional
@@ -214,6 +230,31 @@ public class CourseContentService {
 		return courseContentRepository.findByCourseIdAndDate(courseId, today).stream()
 				.map(CourseContentResponseDto::from)
 				.toList();
+	}
+
+	/**
+	 * 검색 기능 (무한스크롤)
+	 */
+	public CourseContentListResponseDto searchContents(
+			Long courseId,
+			CourseContentSearchRequestDto searchRequest,
+			CourseContentCursorDto cursor) {
+
+		log.info("Searching course contents - courseId: {}, searchRequest: {}, cursor: {}",
+				courseId, searchRequest, cursor);
+
+		List<CourseContent> contents = courseContentRepository.searchWithCursor(
+				courseId,
+				searchRequest,
+				cursor,
+				PAGE_SIZE + 1
+		);
+
+		List<CourseContentResponseDto> responseDtos = contents.stream()
+				.map(CourseContentResponseDto::from)
+				.toList();
+
+		return CourseContentListResponseDto.of(responseDtos, PAGE_SIZE);
 	}
 
 	private String extractStoredFileName(String fileUrl) {
