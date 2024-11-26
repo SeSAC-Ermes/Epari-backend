@@ -1,6 +1,7 @@
 package com.example.epari.admin.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -54,5 +55,17 @@ public interface AdminCourseRepository extends JpaRepository<Course, Long> {
 			    ORDER BY c.name ASC
 			""")
 	List<CourseSearchResponseDTO> searchCoursesWithDTO(@Param("keyword") String keyword);
+
+	/**
+	 * 강의 ID로 강의 정보를 조회하며, 강사와 수강생 정보를 함께 페치 조인으로 가져옴
+	 */
+	@Query("""
+			SELECT c
+			FROM Course c
+			JOIN FETCH c.instructor i
+			LEFT JOIN FETCH c.courseStudents cs
+			WHERE c.id = :courseId
+			""")
+	Optional<Course> findByIdWithInstructorAndStudents(@Param("courseId") Long courseId);
 
 }
