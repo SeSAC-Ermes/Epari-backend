@@ -55,7 +55,7 @@ aws:
 
 ### AWS Domain ###
 app:
-  domain: https://epari.academy
+  frontend-url: ${APP_FRONTEND_URL}
 
 ### AWS SDK Logging Configuration ###
 logging:
