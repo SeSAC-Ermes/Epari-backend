@@ -67,6 +67,13 @@ public enum ErrorCode {
 	// Assignment 관련 에러 코드 (ASM)
 	ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ASM-001", "과제를 찾을 수 없습니다."),
 	SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "ASM-002", "과제 제출물을 찾을 수 없습니다."),
+	UNAUTHORIZED_ASSIGNMENT_ACCESS(HttpStatus.FORBIDDEN, "ASM-003", "과제에 대한 접근 권한이 없습니다."),
+	UNAUTHORIZED_SUBMISSION_ACCESS(HttpStatus.FORBIDDEN,"ASM-004","과제 제출물에 대한 접근 권한이 없습니다."),
+	ASSIGNMENT_INSTRUCTOR_MISMATCH(HttpStatus.FORBIDDEN, "ASM-005", "해당 과제에 대한 접근 권한이 없습니다."),
+	SUBMISSION_STUDENT_MISMATCH(HttpStatus.FORBIDDEN, "ASM-006", "해당 과제 제출물에 대한 접근 권한이 없습니다."),
+	ASSIGNMENT_INVALID(HttpStatus.BAD_REQUEST,"ASM-007","해당 강의의 과제가 아닙니다."),
+	SUBMISSION_INVALID(HttpStatus.BAD_REQUEST,"ASM-008","해당 과제의 제출물이 아닙니다."),
+
 
 	// Question 관련 에러 코드(EXAM)
 	QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "QST-001", "문제를 찾을 수 없습니다."),
