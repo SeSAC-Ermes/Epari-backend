@@ -11,8 +11,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 
-//
-
 @Getter
 public class NoticeResponseDto {
 
