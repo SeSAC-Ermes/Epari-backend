@@ -26,6 +26,7 @@ import com.example.epari.user.repository.InstructorRepository;
 import com.example.epari.user.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +57,9 @@ public class SubmissionService {
 	private final InstructorRepository instructorRepository;
 
 	private final ApplicationEventPublisher eventPublisher;
+
+	@Value("${app.domain}")
+	private String domain;
 
 	/**
 	 * 과제 제출
@@ -232,7 +236,10 @@ public class SubmissionService {
 						submission.getUpdatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
 				.addProperty("feedback", requestDto.getFeedback())
 				.addProperty("assignmentUrl",
-						String.format("/assignments/%d", submission.getAssignment().getId()));
+						String.format("%s/courses/%d/assignments/%d",
+								domain,
+								submission.getAssignment().getCourse().getId(),
+								submission.getAssignment().getId()));
 
 		try {
 			eventPublisher.publishEvent(event);
