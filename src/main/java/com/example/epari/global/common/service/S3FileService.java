@@ -1,5 +1,17 @@
 package com.example.epari.global.common.service;
 
+import com.example.epari.global.config.aws.AwsS3Properties;
+import com.example.epari.global.exception.file.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+
 import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
@@ -7,31 +19,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.example.epari.global.config.aws.AwsS3Properties;
-import com.example.epari.global.exception.file.CourseFileNotFoundException;
-import com.example.epari.global.exception.file.FileDeleteFailedException;
-import com.example.epari.global.exception.file.FileDownloadFailedException;
-import com.example.epari.global.exception.file.FileEmptyException;
-import com.example.epari.global.exception.file.FileSizeExceededException;
-import com.example.epari.global.exception.file.FileUploadFailedException;
-import com.example.epari.global.exception.file.InvalidFileTypeException;
-import com.example.epari.global.exception.file.InvalidFileUrlException;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetUrlRequest;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 @Service
 @RequiredArgsConstructor

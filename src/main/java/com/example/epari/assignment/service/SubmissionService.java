@@ -4,28 +4,36 @@ import com.example.epari.admin.exception.CourseNotFoundException;
 import com.example.epari.assignment.domain.Assignment;
 import com.example.epari.assignment.domain.Submission;
 import com.example.epari.assignment.domain.SubmissionFile;
+import com.example.epari.assignment.dto.submission.GradeRequestDto;
 import com.example.epari.assignment.dto.submission.SubmissionRequestDto;
 import com.example.epari.assignment.dto.submission.SubmissionResponseDto;
 import com.example.epari.assignment.repository.AssignmentRepository;
 import com.example.epari.assignment.repository.SubmissionRepository;
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.repository.CourseRepository;
-import com.example.epari.global.common.enums.SubmissionGrade;
 import com.example.epari.global.common.service.S3FileService;
+import com.example.epari.global.event.NotificationEvent;
+import com.example.epari.global.event.NotificationType;
 import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
 import com.example.epari.global.exception.assignment.*;
+import com.example.epari.global.exception.auth.InstructorNotFoundException;
 import com.example.epari.global.exception.file.FileDeleteFailedException;
 import com.example.epari.global.exception.file.SubmissionFileNotFoundException;
+import com.example.epari.user.domain.Instructor;
 import com.example.epari.user.domain.Student;
+import com.example.epari.user.repository.InstructorRepository;
 import com.example.epari.user.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -45,6 +53,13 @@ public class SubmissionService {
 	private final StudentRepository studentRepository;
 
 	private final S3FileService s3FileService;
+
+	private final InstructorRepository instructorRepository;
+
+	private final ApplicationEventPublisher eventPublisher;
+
+	@Value("${app.frontend-url}")
+	private String frontendUrl;
 
 	/**
 	 * 과제 제출
@@ -194,12 +209,43 @@ public class SubmissionService {
 	 * 과제 채점
 	 */
 	@Transactional
-	public SubmissionResponseDto gradeSubmission(Long submissionId, SubmissionGrade grade, String feedback) {
+	public SubmissionResponseDto gradeSubmission(Long submissionId, GradeRequestDto requestDto, String email) {
 		Submission submission = submissionRepository.findById(submissionId)
 				.orElseThrow(SubmissionNotFoundException::new);
 
-		submission.updateGrade(grade, feedback);
+		Instructor instructor = instructorRepository.findByEmail(email)
+				.orElseThrow(InstructorNotFoundException::new);
 
+		if (!submission.getAssignment().getInstructor().getId().equals(instructor.getId())) {
+			throw new AssignmentInstructorMismatchException();
+		}
+
+		submission.updateGrade(requestDto.getGrade(), requestDto.getFeedback());
+
+		NotificationEvent event = NotificationEvent.of(
+						submission.getStudent().getEmail(),
+						NotificationType.GRADE
+				)
+				.addProperty("grade", requestDto.getGrade().name())
+				.addProperty("studentName", submission.getStudent().getName())
+				.addProperty("instructorName", instructor.getName())
+				.addProperty("assignmentTitle", submission.getAssignment().getTitle())
+				.addProperty("submittedAt",
+						submission.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+				.addProperty("gradedAt",
+						submission.getUpdatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+				.addProperty("feedback", requestDto.getFeedback())
+				.addProperty("assignmentUrl",
+						String.format("%s/courses/%d/assignments/%d",
+								frontendUrl,
+								submission.getAssignment().getCourse().getId(),
+								submission.getAssignment().getId()));
+
+		try {
+			eventPublisher.publishEvent(event);
+		} catch (Exception e) {
+			log.error("알림 발송 실패{}", e.getMessage());
+		}
 		return SubmissionResponseDto.from(submission);
 	}
 
