@@ -45,3 +45,10 @@ src/main/resources/application-dev.yaml
 ### Test Profile ###
 src/test/resources/application-test.properties
 src/test/resources/application-test.yaml
+
+### QueryDSL ###
+/src/main/generated/
+**/generated/
+/generated/
+/src/querydsl/
+**/Q*.java
