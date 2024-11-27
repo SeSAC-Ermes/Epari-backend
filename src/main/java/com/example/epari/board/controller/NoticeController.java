@@ -3,6 +3,7 @@ package com.example.epari.board.controller;
 import com.example.epari.board.dto.NoticeRequestDto;
 import com.example.epari.board.dto.NoticeResponseDto;
 import com.example.epari.board.service.NoticeService;
+import com.example.epari.global.common.service.S3FileService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,8 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -22,6 +26,8 @@ import java.util.List;
 public class NoticeController {
 
 	private final NoticeService noticeService;
+
+	private final S3FileService s3FileService;
 
 	// 공지사항 작성
 	@PostMapping
@@ -125,6 +131,23 @@ public class NoticeController {
 			log.error("Error increasing view count: " + id, e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body(new ErrorResponse("조회수 증가 중 오류가 발생했습니다."));
+		}
+	}
+
+	// 이미지 업로드
+	@PostMapping("/upload-image")
+	public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("files") MultipartFile file) {
+		try {
+			// S3에 이미지 업로드
+			String fileUrl = s3FileService.uploadFile("notices/images", file);
+
+			Map<String, String> response = new HashMap<>();
+			response.put("fileUrl", fileUrl);
+
+			return ResponseEntity.ok(response);
+		} catch (Exception e) {
+			log.error("Image upload failed", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
 		}
 	}
 

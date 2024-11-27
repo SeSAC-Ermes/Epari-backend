@@ -79,7 +79,7 @@ public class Notice extends BaseTimeEntity {
 		}
 	}
 
-	
+
 	// 공지사항 업데이트
 	public void update(String title, String content, NoticeType type, Course course) {
 		this.title = title;
