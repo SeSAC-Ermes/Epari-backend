@@ -58,7 +58,7 @@ public class SubmissionService {
 
 	private final ApplicationEventPublisher eventPublisher;
 
-	@Value("${app.frontend_url}")
+	@Value("${app.frontend-url}")
 	private String frontendUrl;
 
 	/**
