@@ -25,9 +25,8 @@ import lombok.NoArgsConstructor;
 
 /**
  * 시험 문제의 공통 속성을 정의하는 추상 클래스
- * @Inheritance를 사용해 객관식/주관식 문제 타입을 구분하는 상속 구조
+ * 객관식/주관식 문제 타입을 구분하는 상속 구조의 부모 클래스
  */
-
 @Entity
 @Table(name = "exam_questions")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -81,11 +80,7 @@ public abstract class ExamQuestion extends BaseTimeEntity {
 		this.exam = exam;
 	}
 
-	/**
-	 * 학생의 답안을 채점하여 맞았는지 여부를 반환
-	 * @param studentAnswer 학생이 제출한 답안
-	 * @return 정답 여부
-	 */
+	// 학생의 답안을 채점하여 맞았는지 여부를 반환
 	public final boolean validateAnswer(String studentAnswer) {
 		if (studentAnswer == null || studentAnswer.trim().isEmpty()) {
 			return false;
@@ -93,16 +88,16 @@ public abstract class ExamQuestion extends BaseTimeEntity {
 		return doValidateAnswer(studentAnswer.trim());
 	}
 
-	/**
-	 * 실제 답안 검증 로직을 구현하는 추상 메서드
-	 * 각 문제 타입별로 구체적인 검증 방식을 구현
-	 */
+	// 실제 답안 검증 로직을 구현하는 추상 메서드
+	// 각 문제 타입별로 구체적인 검증 방식을 구현
 	protected abstract boolean doValidateAnswer(String studentAnswer);
 
+	// 문제 번호 업데이트
 	public void updateExamNumber(int newNumber) {
 		this.examNumber = newNumber;
 	}
 
+	// 문제 정보 업데이트
 	public void updateQuestion(String questionText, int score, String correctAnswer) {
 		this.questionText = questionText;
 		this.score = score;

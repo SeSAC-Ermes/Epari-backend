@@ -18,7 +18,6 @@ import lombok.NoArgsConstructor;
 /**
  * ExamQuestion을 상속받아 객관식 문제를 구현
  */
-
 @Entity
 @DiscriminatorValue("MULTIPLE_CHOICE")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -35,6 +34,7 @@ public class MultipleChoiceQuestion extends ExamQuestion {
 		super(questionText, examNumber, score, ExamQuestionType.MULTIPLE_CHOICE, exam, correctAnswer);
 	}
 
+	// 답안 검증
 	@Override
 	protected boolean doValidateAnswer(String studentAnswer) {
 		try {
@@ -54,6 +54,7 @@ public class MultipleChoiceQuestion extends ExamQuestion {
 		}
 	}
 
+	// 선택지 추가
 	public void addChoice(Choice choice) {
 		this.choices.add(choice);
 		choice.setQuestion(this);

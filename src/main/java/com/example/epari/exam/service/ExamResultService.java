@@ -30,9 +30,7 @@ public class ExamResultService {
 
 	private final CourseAccessValidator courseAccessValidator;
 
-	/**
-	 * 강의의 모든 학생 시험 결과를 조회합니다.
-	 */
+	// 강의의 모든 학생 시험 결과를 조회
 	public List<ExamResultResponseDto> getCourseExamResults(Long courseId, String instructorEmail) {
 		// 강사 권한 검증
 		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
@@ -54,6 +52,7 @@ public class ExamResultService {
 				.collect(Collectors.toList());
 	}
 
+	// 시험 결과 생성 응답
 	private ExamResultResponseDto createExamResultResponse(List<ExamResult> examResults) {
 		ExamResultResponseDto.StudentInfo studentInfo =
 				ExamResultResponseDto.StudentInfo.from(examResults.get(0).getStudent());
@@ -74,12 +73,14 @@ public class ExamResultService {
 				.build();
 	}
 
+	// 배점 계산
 	private int calculateEarnedScore(ExamResult examResult) {
 		return examResult.getScores().stream()
 				.mapToInt(ExamScore::getEarnedScore)
 				.sum();
 	}
 
+	// 평균 계산
 	private double calculateAverageScore(List<ExamResult> examResults) {
 		return examResults.stream()
 				.mapToDouble(this::calculateEarnedScore)

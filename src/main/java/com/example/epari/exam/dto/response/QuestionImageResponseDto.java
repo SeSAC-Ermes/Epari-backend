@@ -5,6 +5,9 @@ import com.example.epari.exam.domain.QuestionImage;
 import lombok.Builder;
 import lombok.Getter;
 
+/**
+ * 문제 이미지 응답 DTO
+ */
 @Getter
 @Builder
 class QuestionImageResponseDto {

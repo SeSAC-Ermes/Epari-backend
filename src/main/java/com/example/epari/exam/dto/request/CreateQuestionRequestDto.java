@@ -34,7 +34,6 @@ public class CreateQuestionRequestDto {
 	// 객관식일 경우
 	private List<ChoiceRequestDto> choices;
 
-	// 모든 유형의 정답을 하나의 필드로 통합
 	@NotBlank(message = "정답은 필수입니다")
 	private String correctAnswer;
 

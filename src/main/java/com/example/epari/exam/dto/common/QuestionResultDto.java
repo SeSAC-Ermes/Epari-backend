@@ -7,6 +7,9 @@ import com.example.epari.global.common.enums.ExamQuestionType;
 import lombok.Builder;
 import lombok.Getter;
 
+/**
+ * 문제 결과 DTO
+ */
 @Getter
 @Builder
 public class QuestionResultDto {
@@ -15,19 +18,19 @@ public class QuestionResultDto {
 
 	private String questionTitle;
 
-	private String questionText;  // 문제 내용
+	private String questionText;
 
-	private List<String> options;  // 보기 목록
+	private List<String> options;
 
-	private String correctAnswer;  // 정답
+	private String correctAnswer;
 
-	private String studentAnswer;  // 학생 답안
+	private String studentAnswer;
 
-	private Integer selectedOptionIndex;  // 학생이 선택한 보기 번호
+	private Integer selectedOptionIndex;
 
-	private Integer score;  // 배점
+	private Integer score;
 
-	private Integer earnedScore;  // 획득 점수
+	private Integer earnedScore;
 
 	private ExamQuestionType type;
 

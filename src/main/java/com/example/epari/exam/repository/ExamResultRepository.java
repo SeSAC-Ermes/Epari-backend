@@ -15,7 +15,6 @@ import com.example.epari.global.common.enums.ExamStatus;
  * 학생별 시험 결과를 조회하는 레포지토리 인터페이스 구현
  * 시험 정보에 대한 데이터베이스 접근을 담당하는 Repository 인터페이스
  */
-
 public interface ExamResultRepository extends JpaRepository<ExamResult, Long> {
 
 	// 특정 학생의 특정 시험 결과 조회
@@ -29,7 +28,8 @@ public interface ExamResultRepository extends JpaRepository<ExamResult, Long> {
 			"WHERE er.exam.id = :examId")
 	List<ExamResult> findByExamId(@Param("examId") Long examId);
 
-	// 특정 강의의 특정 학생 시험 결과 모두 조회
+	//TODO: 특정 강의의 특정 학생 시험 결과 모두 조회
+	//특정 강의의 특정 학생 시험 결과 모두 조회
 	@Query("SELECT er FROM ExamResult er " +
 			"WHERE er.exam.course.id = :courseId " +
 			"AND er.student.email = :studentEmail")
