@@ -74,8 +74,8 @@ public class ExamSummaryDto {
 				.examDateTime(exam.getExamDateTime())
 				.duration(exam.getDuration())
 				.totalScore(exam.getTotalScore())
-				.createdAt(exam.getCreatedAt())  // 출제일자 추가
-				.instructor(InstructorInfo.from(exam.getCourse().getInstructor())) // 작성자 정보 추가
+				.createdAt(exam.getCreatedAt())
+				.instructor(InstructorInfo.from(exam.getCourse().getInstructor()))
 				.totalStudentCount(statistics.getTotalStudentCount())
 				.submittedStudentCount(statistics.getSubmittedStudentCount())
 				.averageScore(statistics.getAverageScore())
@@ -90,22 +90,23 @@ public class ExamSummaryDto {
 				.examDateTime(exam.getExamDateTime())
 				.duration(exam.getDuration())
 				.totalScore(exam.getTotalScore())
-				.createdAt(exam.getCreatedAt())  // 출제일자 추가
-				.instructor(InstructorInfo.from(exam.getCourse().getInstructor()))  // 작성자 정보 추가
+				.createdAt(exam.getCreatedAt())
+				.instructor(InstructorInfo.from(exam.getCourse().getInstructor()))
 				.status(result != null ? result.getStatus() : ExamStatus.NOT_SUBMITTED)
 				.earnedScore(result != null ? result.getEarnedScore() : null)
 				.submittedAt(result != null ? result.getSubmitTime() : null)
 				.build();
 	}
 
+	// 새로운 시험 정보 생성
 	public static ExamSummaryDto forNewExam(Exam exam) {
 		return ExamSummaryDto.builder()
 				.id(exam.getId())
 				.title(exam.getTitle())
 				.examDateTime(exam.getExamDateTime())
 				.duration(exam.getDuration())
-				.createdAt(exam.getCreatedAt())  // 출제일자 추가
-				.instructor(InstructorInfo.from(exam.getCourse().getInstructor()))  // 작성자 정보 추가
+				.createdAt(exam.getCreatedAt())
+				.instructor(InstructorInfo.from(exam.getCourse().getInstructor()))
 				.totalScore(exam.getTotalScore())
 				.status(ExamStatus.SCHEDULED)
 				.build();

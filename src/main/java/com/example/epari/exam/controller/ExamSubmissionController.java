@@ -1,13 +1,9 @@
 package com.example.epari.exam.controller;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,21 +12,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.epari.exam.domain.Exam;
-import com.example.epari.exam.domain.ExamQuestion;
-import com.example.epari.exam.domain.MultipleChoiceQuestion;
 import com.example.epari.exam.dto.common.AnswerSubmissionDto;
 import com.example.epari.exam.dto.common.ExamResultDetailDto;
 import com.example.epari.exam.dto.common.ExamResultSummaryDto;
 import com.example.epari.exam.dto.common.ExamSubmissionStatusDto;
-import com.example.epari.exam.repository.ExamRepository;
 import com.example.epari.exam.service.ExamSubmissionService;
 import com.example.epari.global.annotation.CurrentUserEmail;
-import com.example.epari.global.exception.BusinessBaseException;
-import com.example.epari.global.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 학생의 시험 제출 관련 REST API 컨트롤러 구현
+ */
 @RestController
 @RequestMapping("/api/courses/{courseId}/exams/{examId}/submission")
 @RequiredArgsConstructor
@@ -123,7 +116,6 @@ public class ExamSubmissionController {
 		ExamResultDetailDto result = examSubmissionService.getStudentExamResultById(resultId);
 		return ResponseEntity.ok(result);
 	}
-
 
 	// 시험 결과
 	@GetMapping("/results")

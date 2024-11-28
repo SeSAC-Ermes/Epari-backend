@@ -11,6 +11,9 @@ import com.example.epari.global.common.enums.ExamQuestionType;
 import lombok.Builder;
 import lombok.Getter;
 
+/**
+ * 문제 응답 DTO
+ */
 @Getter
 @Builder
 public class ExamQuestionResponseDto {
@@ -47,6 +50,7 @@ public class ExamQuestionResponseDto {
 		return fromSubjectiveQuestion((SubjectiveQuestion)question, false);
 	}
 
+	// 객관식 문제 응답 DTO
 	private static ExamQuestionResponseDto fromMultipleChoiceQuestion(
 			MultipleChoiceQuestion question, boolean includeAnswer) {
 		return ExamQuestionResponseDto.builder()
@@ -64,6 +68,7 @@ public class ExamQuestionResponseDto {
 				.build();
 	}
 
+	// 주관식 문제 응답 DTO
 	private static ExamQuestionResponseDto fromSubjectiveQuestion(
 			SubjectiveQuestion question, boolean includeAnswer) {
 		return ExamQuestionResponseDto.builder()

@@ -19,6 +19,9 @@ import com.example.epari.global.validator.ExamQuestionValidator;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 시험 문제 서비스
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -129,8 +132,8 @@ public class ExamQuestionService {
 				.forEach(q -> q.updateExamNumber(q.getExamNumber() - 1));
 	}
 
+	// TODO: 답안 제출 여부 등 검증 로직 추가 예정
 	private void validateDeletable(ExamQuestion question) {
-		// TODO: 답안 제출 여부 등 검증 로직 추가 예정
 		return;
 	}
 

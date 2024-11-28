@@ -19,12 +19,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 	// 특정 강의에 속한 모든 시험 조회
 	List<Exam> findByCourseId(Long courseId);
 
-	// 특정 강의의 시험 목록 조회
-	@Query("SELECT e FROM Exam e " +
-			"WHERE e.course.id = :courseId " +
-			"ORDER BY e.examDateTime DESC")
-	List<Exam> findByCourseIdOrderByExamDateTimeDesc(@Param("courseId") Long courseId);
-
 	// 특정 강의에 속한 시험 상세 조회
 	Optional<Exam> findByCourseIdAndId(Long courseId, Long id);
 
@@ -43,14 +37,14 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 			"WHERE s.email = :studentEmail")
 	List<Exam> findByStudentEmail(@Param("studentEmail") String studentEmail);
 
+	// 특정 시험에 속한 문제 조회
 	@Query("SELECT e FROM Exam e " +
 			"LEFT JOIN FETCH e.questions q " +
 			"LEFT JOIN FETCH q.image " +
 			"WHERE e.id = :examId")
 	Optional<Exam> findByIdWithQuestionsAndCourse(@Param("examId") Long examId);
 
-	List<Exam> findByStatus(ExamStatus status);
-
+	// 특정 상태의 시험 목록 조회
 	List<Exam> findByStatusIn(Collection<ExamStatus> statuses);
 
 }
