@@ -9,6 +9,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * ExamQuestion을 상속받아 주관식 문제를 구현
+ */
 @Entity
 @DiscriminatorValue("SUBJECTIVE")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -21,6 +24,7 @@ public class SubjectiveQuestion extends ExamQuestion {
 		super(questionText, examNumber, score, ExamQuestionType.SUBJECTIVE, exam, correctAnswer);
 	}
 
+	// 답안 검증
 	@Override
 	protected boolean doValidateAnswer(String studentAnswer) {
 		// 대소문자 무시, 앞뒤 공백 제거 후 비교

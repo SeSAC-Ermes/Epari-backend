@@ -29,24 +29,4 @@ public class UpdateQuestionRequestDto {
 	// 객관식일 경우
 	private List<ChoiceRequestDto> choices;
 
-	// 유효성 검사 메소드
-	public void validate() {
-		if (ExamQuestionType.MULTIPLE_CHOICE.equals(type)) {
-			// 객관식 문제 유효성 검사
-			if (choices == null || choices.isEmpty()) {
-				throw new IllegalArgumentException("객관식 문제는 보기가 필요합니다");
-			}
-
-			// 객관식 정답 번호 유효성 검사
-			try {
-				int answerNumber = Integer.parseInt(correctAnswer);
-				if (answerNumber < 1 || answerNumber > choices.size()) {
-					throw new IllegalArgumentException("올바르지 않은 정답 번호입니다");
-				}
-			} catch (NumberFormatException e) {
-				throw new IllegalArgumentException("객관식 문제의 정답은 숫자여야 합니다");
-			}
-		}
-	}
-
 }

@@ -73,23 +73,20 @@ public class ExamResult extends BaseTimeEntity {
 		this.scores = new ArrayList<>();
 	}
 
+	// 시험 결과 상태 업데이트	
 	public void updateStatus(ExamStatus status) {
 		this.status = status;
 	}
 
-	/**
-	 * 답안 추가
-	 */
+	// 답안 추가
 	public void addScore(ExamScore score) {
 		validateScoreAddable();
 		scores.add(score);
 		score.setExamResult(this);
 	}
 
-	/**
-	 * 답안 제출 처리
-	 * @param force 강제 제출 여부 (시험 시간 초과 등의 경우)
-	 */
+	// 답안 제출 처리
+	// 시험 시간 초과 등의 경우 강제 제출
 	public void submit(boolean force) {
 		if (!force) {
 			validateSubmittable();
@@ -99,20 +96,7 @@ public class ExamResult extends BaseTimeEntity {
 		scores.forEach(ExamScore::markAsSubmitted);
 	}
 
-	/**
-	 * 임시저장 답안 여부 확인
-	 */
-	public boolean hasTemporaryAnswer(Long questionId) {
-		return scores.stream()
-				.anyMatch(score ->
-						score.getQuestion().getId().equals(questionId) &&
-								score.isTemporary()
-				);
-	}
-
-	/**
-	 * 채점 결과 반영
-	 */
+	// 채점 결과 반영
 	public void updateScore() {
 		if (status != ExamStatus.SUBMITTED) {
 			throw new BusinessBaseException(ErrorCode.EXAM_NOT_SUBMITTED);
@@ -122,43 +106,22 @@ public class ExamResult extends BaseTimeEntity {
 		this.status = ExamStatus.GRADED;
 	}
 
+	// 획득한 점수 조회
 	public int getEarnedScore() {
-		return scores.stream()
-				.filter(score -> !score.isTemporary())
-				.mapToInt(ExamScore::getEarnedScore)
-				.sum();
+		return scores.stream().filter(score -> !score.isTemporary()).mapToInt(ExamScore::getEarnedScore).sum();
 	}
 
-	/**
-	 * 제출된 문제 수 조회
-	 */
+	// 제출된 문제 수 조회
 	public int getSubmittedQuestionCount() {
-		return (int)scores.stream()
-				.filter(score -> !score.isTemporary())
-				.count();
+		return (int)scores.stream().filter(score -> !score.isTemporary()).count();
 	}
 
-	/**
-	 * 정답률 계산
-	 */
-	public double getCorrectAnswerRate() {
-		if (scores.isEmpty()) {
-			return 0.0;
-		}
-
-		long correctCount = scores.stream()
-				.filter(score -> score.getEarnedScore() > 0)
-				.count();
-
-		return (double)correctCount / scores.size() * 100;
-	}
-
+	// 총 점수 계산
 	private int calculateTotalScore() {
-		return scores.stream()
-				.mapToInt(ExamScore::getEarnedScore)
-				.sum();
+		return scores.stream().mapToInt(ExamScore::getEarnedScore).sum();
 	}
 
+	// 시험 검증
 	private void validateExam(Exam exam) {
 		if (exam == null) {
 			throw new BusinessBaseException(ErrorCode.EXAM_NOT_FOUND);
@@ -168,18 +131,21 @@ public class ExamResult extends BaseTimeEntity {
 		}
 	}
 
+	// 학생 검증
 	private void validateStudent(Student student) {
 		if (student == null) {
 			throw new BusinessBaseException(ErrorCode.STUDENT_NOT_FOUND);
 		}
 	}
 
+	// 답안 추가 검증
 	private void validateScoreAddable() {
 		if (status == ExamStatus.SUBMITTED || status == ExamStatus.COMPLETED) {
 			throw new BusinessBaseException(ErrorCode.EXAM_ALREADY_SUBMITTED);
 		}
 	}
 
+	// 제출 가능 검증
 	private void validateSubmittable() {
 		if (status != ExamStatus.IN_PROGRESS) {
 			throw new BusinessBaseException(ErrorCode.EXAM_NOT_IN_PROGRESS);
@@ -187,11 +153,10 @@ public class ExamResult extends BaseTimeEntity {
 		validateAllQuestionsAnswered();
 	}
 
+	// 모든 문제 답안 검증
 	private void validateAllQuestionsAnswered() {
 		int totalQuestions = exam.getQuestions().size();
-		long answeredQuestions = scores.stream()
-				.filter(score -> !score.isTemporary())
-				.count();
+		long answeredQuestions = scores.stream().filter(score -> !score.isTemporary()).count();
 		if (answeredQuestions < totalQuestions) {
 			throw new BusinessBaseException(ErrorCode.EXAM_NOT_ALL_QUESTIONS_ANSWERED);
 		}

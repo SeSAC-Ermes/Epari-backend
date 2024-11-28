@@ -59,32 +59,19 @@ public class ExamScore extends BaseTimeEntity {
 		this.examResult = examResult;
 	}
 
-	/**
-	 * 답안 업데이트
-	 */
+	// 답안 업데이트
 	public void updateAnswer(String answer) {
 		this.studentAnswer = answer;
 	}
 
-	/**
-	 * 임시저장 상태 해제 (최종 제출)
-	 */
+	// 임시저장 상태 해제 (최종 제출)
 	public void markAsSubmitted() {
 		this.temporary = false;
 	}
 
-	/**
-	 * 채점 결과 업데이트
-	 */
+	// 채점 결과 업데이트
 	public void updateScore(int score) {
 		this.earnedScore = score;
-	}
-
-	/**
-	 * 정답 여부 확인
-	 */
-	public boolean isCorrect() {
-		return earnedScore > 0;
 	}
 
 }

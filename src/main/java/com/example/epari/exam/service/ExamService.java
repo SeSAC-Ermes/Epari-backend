@@ -48,6 +48,7 @@ public class ExamService {
 
 	private final ExamQuestionValidator examQuestionValidator;
 
+	// 시험 상태 일치 여부 확인
 	private boolean matchesStatus(Exam exam, ExamStatus status, LocalDateTime now) {
 		return switch (status) {
 			case SCHEDULED -> exam.isBeforeExam();
@@ -57,6 +58,7 @@ public class ExamService {
 		};
 	}
 
+	// 시험 분류
 	private void categorizeExam(Exam exam, ExamSummaryDto summaryDto, LocalDateTime now,
 			List<ExamSummaryDto> scheduledExams,
 			List<ExamSummaryDto> inProgressExams,
@@ -71,6 +73,7 @@ public class ExamService {
 		}
 	}
 
+	// 시험 통계 계산
 	private ExamStatistics calculateExamStatistics(Exam exam) {
 		List<ExamResult> results = examResultRepository.findByExamId(exam.getId());
 
@@ -139,6 +142,7 @@ public class ExamService {
 				.build();
 	}
 
+	// 시험 조회
 	@Transactional(readOnly = true)
 	public ExamResponseDto getExam(Long courseId, Long examId, String email, String role) {
 		// 접근 권한 검증

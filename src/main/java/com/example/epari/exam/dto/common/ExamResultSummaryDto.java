@@ -13,6 +13,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 시험 결과 요약 DTO
+ */
 @Getter
 @Builder
 @NoArgsConstructor
