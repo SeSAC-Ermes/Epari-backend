@@ -22,6 +22,7 @@ import com.example.epari.course.dto.content.CourseContentListResponseDto;
 import com.example.epari.course.dto.content.CourseContentRequestDto;
 import com.example.epari.course.dto.content.CourseContentResponseDto;
 import com.example.epari.course.dto.content.CourseContentSearchRequestDto;
+import com.example.epari.course.dto.content.PageResponse;
 import com.example.epari.course.service.CourseContentService;
 
 import jakarta.validation.Valid;
@@ -180,6 +181,21 @@ public class CourseContentController {
 			@PathVariable Long courseId) {
 		log.info("Fetching today's contents for course: {}", courseId);
 		return ResponseEntity.ok(courseContentService.getTodayContents(courseId));
+	}
+
+	/**
+	 * 오프셋 기반 페이지네이션
+	 */
+	@GetMapping("/offset")
+	public ResponseEntity<PageResponse<CourseContentResponseDto>> getContentsWithOffset(
+			@PathVariable Long courseId,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "date") String sortBy,
+			@RequestParam(defaultValue = "desc") String direction) {
+
+		log.info("Fetching contents with offset - courseId: {}, page: {}, size: {}", courseId, page, size);
+		return ResponseEntity.ok(courseContentService.getContentsWithOffset(courseId, page, size, sortBy, direction));
 	}
 
 }
