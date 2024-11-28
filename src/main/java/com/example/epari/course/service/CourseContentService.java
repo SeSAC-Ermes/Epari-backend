@@ -3,7 +3,11 @@ package com.example.epari.course.service;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +20,7 @@ import com.example.epari.course.dto.content.CourseContentListResponseDto;
 import com.example.epari.course.dto.content.CourseContentRequestDto;
 import com.example.epari.course.dto.content.CourseContentResponseDto;
 import com.example.epari.course.dto.content.CourseContentSearchRequestDto;
+import com.example.epari.course.dto.content.PageResponse;
 import com.example.epari.course.repository.CourseContentRepository;
 import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.global.common.service.S3FileService;
@@ -259,6 +264,41 @@ public class CourseContentService {
 
 	private String extractStoredFileName(String fileUrl) {
 		return fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+	}
+
+	/**
+	 * 오프셋 기반 페이지네이션
+	 */
+	public PageResponse<CourseContentResponseDto> getContentsWithOffset(
+			Long courseId, int page, int size, String sortBy, String direction) {
+
+		// 정렬 방향 설정
+		Sort.Direction sortDirection = direction.equalsIgnoreCase("asc") ?
+				Sort.Direction.ASC : Sort.Direction.DESC;
+
+		// 정렬 기준 설정
+		Sort sort = Sort.by(sortDirection, sortBy);
+
+		// 페이지 요청 객체 생성
+		PageRequest pageRequest = PageRequest.of(page, size, sort);
+
+		// 페이징된 데이터 조회
+		Page<CourseContent> contentPage = courseContentRepository.findAllByCourseIdWithOffset(
+				courseId, pageRequest);
+
+		// DTO 변환
+		List<CourseContentResponseDto> contentDtos = contentPage.getContent().stream()
+				.map(CourseContentResponseDto::from)
+				.collect(Collectors.toList());
+
+		return PageResponse.<CourseContentResponseDto>builder()
+				.content(contentDtos)
+				.page(page)
+				.size(size)
+				.totalElements(contentPage.getTotalElements())
+				.totalPages(contentPage.getTotalPages())
+				.last(contentPage.isLast())
+				.build();
 	}
 
 }
