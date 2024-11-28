@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,6 +36,12 @@ public interface CourseContentRepository extends JpaRepository<CourseContent, Lo
 			@Param("date") LocalDate date
 	);
 
-
+	/**
+	 * 테스트 오프셋 기반 페이지네이션 쿼리
+	 */
+	@Query("SELECT c FROM CourseContent c WHERE c.course.id = :courseId")
+	Page<CourseContent> findAllByCourseIdWithOffset(
+			@Param("courseId") Long courseId,
+			Pageable pageable);
 
 }
