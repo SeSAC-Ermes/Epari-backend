@@ -28,6 +28,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * 시험의 기본 정보를 관리하는 메인 엔티티
+ * 시험의 생성, 수정, 삭제 및 문제 관리 기능을 제공
  */
 @Entity
 @Table(name = "exams")
@@ -62,8 +63,8 @@ public class Exam extends BaseTimeEntity {
 	private List<ExamQuestion> questions = new ArrayList<>();
 
 	@Builder
-	private Exam(String title, LocalDateTime examDateTime,
-			Integer duration, Integer totalScore, String description, Course course) {
+	private Exam(String title, LocalDateTime examDateTime, Integer duration, Integer totalScore, String description,
+			Course course) {
 		this.title = title;
 		this.examDateTime = examDateTime;
 		this.duration = duration;
@@ -72,6 +73,7 @@ public class Exam extends BaseTimeEntity {
 		this.course = course;
 	}
 
+	//시험 종료 시간을 계산하여 반환
 	public LocalDateTime getEndDateTime() {
 		if (examDateTime == null || duration == null) {
 			throw new IllegalStateException("시험 시작 시간 또는 시험 시간이 설정되지 않았습니다.");
@@ -82,8 +84,9 @@ public class Exam extends BaseTimeEntity {
 		return examDateTime.plusMinutes(duration);
 	}
 
-	public void updateExam(String title, LocalDateTime examDateTime,
-			Integer duration, Integer totalScore, String description) {
+	// 시험 정보 업데이트
+	public void updateExam(String title, LocalDateTime examDateTime, Integer duration, Integer totalScore,
+			String description) {
 		this.title = title;
 		this.examDateTime = examDateTime;
 		this.duration = duration;
@@ -91,11 +94,13 @@ public class Exam extends BaseTimeEntity {
 		this.description = description;
 	}
 
+	// 시험 문제 추가
 	public void addQuestion(ExamQuestion question) {
 		this.questions.add(question);
 		question.setExam(this);
 	}
 
+	// 시험 문제 순서 재정렬
 	public void reorderQuestions(Long questionId, int newNumber) {
 		// 1. 이동할 문제 찾기
 		ExamQuestion targetQuestion = questions.stream()
@@ -128,12 +133,7 @@ public class Exam extends BaseTimeEntity {
 		targetQuestion.updateExamNumber(newNumber);
 	}
 
-	public void reorderQuestionsAfterDelete(int deletedNumber) {
-		questions.stream()
-				.filter(q -> q.getExamNumber() > deletedNumber)
-				.forEach(q -> q.updateExamNumber(q.getExamNumber() - 1));
-	}
-
+	// 시험 시작 전 여부 확인
 	public boolean isBeforeExam() {
 		if (examDateTime == null) {
 			throw new IllegalStateException("시험 시작 시간이 설정되지 않았습니다.");
@@ -141,32 +141,23 @@ public class Exam extends BaseTimeEntity {
 		return LocalDateTime.now().isBefore(examDateTime);
 	}
 
+	// 시험 종료 여부 확인
 	public boolean isAfterExam() {
 		return LocalDateTime.now().isAfter(getEndDateTime());
 	}
 
+	// 시험 진행 중 여부 확인
 	public boolean isDuringExam() {
-		LocalDateTime now = LocalDateTime.now();
+		// LocalDateTime now = LocalDateTime.now();
 		return !isBeforeExam() && !isAfterExam();
 	}
 
 	@Enumerated(EnumType.STRING)
 	private ExamStatus status = ExamStatus.SCHEDULED;
 
-	// 상태 변경 메서드 추가
+	// 시험 상태 업데이트
 	public void updateStatus(ExamStatus newStatus) {
 		this.status = newStatus;
-	}
-
-	// 시험 상태 검증 메서드
-	public boolean canChangeStatusTo(ExamStatus newStatus) {
-		return switch (this.status) {
-			case SCHEDULED -> newStatus == ExamStatus.IN_PROGRESS;
-			case IN_PROGRESS -> newStatus == ExamStatus.GRADING;
-			case GRADING -> newStatus == ExamStatus.GRADED;
-			case GRADED -> newStatus == ExamStatus.COMPLETED;
-			default -> false;
-		};
 	}
 
 }
