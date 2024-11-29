@@ -1,55 +1,38 @@
 package com.example.epari.global.init;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.example.epari.assignment.domain.Assignment;
 import com.example.epari.assignment.domain.Submission;
 import com.example.epari.assignment.repository.AssignmentRepository;
 import com.example.epari.assignment.repository.SubmissionRepository;
-import com.example.epari.course.domain.Attendance;
-import com.example.epari.course.domain.Course;
-import com.example.epari.course.domain.CourseContent;
-import com.example.epari.course.domain.CourseStudent;
-import com.example.epari.course.domain.Curriculum;
-import com.example.epari.course.repository.AttendanceRepository;
-import com.example.epari.course.repository.CourseContentRepository;
-import com.example.epari.course.repository.CourseRepository;
-import com.example.epari.course.repository.CourseStudentRepository;
-import com.example.epari.course.repository.CurriculumRepository;
-import com.example.epari.exam.domain.Choice;
-import com.example.epari.exam.domain.Exam;
-import com.example.epari.exam.domain.ExamQuestion;
-import com.example.epari.exam.domain.ExamResult;
-import com.example.epari.exam.domain.ExamScore;
-import com.example.epari.exam.domain.MultipleChoiceQuestion;
-import com.example.epari.exam.domain.SubjectiveQuestion;
+import com.example.epari.board.domain.Notice;
+import com.example.epari.board.repository.NoticeRepository;
+import com.example.epari.course.domain.*;
+import com.example.epari.course.repository.*;
+import com.example.epari.exam.domain.*;
 import com.example.epari.exam.repository.ExamQuestionRepository;
 import com.example.epari.exam.repository.ExamRepository;
 import com.example.epari.exam.repository.ExamResultRepository;
 import com.example.epari.global.common.enums.AttendanceStatus;
+import com.example.epari.global.common.enums.NoticeType;
 import com.example.epari.global.common.enums.SubmissionGrade;
 import com.example.epari.global.common.enums.SubmissionStatus;
 import com.example.epari.user.domain.Instructor;
 import com.example.epari.user.domain.Student;
 import com.example.epari.user.repository.InstructorRepository;
 import com.example.epari.user.repository.StudentRepository;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -80,6 +63,8 @@ public class InitDataLoader implements ApplicationRunner {
 	private final SubmissionRepository submissionRepository;
 
 	private final CourseContentRepository courseContentRepository;
+
+	private final NoticeRepository noticeRepository;
 
 	@Transactional
 	@Override
@@ -118,6 +103,9 @@ public class InitDataLoader implements ApplicationRunner {
 
 		// 9. 과제 데이터 생성 (첫 번째 강의에 대해서만)
 		createAssignments(courses.get(0), instructors.get(0));
+
+		// 10. 공지사항 데이터 생성
+		createNotices();
 
 	}
 
@@ -1660,7 +1648,7 @@ public class InitDataLoader implements ApplicationRunner {
 		createAwsCourseContents(courses.get(0));
 
 		// 풀스택 과정 강의 자료 생성
-		createFullstackCourseContents(courses.get(0));
+		createFullstackCourseContents(courses.get(1));
 	}
 
 	private void createAwsCourseContents(Course course) {
@@ -1862,6 +1850,130 @@ public class InitDataLoader implements ApplicationRunner {
 				.build();
 
 		courseContentRepository.save(courseContent);
+	}
+
+
+	// Notice 생성을 위한 헬퍼 메소드
+	private Notice createNotice(String title, String content, Course course, Instructor instructor, NoticeType type) {
+		return Notice.builder()
+				.title(title)
+				.instructor(instructor)
+				.content(content)
+				.type(type)
+				.course(course)
+				.build();
+	}
+
+	// 실제로 Notice 데이터들을 생성하는 메소드
+	private void createNotices() {
+		List<Notice> notices = new ArrayList<>();
+		Course course = courseRepository.findById(1L).orElse(null);
+		Instructor instructor = instructorRepository.findById(1L).orElse(null);
+
+		// 강의 관련 공지사항
+		notices.add(createNotice("AWS 자격증 모의 시험 공지",
+				"AWS 자격증 모의 시험이 다음 주 금요일 오후 2시에 온라인으로 진행됩니다.<br/>시험 범위는 AWS Certified Developer - Associate입니다.<br/>참여를 원하시면 LMS를 통해 신청하세요.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("기말 프로젝트 발표 일정 공지",
+				"기말 프로젝트 발표가 다음 주 월요일부터 수요일까지 진행됩니다.<br/>팀별 발표 순서는 LMS에서 확인할 수 있으며,<br/>발표 자료는 발표 전날 자정까지 제출하세요.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("과제 제출 기한 연장 공지",
+				"이번 과제 제출 기한이 다음 주 화요일 자정까지로 연장되었습니다.<br/>과제 내용에는 변경이 없으며,<br/>마감일을 준수해 주세요.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("특강 안내: AWS Lambda 활용법",
+				"다음 주 화요일 오후 3시에 \"AWS Lambda를 활용한 서버리스 애플리케이션 구축\" 특강이 진행됩니다.<br/>강의는 온라인으로 열리며,<br/>링크는 LMS에 공지됩니다.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("클라우드 비용 절감 전략 과제",
+				"이번 과제는 \"AWS 클라우드 서비스 비용 최적화 방안\"에 대한 보고서 작성입니다.<br/>보고서 분량은 최소 3페이지 이상이어야 하며,<br/>마감일은 이번 주 금요일 자정입니다.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("휴강 공지",
+				"다음 주 금요일 강의는 강사 사정으로 인해 휴강합니다.<br/>LMS에 자율 학습 자료를 업로드할 예정이니 학습 자료를 참고해 주세요.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("AWS S3 활용 실습 과제",
+				"AWS S3를 활용하여 파일 업로드 및 다운로드 기능을 구현하는 과제를 진행합니다.<br/>제출 마감일은 이번 주 목요일 자정입니다.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("팀 프로젝트 중간 점검 일정",
+				"팀 프로젝트 중간 점검이 이번 주 수요일에 진행됩니다.<br/>각 팀은 진행 상황을 발표하고,<br/>질의응답 시간을 갖습니다.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("Lambda 함수 디버깅 과제",
+				"AWS Lambda 함수 디버깅 실습을 과제로 진행합니다.<br/>제공된 예제를 기반으로 디버깅 과정을 문서로 작성해 제출하세요.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("EC2 인스턴스 설정 과제",
+				"AWS EC2 인스턴스 생성 및 보안 그룹 설정 실습을 과제로 진행합니다.<br/>제출 마감일은 이번 주 일요일 자정입니다.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("Docker 컨테이너 실습 과제",
+				"Docker 컨테이너를 활용하여 간단한 애플리케이션을 실행하는 실습 과제를 진행합니다.<br/>과제 제출 기한은 다음 주 화요일 자정입니다.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("네트워크 구성 과제 안내",
+				"AWS 네트워크 구성 실습을 과제로 진행합니다.<br/>VPC, 서브넷, 라우팅 테이블 설정을 포함하며,<br/>마감일은 이번 주 금요일입니다.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("RDS 데이터베이스 생성 과제",
+				"AWS RDS를 활용하여 데이터베이스를 생성하고 연결하는 과제를 진행합니다.<br/>과제 제출 기한은 이번 주 토요일 자정입니다.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("휴강 및 보강 안내",
+				"다음 주 월요일 강의는 휴강하며,<br/>보강 일정은 화요일 오후 2시로 조정되었습니다.<br/>LMS에서 변경된 일정을 확인하세요.",
+				course, instructor, NoticeType.COURSE));
+
+		notices.add(createNotice("강의 평가 참여 요청",
+				"이번 주 금요일까지 강의 평가에 참여해 주시기 바랍니다.<br/>링크는 LMS에 공지되었으며,<br/>여러분의 소중한 의견 부탁드립니다.",
+				course, instructor, NoticeType.COURSE));
+
+		// 글로벌 공지사항
+		notices.add(createNotice("엘리베이터 정기 점검 안내",
+				"12월 1일(금) 오전 10시부터 오후 2시까지 전체 엘리베이터 정기 점검이 진행됩니다.<br/>점검 시간 동안은 계단을 이용해 주시기 바랍니다.<br/>불편을 끼쳐 죄송합니다.",
+				course, instructor, NoticeType.GLOBAL));
+
+		notices.add(createNotice("주차장 도색 공사 안내",
+				"11월 25일(토) ~ 26일(일) 이틀간 지하 주차장 바닥 도색 공사가 진행됩니다.<br/>해당 기간 동안 지하 1층 주차장 이용이 제한되오니 지상 주차장을 이용해 주시기 바랍니다.",
+				course, instructor, NoticeType.GLOBAL));
+
+		notices.add(createNotice("화재 경보기 검사 안내",
+				"11월 30일(목) 오전 9시부터 11시까지 전체 층 화재 경보기 정기 검사가 있을 예정입니다.<br/>검사 중 경보음이 발생할 수 있으니 참고 부탁드립니다.",
+				course, instructor, NoticeType.GLOBAL));
+
+		notices.add(createNotice("냉난방 시설 교체 공사 안내",
+				"12월 5일(화) ~ 7일(목) 3일간 5층 냉난방 시설 교체 공사가 진행됩니다.<br/>공사 기간 동안 5층 전체 공간의 이용이 제한되오니 양해 부탁드립니다.",
+				course, instructor, NoticeType.GLOBAL));
+
+		notices.add(createNotice("외벽 청소 작업 안내",
+				"12월 10일(일) 건물 외벽 청소 작업이 진행됩니다.<br/>작업 시간 동안 일부 창문 개방이 제한될 수 있으니 양해 부탁드립니다.<br/>작업 시간: 오전 8시 ~ 오후 6시",
+				course, instructor, NoticeType.GLOBAL));
+
+		notices.add(createNotice("전기 시설 점검 안내",
+				"12월 15일(금) 새벽 2시부터 4시까지 전기 시설 정기 점검이 진행됩니다.<br/>점검 시간 동안 일시적인 전기 공급 중단이 있을 예정입니다.",
+				course, instructor, NoticeType.GLOBAL));
+
+		notices.add(createNotice("로비 바닥 공사 안내",
+				"12월 20일(수) 1층 로비 바닥 보수 공사가 진행됩니다.<br/>공사 기간 동안 후문을 이용해 주시기 바랍니다.<br/>공사 시간: 오전 9시 ~ 오후 6시",
+				course, instructor, NoticeType.GLOBAL));
+
+		notices.add(createNotice("방역 작업 실시 안내",
+				"12월 23일(토) 전체 건물 방역 작업이 실시됩니다.<br/>작업 시간: 오후 2시 ~ 오후 5시<br/>해당 시간 동안 건물 출입이 통제되오니 양해 부탁드립니다.",
+				course, instructor, NoticeType.GLOBAL));
+
+		notices.add(createNotice("주차장 차선 도색 작업 안내",
+				"12월 25일(월) 지상 주차장 차선 도색 작업이 진행됩니다.<br/>작업 구간 주차가 제한되오니 지하 주차장을 이용해 주시기 바랍니다.",
+				course, instructor, NoticeType.GLOBAL));
+
+		notices.add(createNotice("승강기 부품 교체 공사 안내",
+				"1월 5일(금) 2호기 승강기 부품 교체 공사가 진행됩니다.<br/>공사 시간: 오전 10시 ~ 오후 3시<br/>해당 시간 동안 1호기 승강기만 이용 가능합니다.",
+				course, instructor, NoticeType.GLOBAL));
+
+		// 모든 공지사항을 데이터베이스에 저장
+		noticeRepository.saveAll(notices);
 	}
 
 }
