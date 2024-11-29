@@ -45,7 +45,6 @@ public class ExamStatusService {
 		}
 	}
 
-
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	protected void processExamEndWithNewTransaction(Exam exam) {
 		// 시험 상태를 먼저 IN_PROGRESS로 변경
@@ -55,18 +54,16 @@ public class ExamStatusService {
 		}
 
 		// 1. 미제출자 강제 제출 처리
-		List<ExamResult> inProgressResults = examResultRepository
-				.findByExamIdAndStatus(exam.getId(), ExamStatus.IN_PROGRESS);
+		List<ExamResult> inProgressResults = examResultRepository.findByExamIdAndStatus(exam.getId(),
+				ExamStatus.IN_PROGRESS);
 
 		for (ExamResult result : inProgressResults) {
 			try {
 				result.submit(true);
 				examResultRepository.save(result);
-				log.info("시험 자동 제출 처리 완료. examId={}, studentId={}",
-						exam.getId(), result.getStudent().getId());
+				log.info("시험 자동 제출 처리 완료. examId={}, studentId={}", exam.getId(), result.getStudent().getId());
 			} catch (Exception e) {
-				log.error("시험 자동 제출 실패. examId={}, studentId={}",
-						exam.getId(), result.getStudent().getId(), e);
+				log.error("시험 자동 제출 실패. examId={}, studentId={}", exam.getId(), result.getStudent().getId(), e);
 				// 개별 실패는 전체 트랜잭션을 롤백하지 않음
 			}
 		}
@@ -82,7 +79,7 @@ public class ExamStatusService {
 			log.error("채점 실패. examId={}", exam.getId(), e);
 			// 채점 실패해도 시험 종료 처리는 커밋
 		}
-		
+
 		log.info("시험 종료 처리 완료. examId={}", exam.getId());
 	}
 
@@ -103,44 +100,41 @@ public class ExamStatusService {
 			exam.updateStatus(ExamStatus.IN_PROGRESS);
 			examRepository.save(exam);
 		}
-	
+
 		// 1. 미제출자 강제 제출 처리
-		List<ExamResult> inProgressResults = examResultRepository
-				.findByExamIdAndStatus(exam.getId(), ExamStatus.IN_PROGRESS);
-	
+		List<ExamResult> inProgressResults = examResultRepository.findByExamIdAndStatus(exam.getId(),
+				ExamStatus.IN_PROGRESS);
+
 		for (ExamResult result : inProgressResults) {
 			try {
 				result.submit(true);
 				examResultRepository.save(result);
-				log.info("시험 자동 제출 처리 완료. examId={}, studentId={}",
-						exam.getId(), result.getStudent().getId());
+				log.info("시험 자동 제출 처리 완료. examId={}, studentId={}", exam.getId(), result.getStudent().getId());
 			} catch (Exception e) {
-				log.error("시험 자동 제출 실패. examId={}, studentId={}",
-						exam.getId(), result.getStudent().getId(), e);
+				log.error("시험 자동 제출 실패. examId={}, studentId={}", exam.getId(), result.getStudent().getId(), e);
 			}
 		}
-	
+
 		// 2. 시험 상태를 채점중으로 변경
 		exam.updateStatus(ExamStatus.GRADING);
 		examRepository.save(exam);
-	
+
 		// 3. 채점 프로세스 시작
 		startGradingProcess(exam);
 	}
 
 	private void startGradingProcess(Exam exam) {
-		List<ExamResult> submittedResults = examResultRepository
-				.findByExamIdAndStatus(exam.getId(), ExamStatus.SUBMITTED);
+		List<ExamResult> submittedResults = examResultRepository.findByExamIdAndStatus(exam.getId(),
+				ExamStatus.SUBMITTED);
 
 		// GradingService의 채점 로직 활용
 		for (ExamResult result : submittedResults) {
 			try {
 				gradingService.processGrading(result);
-				log.info("채점 완료. examId={}, studentId={}, score={}",
-						exam.getId(), result.getStudent().getId(), result.getEarnedScore());
+				log.info("채점 완료. examId={}, studentId={}, score={}", exam.getId(), result.getStudent().getId(),
+						result.getEarnedScore());
 			} catch (Exception e) {
-				log.error("채점 실패. examId={}, studentId={}",
-						exam.getId(), result.getStudent().getId(), e);
+				log.error("채점 실패. examId={}, studentId={}", exam.getId(), result.getStudent().getId(), e);
 			}
 		}
 

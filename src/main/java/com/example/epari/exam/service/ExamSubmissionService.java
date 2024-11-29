@@ -2,7 +2,6 @@ package com.example.epari.exam.service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -72,24 +71,20 @@ public class ExamSubmissionService {
 		examQuestionValidator.validateExamTime(exam);
 		examQuestionValidator.validateNotAlreadyStarted(examId, studentEmail);
 
-		ExamResult examResult = ExamResult.builder()
-				.exam(exam)
-				.student(student)
-				.build();
+		ExamResult examResult = ExamResult.builder().exam(exam).student(student).build();
 
 		examResultRepository.save(examResult);
 		return createExamSubmissionStatusDto(exam, examResult);
 	}
 
 	// 답안 임시 저장
-	public void saveAnswerTemporarily(Long courseId, Long examId, Long questionId,
-			AnswerSubmissionDto answerDto, String studentEmail) {
+	public void saveAnswerTemporarily(Long courseId, Long examId, Long questionId, AnswerSubmissionDto answerDto,
+			String studentEmail) {
 		ExamResult examResult = getExamResultInProgress(examId, studentEmail);
 		validateExamTimeRemaining(examResult.getExam());
 
 		// examId로 함께 검증
-		ExamQuestion question = examQuestionRepository
-				.findByExamIdAndId(examId, questionId)
+		ExamQuestion question = examQuestionRepository.findByExamIdAndId(examId, questionId)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.QUESTION_NOT_FOUND));
 
 		// question이 해당 시험의 문제가 맞는지 한번 더 검증
@@ -98,7 +93,8 @@ public class ExamSubmissionService {
 		}
 
 		// 기존 임시 저장된 답안이 있는지 확인
-		Optional<ExamScore> existingScore = examResult.getScores().stream()
+		Optional<ExamScore> existingScore = examResult.getScores()
+				.stream()
 				.filter(score -> score.getQuestion().getId().equals(questionId))
 				.findFirst();
 
@@ -117,15 +113,13 @@ public class ExamSubmissionService {
 		}
 	}
 
-	public void submitAnswer(Long courseId, Long examId, Long questionId,
-			AnswerSubmissionDto answerDto, String studentEmail) {
+	public void submitAnswer(Long courseId, Long examId, Long questionId, AnswerSubmissionDto answerDto,
+			String studentEmail) {
 		ExamResult examResult = getExamResultInProgress(examId, studentEmail);
 		validateExamTimeRemaining(examResult.getExam());
 
 		// examId로 함께 검증
-		ExamQuestion question = examQuestionRepository
-		.findByExamIdAndId(examId, questionId)
-		.orElseThrow(() -> {
+		ExamQuestion question = examQuestionRepository.findByExamIdAndId(examId, questionId).orElseThrow(() -> {
 			log.error("문제를 찾을 수 없음 - examId:{}, questionId:{}", examId, questionId);
 			return new BusinessBaseException(ErrorCode.QUESTION_NOT_FOUND);
 		});
@@ -136,20 +130,19 @@ public class ExamSubmissionService {
 		}
 
 		// 기존 답안이 있는지 확인
-		Optional<ExamScore> existingScore = examResult.getScores().stream()
+		Optional<ExamScore> existingScore = examResult.getScores()
+				.stream()
 				.filter(score -> score.getQuestion().getId().equals(questionId))
 				.findFirst();
 
 		if (existingScore.isPresent()) {
-			log.info("기존 답안 업데이트 - examId:{}, questionId:{}, answer:{}",
-                    examId, questionId, answerDto.getAnswer());
+			log.info("기존 답안 업데이트 - examId:{}, questionId:{}, answer:{}", examId, questionId, answerDto.getAnswer());
 			// 기존 답안을 최종 제출로 변경
 			existingScore.get().updateAnswer(answerDto.getAnswer());
 			existingScore.get().markAsSubmitted();  // 임시저장 상태 해제
 		} else {
 			// 새로운 답안 생성
-			log.info("새로운 답안 생성 - examId:{}, questionId:{}, answer:{}",
-                    examId, questionId, answerDto.getAnswer());
+			log.info("새로운 답안 생성 - examId:{}, questionId:{}, answer:{}", examId, questionId, answerDto.getAnswer());
 			ExamScore score = ExamScore.builder()
 					.examResult(examResult)
 					.question(question)
@@ -180,16 +173,12 @@ public class ExamSubmissionService {
 		LocalDateTime baseTime = LocalDateTime.now().minusMinutes(maxExamDurationMinutes);
 		List<ExamResult> expiredExams = examResultRepository.findExpiredExams(baseTime);
 
-		expiredExams.stream()
-				.filter(result -> result.getExam().isAfterExam())
-				.forEach(result -> {
-					result.submit(true);
-					log.info("Auto submitted exam: examId={}, studentId={}, submittedAt={}, remainingQuestions={}",
-							result.getExam().getId(),
-							result.getStudent().getId(),
-							result.getSubmitTime(),
-							result.getExam().getQuestions().size() - result.getSubmittedQuestionCount());
-				});
+		expiredExams.stream().filter(result -> result.getExam().isAfterExam()).forEach(result -> {
+			result.submit(true);
+			log.info("Auto submitted exam: examId={}, studentId={}, submittedAt={}, remainingQuestions={}",
+					result.getExam().getId(), result.getStudent().getId(), result.getSubmitTime(),
+					result.getExam().getQuestions().size() - result.getSubmittedQuestionCount());
+		});
 	}
 
 	// 시험 상태 조회
@@ -257,7 +246,8 @@ public class ExamSubmissionService {
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_FOUND));
 
 		// 3. 문제별 답안 조회 (ExamScore 사용)
-		List<QuestionResultDto> questionResults = examResult.getScores().stream()
+		List<QuestionResultDto> questionResults = examResult.getScores()
+				.stream()
 				.<QuestionResultDto>map(score -> QuestionResultDto.builder()
 						.questionId(score.getQuestion().getId())
 						.questionTitle(score.getQuestion().getQuestionText())  // title -> questionText로 변경
@@ -285,29 +275,27 @@ public class ExamSubmissionService {
 		List<ExamResult> submittedResults = examResultRepository.findByExamId(examId);
 
 		// 3. 학생별 결과 매핑
-		return courseStudents.stream()
-			.map(courseStudent -> {
-				// 학생의 시험 결과 찾기
-				ExamResult result = submittedResults.stream()
+		return courseStudents.stream().map(courseStudent -> {
+			// 학생의 시험 결과 찾기
+			ExamResult result = submittedResults.stream()
 					.filter(r -> r.getStudent().getEmail().equals(courseStudent.getStudent().getEmail()))
 					.findFirst()
 					.orElse(null);
 
-				// 결과가 없는 경우 (미제출) 기본값으로 DTO 생성
-				if (result == null) {
-					return ExamResultSummaryDto.builder()
+			// 결과가 없는 경우 (미제출) 기본값으로 DTO 생성
+			if (result == null) {
+				return ExamResultSummaryDto.builder()
 						.studentName(courseStudent.getStudent().getName())
 						.studentEmail(courseStudent.getStudent().getEmail())
 						.status(ExamStatus.NOT_SUBMITTED)
 						.totalScore(0)
 						.submittedAt(null)  // 미제출이므로 null
 						.build();
-				}
+			}
 
-				// 결과가 있는 경우 정상적으로 DTO 생성
-				return ExamResultSummaryDto.from(result);
-			})
-			.collect(Collectors.toList());
+			// 결과가 있는 경우 정상적으로 DTO 생성
+			return ExamResultSummaryDto.from(result);
+		}).collect(Collectors.toList());
 	}
 
 	/**
@@ -323,21 +311,19 @@ public class ExamSubmissionService {
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_FOUND));
 
 		// 3. 문제별 답안 조회 (ExamScore 사용)
-		List<QuestionResultDto> questionResults = examResult.getScores().stream()
-				.map(score -> {
-					ExamQuestion question = score.getQuestion();
-					return QuestionResultDto.builder()
-							.questionId(question.getId())
-							.questionTitle(question.getQuestionText())
-							.questionText(question.getQuestionText())
-							.type(question.getType())  // ExamQuestionType enum 사용
-							.score(question.getScore()) // 배점
-							.earnedScore(score.getEarnedScore()) // 획득 점수
-							.correctAnswer(question.getCorrectAnswer()) // 정답
-							.studentAnswer(score.getStudentAnswer()) // 학생 답안
-							.build();
-				})
-				.collect(Collectors.toList());
+		List<QuestionResultDto> questionResults = examResult.getScores().stream().map(score -> {
+			ExamQuestion question = score.getQuestion();
+			return QuestionResultDto.builder()
+					.questionId(question.getId())
+					.questionTitle(question.getQuestionText())
+					.questionText(question.getQuestionText())
+					.type(question.getType())  // ExamQuestionType enum 사용
+					.score(question.getScore()) // 배점
+					.earnedScore(score.getEarnedScore()) // 획득 점수
+					.correctAnswer(question.getCorrectAnswer()) // 정답
+					.studentAnswer(score.getStudentAnswer()) // 학생 답안
+					.build();
+		}).collect(Collectors.toList());
 
 		return ExamResultDetailDto.builder()
 				.examId(exam.getId())
