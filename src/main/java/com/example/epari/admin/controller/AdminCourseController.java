@@ -6,13 +6,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.epari.admin.dto.AdminCourseDetailResponseDto;
 import com.example.epari.admin.dto.AdminCourseListResponseDto;
 import com.example.epari.admin.dto.AdminCourseRequestDto;
+import com.example.epari.admin.dto.AdminCourseUpdateRequestDto;
 import com.example.epari.admin.dto.CourseSearchResponseDTO;
 import com.example.epari.admin.service.AdminCourseService;
 
@@ -66,6 +70,46 @@ public class AdminCourseController {
 	@GetMapping
 	public ResponseEntity<List<AdminCourseListResponseDto>> getCourses() {
 		return ResponseEntity.ok(adminCourseService.getCourses());
+	}
+
+	/**
+	 * 강의 상세 정보 조회
+	 */
+	@GetMapping("/{courseId}")
+	public ResponseEntity<AdminCourseDetailResponseDto> getCourseDetail(@PathVariable Long courseId) {
+		log.info("Course detail request received - courseId: {}", courseId);
+
+		AdminCourseDetailResponseDto courseDetail = adminCourseService.getCourseDetail(courseId);
+
+		log.info("Course detail retrieved successfully - courseId: {}", courseId);
+
+		return ResponseEntity.ok(courseDetail);
+	}
+
+	/**
+	 * 강의 수정
+	 */
+	@PutMapping("/{courseId}")
+	public ResponseEntity<Void> updateCourse(
+			@PathVariable Long courseId,
+			@Validated @ModelAttribute AdminCourseUpdateRequestDto request) {
+
+		if (!request.isValidDateRange()) {
+			return ResponseEntity.badRequest().build();
+		}
+
+		if (!request.isAllCurriculumDatesValid()) {
+			return ResponseEntity.badRequest().build();
+		}
+
+		log.info("Course update request received - courseId: {}, name: {}, instructor: {}",
+				courseId, request.getName(), request.getInstructorId());
+
+		adminCourseService.updateCourse(courseId, request);
+
+		log.info("Course updated successfully - courseId: {}", courseId);
+
+		return ResponseEntity.ok().build();
 	}
 
 }
