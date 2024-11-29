@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.epari.exam.domain.ExamResult;
-import com.example.epari.exam.domain.ExamScore;
 import com.example.epari.exam.dto.response.ExamResultResponseDto;
 import com.example.epari.exam.repository.ExamResultRepository;
 import com.example.epari.global.exception.exam.ExamResultNotFoundException;
@@ -29,6 +28,8 @@ public class ExamResultService {
 	private final ExamResultRepository examResultRepository;
 
 	private final CourseAccessValidator courseAccessValidator;
+
+	private final ScoreCalculator scoreCalculator;
 
 	/**
 	 * 강의의 모든 학생 시험 결과를 조회합니다.
@@ -59,32 +60,19 @@ public class ExamResultService {
 				ExamResultResponseDto.StudentInfo.from(examResults.get(0).getStudent());
 
 		List<ExamResultResponseDto.ExamInfo> examInfos = examResults.stream()
-				.map(result -> {
-					int earnedScore = calculateEarnedScore(result);
-					return ExamResultResponseDto.ExamInfo.from(result, earnedScore);
-				})
+				.map(result -> ExamResultResponseDto.ExamInfo.from(
+						result,
+						result.getEarnedScore()
+				))
 				.collect(Collectors.toList());
 
-		double averageScore = calculateAverageScore(examResults);
+		double averageScore = scoreCalculator.calculateAverageScore(examResults);
 
 		return ExamResultResponseDto.builder()
 				.student(studentInfo)
 				.examResults(examInfos)
 				.averageScore(averageScore)
 				.build();
-	}
-
-	private int calculateEarnedScore(ExamResult examResult) {
-		return examResult.getScores().stream()
-				.mapToInt(ExamScore::getEarnedScore)
-				.sum();
-	}
-
-	private double calculateAverageScore(List<ExamResult> examResults) {
-		return examResults.stream()
-				.mapToDouble(this::calculateEarnedScore)
-				.average()
-				.orElse(0.0);
 	}
 
 }

@@ -17,7 +17,6 @@ import com.example.epari.exam.repository.ExamResultRepository;
 import com.example.epari.global.common.enums.ExamStatus;
 import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
-import com.example.epari.user.domain.Student;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -30,57 +29,58 @@ import lombok.extern.slf4j.Slf4j;
 public class GradingService {
 
 	private final ExamResultRepository examResultRepository;
+
 	private final CourseStudentRepository courseStudentRepository;
+
+	private final ScoreCalculator scoreCalculator;
 
 	/**
 	 * 단순 채점 처리 (내부용)
 	 */
-	 public void processGrading(ExamResult examResult) {
+	public void processGrading(ExamResult examResult) {
 		Exam exam = examResult.getExam();
-		
+
 		// 1. 미제출자 처리
-		List<CourseStudent> courseStudents = courseStudentRepository.findAllCourseStudentsByCourseId(exam.getCourse().getId());
-        List<Long> submittedStudentIds = examResultRepository.findByExamId(exam.getId())
-                .stream()
-                .map(result -> result.getStudent().getId())
-                .collect(Collectors.toList());
+		List<CourseStudent> courseStudents = courseStudentRepository.findAllCourseStudentsByCourseId(
+				exam.getCourse().getId());
+		List<Long> submittedStudentIds = examResultRepository.findByExamId(exam.getId())
+				.stream()
+				.map(result -> result.getStudent().getId())
+				.collect(Collectors.toList());
 
-        // 미제출자들의 ExamResult 생성
-        for (CourseStudent courseStudent : courseStudents) {
-            if (!submittedStudentIds.contains(courseStudent.getStudent().getId())) {
-                ExamResult notSubmittedResult = ExamResult.builder()
-                        .exam(exam)
-                        .student(courseStudent.getStudent())
-                        .status(ExamStatus.NOT_SUBMITTED)
+		// 미제출자들의 ExamResult 생성
+		for (CourseStudent courseStudent : courseStudents) {
+			if (!submittedStudentIds.contains(courseStudent.getStudent().getId())) {
+				ExamResult notSubmittedResult = ExamResult.builder()
+						.exam(exam)
+						.student(courseStudent.getStudent())
+						.status(ExamStatus.NOT_SUBMITTED)
 						.submitTime(LocalDateTime.now())
-                        .build();
-                examResultRepository.save(notSubmittedResult);
-                log.info("Created NOT_SUBMITTED result for student: {}", courseStudent.getId());
-            }
-        }
+						.build();
+				examResultRepository.save(notSubmittedResult);
+				log.info("Created NOT_SUBMITTED result for student: {}", courseStudent.getId());
+			}
+		}
 
-        // 2. 기존 채점 로직
-        if (examResult.getStatus() == ExamStatus.SUBMITTED) {
-            for (ExamScore score : examResult.getScores()) {
-                ExamQuestion question = score.getQuestion();
-                String studentAnswer = score.getStudentAnswer();
-                
-                boolean isCorrect = question.validateAnswer(studentAnswer);
-                int earnedScore = isCorrect ? question.getScore() : 0;
-                score.updateScore(earnedScore);
-            }
-            
-            examResult.updateScore();
-            examResultRepository.save(examResult);
-        }
-    }
+		// 2. 기존 채점 로직
+		if (examResult.getStatus() == ExamStatus.SUBMITTED) {
+			for (ExamScore score : examResult.getScores()) {
+				ExamQuestion question = score.getQuestion();
+				String studentAnswer = score.getStudentAnswer();
 
+				boolean isCorrect = question.validateAnswer(studentAnswer);
+				int earnedScore = isCorrect ? question.getScore() : 0;
+				score.updateScore(earnedScore);
+			}
+
+			examResult.updateScore();
+			examResultRepository.save(examResult);
+		}
+	}
 
 	@Transactional(readOnly = true)
 	public boolean verifyTotalScore(ExamResult examResult) {
-		int calculatedTotal = examResult.getScores().stream()
-				.mapToInt(ExamScore::getEarnedScore)
-				.sum();
+		int calculatedTotal = examResult.getScores().stream().mapToInt(ExamScore::getEarnedScore).sum();
 
 		return calculatedTotal == examResult.getEarnedScore();
 	}
@@ -115,16 +115,7 @@ public class GradingService {
 	@Transactional(readOnly = true)
 	public double calculateAverageScore(Long examId) {
 		List<ExamResult> gradedResults = examResultRepository.findByExamIdAndStatus(examId, ExamStatus.GRADED);
-
-		if (gradedResults.isEmpty()) {
-			return 0.0;
-		}
-
-		int totalScore = gradedResults.stream()
-				.mapToInt(ExamResult::getTotalScore)
-				.sum();
-
-		return (double)totalScore / gradedResults.size();
+		return scoreCalculator.calculateAverageScore(gradedResults);
 	}
 
 	/**
@@ -133,22 +124,7 @@ public class GradingService {
 	@Transactional(readOnly = true)
 	public ScoreStatistics calculateScoreStatistics(Long examId) {
 		List<ExamResult> gradedResults = examResultRepository.findByExamIdAndStatus(examId, ExamStatus.GRADED);
-
-		if (gradedResults.isEmpty()) {
-			return new ScoreStatistics(0, 0);
-		}
-
-		int maxScore = gradedResults.stream()
-				.mapToInt(ExamResult::getTotalScore)
-				.max()
-				.orElse(0);
-
-		int minScore = gradedResults.stream()
-				.mapToInt(ExamResult::getTotalScore)
-				.min()
-				.orElse(0);
-
-		return new ScoreStatistics(maxScore, minScore);
+		return scoreCalculator.calculateStatistics(gradedResults);
 	}
 
 	private int gradeAnswer(ExamScore score) {
