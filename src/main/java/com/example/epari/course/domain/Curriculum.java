@@ -49,4 +49,11 @@ public class Curriculum {
 		this.course = course;
 	}
 
+	// 커리큘럼 수정 메서드
+	public void update(LocalDate date, String topic, String description) {
+		this.date = date;
+		this.topic = topic;
+		this.description = description;
+	}
+
 }

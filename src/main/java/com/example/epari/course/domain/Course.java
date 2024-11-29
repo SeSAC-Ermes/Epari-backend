@@ -1,6 +1,7 @@
 package com.example.epari.course.domain;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import com.example.epari.global.common.base.BaseTimeEntity;
 import com.example.epari.user.domain.Instructor;
@@ -18,8 +19,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 /**
  * 강의 정보를 관리하는 Entity 클래스
@@ -50,7 +49,7 @@ public class Course extends BaseTimeEntity {
 	private Instructor instructor;
 
 	@OneToMany(mappedBy = "course")
-    private List<CourseStudent> courseStudents;
+	private List<CourseStudent> courseStudents;
 
 	@Builder
 	private Course(String name, LocalDate startDate, LocalDate endDate, String classroom, Instructor instructor) {
@@ -79,6 +78,16 @@ public class Course extends BaseTimeEntity {
 		this.startDate = startDate;
 		this.endDate = endDate;
 		this.classroom = classroom;
+	}
+
+	// 강의 수정 메서드
+	public void updateCourse(String name, LocalDate startDate, LocalDate endDate, String classroom,
+			Instructor instructor) {
+		this.name = name;
+		this.startDate = startDate;
+		this.endDate = endDate;
+		this.classroom = classroom;
+		this.instructor = instructor;
 	}
 
 	public void updateCourseImage(String imageUrl) {
