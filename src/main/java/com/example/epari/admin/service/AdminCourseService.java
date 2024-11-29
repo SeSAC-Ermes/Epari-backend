@@ -7,13 +7,16 @@ import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.epari.admin.dto.AdminCourseDetailResponseDto;
 import com.example.epari.admin.dto.AdminCourseListResponseDto;
 import com.example.epari.admin.dto.AdminCourseRequestDto;
 import com.example.epari.admin.dto.AdminCourseUpdateRequestDto;
 import com.example.epari.admin.dto.CourseSearchResponseDTO;
+import com.example.epari.admin.dto.CurriculumDetailDto;
 import com.example.epari.admin.exception.CourseNotFoundException;
 import com.example.epari.admin.repository.AdminCourseRepository;
 import com.example.epari.admin.repository.AdminCurriculumRepository;
@@ -112,11 +115,40 @@ public class AdminCourseService {
 	}
 
 	/**
+	 * 강의 상세 정보 조회
+	 */
+	public AdminCourseDetailResponseDto getCourseDetail(Long courseId) {
+		// 1. courseId로 Course 엔티티 조회
+		Course course = courseRepository.findByIdWithInstructorAndStudents(courseId)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
+
+		// 2. 커리큘럼 정보 조회
+		List<CurriculumDetailDto> curriculums = courseRepository.findCurriculumsByCourseId(courseId);
+
+		// 3. 엔티티와 커리큘럼 정보로 DTO를 한 번만 생성
+		return AdminCourseDetailResponseDto.of(
+				course.getId(),
+				course.getName(),
+				course.getClassroom(),
+				course.getInstructor().getId(),
+				course.getInstructor().getName(),
+				course.getStartDate(),
+				course.getEndDate(),
+				course.getImageUrl(),
+				course.getCourseStudents().size(),
+				curriculums
+		);
+	}
+
+	/**
 	 * 강의 정보 수정
 	 * 기본 정보, 강사 정보, 커리큘럼, 이미지를 수정합니다.
 	 */
 	@Transactional
-	@CacheEvict(value = "courses", key = "'all'")
+	@Caching(evict = {
+			@CacheEvict(value = "courses", key = "'all'"),
+			@CacheEvict(value = "curriculums", key = "#courseId")
+	})
 	public void updateCourse(Long courseId, AdminCourseUpdateRequestDto request) {
 		// 1. 강의 및 연관 데이터 조회
 		Course course = courseRepository.findByIdWithInstructorAndStudents(courseId)
