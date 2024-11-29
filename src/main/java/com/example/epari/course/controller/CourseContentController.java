@@ -3,6 +3,7 @@ package com.example.epari.course.controller;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -16,8 +17,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.epari.course.dto.content.CourseContentCursorDto;
+import com.example.epari.course.dto.content.CourseContentListResponseDto;
 import com.example.epari.course.dto.content.CourseContentRequestDto;
 import com.example.epari.course.dto.content.CourseContentResponseDto;
+import com.example.epari.course.dto.content.CourseContentSearchRequestDto;
+import com.example.epari.course.dto.content.PageResponse;
 import com.example.epari.course.service.CourseContentService;
 
 import jakarta.validation.Valid;
@@ -64,10 +69,40 @@ public class CourseContentController {
 	 * 특정 강의의 모든 강의 자료를 조회합니다.
 	 */
 	@GetMapping
-	public ResponseEntity<List<CourseContentResponseDto>> getContents(
-			@PathVariable Long courseId) {
-		log.info("Fetching all contents for course: {}", courseId);
-		return ResponseEntity.ok(courseContentService.getContents(courseId));
+	public ResponseEntity<CourseContentListResponseDto> getContents(
+			@PathVariable Long courseId,
+			@RequestParam(required = false) Long cursorId,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate cursorDate) {
+
+		CourseContentCursorDto cursor = null;
+		if (cursorId != null && cursorDate != null) {
+			cursor = CourseContentCursorDto.of(cursorId, cursorDate);
+		}
+
+		log.info("Fetching course contents - courseId: {}, cursor: {}", courseId, cursor);
+
+		return ResponseEntity.ok(courseContentService.getContents(courseId, cursor));
+	}
+
+	/**
+	 * 특정 강의에 강의 자료 검색 제목, 내용
+	 */
+	@GetMapping("/search")
+	public ResponseEntity<CourseContentListResponseDto> searchContents(
+			@PathVariable Long courseId,
+			@ModelAttribute CourseContentSearchRequestDto searchRequest,
+			@RequestParam(required = false) Long cursorId,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate cursorDate) {
+
+		CourseContentCursorDto cursor = null;
+		if (cursorId != null && cursorDate != null) {
+			cursor = CourseContentCursorDto.of(cursorId, cursorDate);
+		}
+
+		log.info("Searching course contents - courseId: {}, searchRequest: {}, cursor: {}",
+				courseId, searchRequest, cursor);
+
+		return ResponseEntity.ok(courseContentService.searchContents(courseId, searchRequest, cursor));
 	}
 
 	/**
@@ -146,6 +181,21 @@ public class CourseContentController {
 			@PathVariable Long courseId) {
 		log.info("Fetching today's contents for course: {}", courseId);
 		return ResponseEntity.ok(courseContentService.getTodayContents(courseId));
+	}
+
+	/**
+	 * 오프셋 기반 페이지네이션
+	 */
+	@GetMapping("/offset")
+	public ResponseEntity<PageResponse<CourseContentResponseDto>> getContentsWithOffset(
+			@PathVariable Long courseId,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "date") String sortBy,
+			@RequestParam(defaultValue = "desc") String direction) {
+
+		log.info("Fetching contents with offset - courseId: {}, page: {}, size: {}", courseId, page, size);
+		return ResponseEntity.ok(courseContentService.getContentsWithOffset(courseId, page, size, sortBy, direction));
 	}
 
 }

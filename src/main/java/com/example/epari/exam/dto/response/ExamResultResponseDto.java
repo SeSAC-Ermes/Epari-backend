@@ -11,7 +11,6 @@ import lombok.Getter;
 /**
  * 시험 결과 조회 응답 데이터를 전달하기 위한 DTO 클래스 구현
  */
-
 @Getter
 @Builder
 public class ExamResultResponseDto {
@@ -22,6 +21,7 @@ public class ExamResultResponseDto {
 
 	private double averageScore;
 
+	// 학생 정보 응답 DTO
 	@Getter
 	@Builder
 	public static class StudentInfo {
@@ -42,6 +42,7 @@ public class ExamResultResponseDto {
 
 	}
 
+	// 시험 정보 응답 DTO
 	@Getter
 	@Builder
 	public static class ExamInfo {

@@ -1,26 +1,37 @@
 package com.example.epari.assignment.service;
 
+import com.example.epari.admin.exception.CourseNotFoundException;
 import com.example.epari.assignment.domain.Assignment;
 import com.example.epari.assignment.domain.AssignmentFile;
+import com.example.epari.assignment.domain.Submission;
+import com.example.epari.assignment.domain.SubmissionFile;
 import com.example.epari.assignment.dto.assignment.AssignmentRequestDto;
 import com.example.epari.assignment.dto.assignment.AssignmentResponseDto;
-import com.example.epari.assignment.repository.AssignmentFileRepository;
 import com.example.epari.assignment.repository.AssignmentRepository;
+import com.example.epari.assignment.repository.SubmissionRepository;
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.repository.CourseRepository;
 import com.example.epari.global.common.base.BaseUser;
 import com.example.epari.global.common.repository.BaseUserRepository;
 import com.example.epari.global.common.service.S3FileService;
+import com.example.epari.global.exception.assignment.AssignmentAccessDeniedException;
+import com.example.epari.global.exception.assignment.AssignmentInvalidException;
+import com.example.epari.global.exception.assignment.AssignmentNotFoundException;
+import com.example.epari.global.exception.auth.AuthUserNotFoundException;
+import com.example.epari.global.exception.auth.InstructorNotFoundException;
+import com.example.epari.global.exception.course.CourseInstructorMismatchException;
+import com.example.epari.global.exception.file.AssignmentFileNotFoundException;
+import com.example.epari.global.exception.file.FileDeleteFailedException;
+import com.example.epari.global.exception.file.FileUploadFailedException;
 import com.example.epari.user.domain.Instructor;
 import com.example.epari.user.repository.InstructorRepository;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileNotFoundException;
 import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,7 +53,7 @@ public class AssignmentService {
 
 	private final S3FileService s3FileService;
 
-	private final AssignmentFileRepository assignmentFileRepository;
+	private final SubmissionRepository submissionRepository;
 
 	/**
 	 * 과제 추가
@@ -50,16 +61,16 @@ public class AssignmentService {
 	@Transactional
 	public AssignmentResponseDto addAssignment(Long courseId, AssignmentRequestDto requestDto, String email) {
 		BaseUser user = baseUserRepository.findByEmail(email)
-				.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+				.orElseThrow(AuthUserNotFoundException::new);
 
 		Course course = courseRepository.findById(courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다."));
+				.orElseThrow(CourseNotFoundException::new);
 
 		Instructor instructor = instructorRepository.findById(user.getId())
-				.orElseThrow(() -> new IllegalArgumentException("강사 정보를 찾을 수 없습니다."));
+				.orElseThrow(InstructorNotFoundException::new);
 
 		if (!course.getInstructor().getId().equals(instructor.getId())) {
-			throw new IllegalArgumentException("해당 강의의 담당 강사가 아닙니다.");
+			throw new CourseInstructorMismatchException();
 		}
 
 		Assignment assignment = Assignment.createAssignment(
@@ -110,11 +121,11 @@ public class AssignmentService {
 	 */
 	public AssignmentResponseDto getAssignmentById(Long courseId, Long assignmentId) {
 		Assignment assignment = assignmentRepository.findByIdWithInstructor(assignmentId)
-				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
+				.orElseThrow(AssignmentNotFoundException::new);
 
 		// 해당 과제가 요청된 코스에 속하는지 확인
 		if (!assignment.getCourse().getId().equals(courseId)) {
-			throw new IllegalArgumentException("해당 강의의 과제가 아닙니다.");
+			throw new AssignmentInvalidException();
 		}
 
 		return AssignmentResponseDto.from(assignment);
@@ -125,21 +136,18 @@ public class AssignmentService {
 	 */
 	@Transactional
 	public AssignmentResponseDto updateAssignment(Long courseId, Long assignmentId, AssignmentRequestDto requestDto,
-			String email) {
-		BaseUser user = baseUserRepository.findByEmail(email)
-				.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
+												  String email) {
 		Course course = courseRepository.findById(courseId)
-				.orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다."));
+				.orElseThrow(CourseNotFoundException::new);
 
 		Assignment assignment = assignmentRepository.findByIdWithInstructor(assignmentId)
-				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
+				.orElseThrow(AssignmentNotFoundException::new);
 
-		Instructor instructor = instructorRepository.findById(user.getId())
-				.orElseThrow(() -> new IllegalArgumentException("강사 정보를 찾을 수 없습니다."));
+		Instructor instructor = instructorRepository.findByEmail(email)
+				.orElseThrow(InstructorNotFoundException::new);
 
 		if (!course.getInstructor().getId().equals(instructor.getId())) {
-			throw new IllegalArgumentException("해당 강의의 담당 강사가 아닙니다.");
+			throw new CourseInstructorMismatchException();
 		}
 
 		assignment.updateAssignment(
@@ -171,20 +179,35 @@ public class AssignmentService {
 	@Transactional
 	public void deleteAssignment(Long assignmentId, String email) {
 		BaseUser user = baseUserRepository.findByEmail(email)
-				.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+				.orElseThrow(AuthUserNotFoundException::new);
 
 		Assignment assignment = assignmentRepository.findByIdWithInstructor(assignmentId)
-				.orElseThrow(() -> new IllegalArgumentException("과제를 찾을 수 없습니다."));
+				.orElseThrow(AssignmentNotFoundException::new);
 
 		if (!assignment.getInstructor().getId().equals(user.getId())) {
-			throw new IllegalArgumentException("해당 과제의 삭제 권한이 없습니다.");
+			throw new AssignmentAccessDeniedException();
 		}
 
+		// 연관된 제출물의 S3 파일들 삭제
+		List<Submission> submissions = submissionRepository.findByAssignmentId(assignmentId);
+		for (Submission submission : submissions) {
+			for (SubmissionFile submissionFile : submission.getFiles()) {
+				try {
+					s3FileService.deleteFile(submissionFile.getFileUrl());
+				} catch (Exception e) {
+					log.error("S3에서 제출물 파일 삭제를 실패했습니다: {}", submissionFile.getFileUrl(), e);
+					throw new FileDeleteFailedException();
+				}
+			}
+		}
+
+		// 과제 S3 파일들 삭제
 		for (AssignmentFile assignmentFile : assignment.getFiles()) {
 			try {
 				s3FileService.deleteFile(assignmentFile.getFileUrl());
 			} catch (Exception e) {
 				log.error("S3에서 파일 삭제를 실패했습니다.", assignmentFile.getFileUrl(), e);
+				throw new FileDeleteFailedException();
 			}
 		}
 
@@ -197,13 +220,13 @@ public class AssignmentService {
 	public String downloadFile(Long courseId, Long assignmentId, Long fileId) {
 		// 과제 확인
 		Assignment assignment = assignmentRepository.findByIdAndCourseId(assignmentId, courseId)
-				.orElseThrow(() -> new IllegalArgumentException("과제 자료를 찾을 수 없습니다."));
+				.orElseThrow(AssignmentNotFoundException::new);
 
 		// 파일 확인
 		AssignmentFile assignmentFile = assignment.getFiles().stream()
 				.filter(f -> f.getId().equals(fileId))
 				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("파일을 찾을 수 없습니다."));
+				.orElseThrow(AssignmentFileNotFoundException::new);
 
 		// 7일간 유효한 다운로드 링크
 		return s3FileService.generatePresignedUrl(assignmentFile.getFileUrl(), Duration.ofDays(7));
@@ -215,20 +238,21 @@ public class AssignmentService {
 	@Transactional
 	public AssignmentResponseDto deleteFile(Long courseId, Long assignmentId, Long fileId) {
 		Assignment assignment = assignmentRepository.findByIdAndCourseId(assignmentId, courseId)
-				.orElseThrow(() -> new IllegalArgumentException("과제 파일을 찾을 수 없습니다."));
+				.orElseThrow(AssignmentNotFoundException::new);
 
 		AssignmentFile file = assignment.getFiles().stream()
 				.filter(f -> f.getId().equals(fileId))
 				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("파일을 찾을 수 없습니다."));
+				.orElseThrow(AssignmentFileNotFoundException::new);
 
 		try {
 			s3FileService.deleteFile(file.getFileUrl());
 		} catch (Exception e) {
 			log.error("S3에서 파일 삭제를 실패했습니다: {}", file.getFileUrl(), e);
+			throw new FileDeleteFailedException();
 		}
 
-		//과제에서 파일 제거
+		// 과제에서 파일 제거
 		assignment.removeFile(file);
 
 		return AssignmentResponseDto.from(assignment);

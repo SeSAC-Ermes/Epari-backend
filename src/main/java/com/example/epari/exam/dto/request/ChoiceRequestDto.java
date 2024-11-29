@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 보기 요청 DTO
+ */
 @Getter
 @NoArgsConstructor
 public class ChoiceRequestDto {

@@ -29,11 +29,10 @@ public class ExamResultService {
 
 	private final CourseAccessValidator courseAccessValidator;
 
+
 	private final ScoreCalculator scoreCalculator;
 
-	/**
-	 * 강의의 모든 학생 시험 결과를 조회합니다.
-	 */
+	// 강의의 모든 학생 시험 결과를 조회
 	public List<ExamResultResponseDto> getCourseExamResults(Long courseId, String instructorEmail) {
 		// 강사 권한 검증
 		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
@@ -55,6 +54,7 @@ public class ExamResultService {
 				.collect(Collectors.toList());
 	}
 
+	// 시험 결과 생성 응답
 	private ExamResultResponseDto createExamResultResponse(List<ExamResult> examResults) {
 		ExamResultResponseDto.StudentInfo studentInfo =
 				ExamResultResponseDto.StudentInfo.from(examResults.get(0).getStudent());

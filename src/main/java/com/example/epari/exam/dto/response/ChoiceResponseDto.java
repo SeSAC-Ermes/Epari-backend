@@ -5,6 +5,9 @@ import com.example.epari.exam.domain.Choice;
 import lombok.Builder;
 import lombok.Getter;
 
+/**
+ * 보기 응답 DTO
+ */
 @Getter
 @Builder
 class ChoiceResponseDto {

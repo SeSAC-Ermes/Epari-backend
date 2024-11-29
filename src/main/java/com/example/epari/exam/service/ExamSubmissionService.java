@@ -113,6 +113,7 @@ public class ExamSubmissionService {
 		}
 	}
 
+	// 답안 제출
 	public void submitAnswer(Long courseId, Long examId, Long questionId, AnswerSubmissionDto answerDto,
 			String studentEmail) {
 		ExamResult examResult = getExamResultInProgress(examId, studentEmail);
@@ -164,9 +165,11 @@ public class ExamSubmissionService {
 		examResult.submit(force);
 	}
 
+	// 자동 제출
 	@Value("${exam.max-duration-minutes:180}")  // application.properties에서 설정값을 가져옴
 	private Integer maxExamDurationMinutes;
 
+	// 만료된 시험 자동 제출
 	@Scheduled(fixedRate = 60000) // 1분마다 실행
 	@Transactional
 	public void autoSubmitExpiredExams() {
@@ -196,12 +199,14 @@ public class ExamSubmissionService {
 				.build();
 	}
 
+	// 시험 시간 유효성 검사
 	private void validateExamTimeRemaining(Exam exam) {
 		if (!exam.isDuringExam()) {
 			throw new BusinessBaseException(ErrorCode.EXAM_TIME_EXPIRED);
 		}
 	}
 
+	// 모든 문제 답변 여부 검사
 	private void validateAllQuestionsAnswered(ExamResult examResult) {
 		int totalQuestions = examResult.getExam().getQuestions().size();
 		int answeredQuestions = examResult.getScores().size();
@@ -211,13 +216,14 @@ public class ExamSubmissionService {
 		}
 	}
 
-	// Helper 메서드
+	// 진행중인 시험 결과 조회
 	private ExamResult getExamResultInProgress(Long examId, String studentEmail) {
 		return examResultRepository.findByExamIdAndStudentEmail(examId, studentEmail)
 				.filter(result -> result.getStatus() == ExamStatus.IN_PROGRESS)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_IN_PROGRESS));
 	}
 
+	// 시험 제출 상태 DTO 생성
 	private ExamSubmissionStatusDto createExamSubmissionStatusDto(Exam exam, ExamResult examResult) {
 		LocalDateTime now = LocalDateTime.now();
 		return ExamSubmissionStatusDto.builder()
@@ -229,6 +235,7 @@ public class ExamSubmissionService {
 				.build();
 	}
 
+	// 남은 시간 계산
 	private int calculateRemainingTime(LocalDateTime now, LocalDateTime endTime) {
 		if (now.isAfter(endTime)) {
 			return 0;
@@ -236,6 +243,7 @@ public class ExamSubmissionService {
 		return (int)Duration.between(now, endTime).toMinutes();
 	}
 
+	// 학생 시험 결과 조회
 	public ExamResultDetailDto getStudentExamResult(Long courseId, Long examId, String studentEmail) {
 		// 1. 시험 결과 조회
 		ExamResult examResult = examResultRepository.findByExamIdAndStudentEmail(examId, studentEmail)
@@ -266,6 +274,7 @@ public class ExamSubmissionService {
 				.build();
 	}
 
+	// 시험 결과 목록 조회
 	@Transactional(readOnly = true)
 	public List<ExamResultSummaryDto> getExamResults(Long courseId, Long examId) {
 		// 1. 해당 코스의 모든 수강생 목록 조회
@@ -298,9 +307,7 @@ public class ExamSubmissionService {
 		}).collect(Collectors.toList());
 	}
 
-	/**
-	 * 강사가 결과 resultid로 상세 조회
-	 */
+	// 강사가 결과 resultid로 상세 조회
 	public ExamResultDetailDto getStudentExamResultById(Long resultId) {
 		// 1. 시험 결과 조회
 		ExamResult examResult = examResultRepository.findById(resultId)

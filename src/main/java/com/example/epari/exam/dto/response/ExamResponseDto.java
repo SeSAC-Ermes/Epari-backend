@@ -59,6 +59,7 @@ public class ExamResponseDto {
 		}
 	}
 
+	// 강사용 시험 응답 DTO
 	public static ExamResponseDto fromExamForInstructor(Exam exam) {
 		return ExamResponseDto.builder()
 				.id(exam.getId())
@@ -75,6 +76,7 @@ public class ExamResponseDto {
 				.build();
 	}
 
+	// 학생용 시험 응답 DTO
 	public static ExamResponseDto fromExamForStudent(Exam exam, ExamResult result) {
 		boolean canViewQuestions = !exam.isBeforeExam();
 		return ExamResponseDto.builder()

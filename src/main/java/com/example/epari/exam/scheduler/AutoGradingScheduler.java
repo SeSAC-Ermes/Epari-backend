@@ -23,12 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 public class AutoGradingScheduler {
 
 	private final ExamResultRepository examResultRepository;
+
 	private final GradingService gradingService;
 
-	/**
-	 * 1분마다 실행되는 시험 자동 제출 처리
-	 * 시험 시간이 종료된 시험을 자동으로 제출 처리
-	 */
+	// 1분마다 실행되는 시험 자동 제출 처리
+	// 시험 시간이 종료된 시험을 자동으로 제출 처리
 	@Scheduled(fixedRate = 60000)
 	@Transactional
 	public void autoSubmitExpiredExams() {
@@ -48,10 +47,8 @@ public class AutoGradingScheduler {
 		}
 	}
 
-	/**
-	 * 5분마다 실행되는 자동 채점 처리
-	 * 제출된 시험 중 채점되지 않은 시험을 자동으로 채점
-	 */
+	// 5분마다 실행되는 자동 채점 처리
+	// 제출된 시험 중 채점되지 않은 시험을 자동으로 채점
 	@Scheduled(fixedRate = 300000)
 	public void autoGradeSubmittedExams() {
 		LocalDateTime baseTime = LocalDateTime.now().minusMinutes(5);
@@ -68,4 +65,5 @@ public class AutoGradingScheduler {
 			}
 		}
 	}
+
 }

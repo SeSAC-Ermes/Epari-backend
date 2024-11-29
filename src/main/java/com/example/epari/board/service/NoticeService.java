@@ -21,9 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -61,13 +61,20 @@ public class NoticeService {
 					.instructor(instructor)
 					.build());
 
-			// S3에 파일 업로드
+			// S3에 파일 업로드 및 NoticeFile 엔티티 생성
+			// 파일 업로드 부분
 			if (requestDto.getFiles() != null && !requestDto.getFiles().isEmpty()) {
 				for (MultipartFile file : requestDto.getFiles()) {
-					String fileUrl = s3FileService.uploadFile("notices", file);
+					// S3에 파일 업로드
+					String s3Key = generateS3Key(file.getOriginalFilename());
+					String fileUrl = s3FileService.uploadFile("notices/files", file);
+
+					log.info("File uploaded to S3. Key: {}, URL: {}", s3Key, fileUrl);
+
+					// NoticeFile 엔티티 생성 및 저장
 					NoticeFile noticeFile = NoticeFile.createNoticeFile(
 							file.getOriginalFilename(),
-							extractKeyFromUrl(fileUrl),
+							s3Key,  // 여기서 S3 키를 정확히 저장
 							fileUrl,
 							file.getSize(),
 							notice
@@ -94,20 +101,29 @@ public class NoticeService {
 					.orElseThrow(() -> new EntityNotFoundException("Course not found"));
 
 			// 기존 파일 삭제
-			List<NoticeFile> existingFiles = new ArrayList<>(notice.getFiles());
-			for (NoticeFile existingFile : existingFiles) {
-				s3FileService.deleteFile(existingFile.getFileUrl());
-				noticeFileRepository.delete(existingFile);
-				notice.getFiles().remove(existingFile);
+			if (requestDto.getDeleteFileIds() != null && !requestDto.getDeleteFileIds().isEmpty()) {
+				for (Long fileId : requestDto.getDeleteFileIds()) {
+					NoticeFile existingFile = noticeFileRepository.findById(fileId)
+							.orElseThrow(() -> new EntityNotFoundException("File not found: " + fileId));
+
+					// S3에서 파일 삭제
+					s3FileService.deleteFile(existingFile.getFileUrl());
+					noticeFileRepository.delete(existingFile);
+					notice.getFiles().remove(existingFile);
+				}
 			}
 
-			// 새 파일 추가
+			// 새 파일 업로드
 			if (requestDto.getFiles() != null && !requestDto.getFiles().isEmpty()) {
 				for (MultipartFile file : requestDto.getFiles()) {
-					String fileUrl = s3FileService.uploadFile("notices", file);
+					// S3에 파일 업로드
+					String s3Key = generateS3Key(file.getOriginalFilename());
+					String fileUrl = s3FileService.uploadFile("notices/files", file);
+
+					// NoticeFile 엔티티 생성 및 저장
 					NoticeFile noticeFile = NoticeFile.createNoticeFile(
 							file.getOriginalFilename(),
-							extractKeyFromUrl(fileUrl),
+							s3Key,
 							fileUrl,
 							file.getSize(),
 							notice
@@ -117,6 +133,7 @@ public class NoticeService {
 				}
 			}
 
+			// 공지사항 정보 업데이트
 			notice.update(
 					requestDto.getTitle(),
 					requestDto.getContent(),
@@ -124,7 +141,7 @@ public class NoticeService {
 					course
 			);
 
-			return noticeRepository.save(notice).getId();
+			return notice.getId();
 		} catch (EntityNotFoundException e) {
 			throw e;
 		} catch (Exception e) {
@@ -133,23 +150,85 @@ public class NoticeService {
 		}
 	}
 
+	// S3 키 생성 메서드
+	private String generateS3Key(String originalFilename) {
+		return String.format("notices/files/%s-%s", UUID.randomUUID(), originalFilename);
+	}
+
 	// 공지사항 삭제
 	@Transactional
 	public void deleteNotice(Long noticeId) {
 		try {
 			Notice notice = noticeRepository.findById(noticeId)
-					.orElseThrow(() -> new EntityNotFoundException("Notice not found"));
+					.orElseThrow(() -> new EntityNotFoundException("Notice not found with id: " + noticeId));
 
-			// S3에서 파일 삭제
-			List<NoticeFile> files = noticeFileRepository.findByNoticeId(noticeId);
-			files.forEach(file -> s3FileService.deleteFile(file.getFileUrl()));
+			// 1. 첨부 파일 삭제
+			List<NoticeFile> attachments = noticeFileRepository.findByNoticeId(noticeId);
+			deleteFiles(attachments);
 
+			// 2. 본문 내 이미지 URL 추출 및 삭제
+			Set<String> contentImageUrls = extractImageUrlsFromContent(notice.getContent());
+			deleteContentImages(contentImageUrls);
+
+			// 3. Notice 엔티티 삭제
 			noticeRepository.delete(notice);
-		} catch (EntityNotFoundException e) {
-			throw e;
+
+			log.info("Successfully deleted notice and all associated files. Notice ID: {}", noticeId);
 		} catch (Exception e) {
-			log.error("Error deleting notice: " + noticeId, e);
+			log.error("Failed to delete notice with ID: {}", noticeId, e);
 			throw new RuntimeException("공지사항 삭제 중 오류가 발생했습니다.", e);
+		}
+	}
+
+	private void deleteFiles(List<NoticeFile> files) {
+		for (NoticeFile file : files) {
+			try {
+				String fileUrl = file.getFileUrl();
+				log.info("Attempting to delete attachment: {}", fileUrl);
+				s3FileService.deleteFile(fileUrl);
+				noticeFileRepository.delete(file);
+				log.info("Successfully deleted attachment: {}", fileUrl);
+			} catch (Exception e) {
+				log.error("Failed to delete attachment: {}", file.getFileUrl(), e);
+				// 개별 파일 삭제 실패 시에도 계속 진행
+			}
+		}
+	}
+
+	private Set<String> extractImageUrlsFromContent(String content) {
+		Set<String> imageUrls = new HashSet<>();
+		if (content == null || content.isEmpty()) {
+			return imageUrls;
+		}
+
+		// Quill 에디터의 이미지 URL 패턴 매칭
+		String bucket = awsS3Properties.getBucket();
+		String region = awsS3Properties.getRegion();
+		String s3Pattern = String.format("https://%s\\.s3\\.%s\\.amazonaws\\.com/notices/images/[^\"\\s]+",
+				bucket, region);
+
+		Pattern pattern = Pattern.compile(s3Pattern);
+		Matcher matcher = pattern.matcher(content);
+
+		while (matcher.find()) {
+			String imageUrl = matcher.group();
+			imageUrls.add(imageUrl);
+			log.info("Found image URL in content: {}", imageUrl);
+		}
+
+		return imageUrls;
+	}
+
+	private void deleteContentImages(Set<String> imageUrls) {
+		for (String imageUrl : imageUrls) {
+			try {
+				log.info("Attempting to delete content image: {}", imageUrl);
+				s3FileService.deleteFile(imageUrl);
+				log.info("Successfully deleted content image: {}", imageUrl);
+			} catch (Exception e) {
+				log.error("Failed to delete content image: {}", imageUrl, e);
+				// 개별 이미지 삭제 실패 시에도 계속 진행
+			}
 		}
 	}
 

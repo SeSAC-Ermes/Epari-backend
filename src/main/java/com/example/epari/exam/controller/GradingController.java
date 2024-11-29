@@ -32,14 +32,7 @@ public class GradingController {
 
 	private final GradingService gradingService;
 
-	/**
-	 * 시험 결과 채점 요청
-	 * @param courseId 강의 ID
-	 * @param examId 시험 ID
-	 * @param resultId 채점할 시험 결과 ID
-	 * @param instructorEmail 강사 이메일
-	 * @return 채점 완료 응답
-	 */
+	// 시험 결과 채점 요청
 	@PostMapping("/results/{resultId}")
 	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<Void> gradeExam(
@@ -53,13 +46,7 @@ public class GradingController {
 		return ResponseEntity.ok().build();
 	}
 
-	/**
-	 * 평균 점수 조회
-	 * @param courseId 강의 ID
-	 * @param examId 시험 ID
-	 * @param instructorEmail 강사 이메일
-	 * @return 평균 점수
-	 */
+	// 평균 점수 조회
 	@GetMapping("/average")
 	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<Double> getAverageScore(
@@ -72,13 +59,7 @@ public class GradingController {
 		return ResponseEntity.ok(averageScore);
 	}
 
-	/**
-	 * 최고/최저 점수 통계 조회
-	 * @param courseId 강의 ID
-	 * @param examId 시험 ID
-	 * @param instructorEmail 강사 이메일
-	 * @return 점수 통계 정보
-	 */
+	// 최고/최저 점수 통계 조회
 	@GetMapping("/statistics")
 	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<ScoreStatistics> getScoreStatistics(
@@ -91,18 +72,21 @@ public class GradingController {
 		return ResponseEntity.ok(statistics);
 	}
 
+	// 채점 처리 중 오류 발생 시 처리
 	@ExceptionHandler(GradingException.class)
 	public ResponseEntity<ErrorResponse> handleGradingException(GradingException e) {
 		log.error("채점 처리 중 오류 발생", e);
 		return ErrorResponse.toResponseEntity(ErrorCode.GRADING_FAILED);
 	}
 
+	// 채점 불가능한 상태 예외 처리
 	@ExceptionHandler(GradingNotPossibleException.class)
 	public ResponseEntity<ErrorResponse> handleGradingNotPossibleException(GradingNotPossibleException e) {
 		log.error("채점 불가능한 상태", e);
 		return ErrorResponse.toResponseEntity(ErrorCode.EXAM_NOT_SUBMITTED);
 	}
 
+	// 유효하지 않은 점수 예외 처리
 	@ExceptionHandler(InvalidScoreException.class)
 	public ResponseEntity<ErrorResponse> handleInvalidScoreException(InvalidScoreException e) {
 		log.error("유효하지 않은 점수", e);

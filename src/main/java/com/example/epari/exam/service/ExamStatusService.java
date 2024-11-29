@@ -19,6 +19,9 @@ import com.example.epari.global.common.enums.ExamStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 시험 상태 서비스
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -30,10 +33,9 @@ public class ExamStatusService {
 
 	private final GradingService gradingService;
 
-	private final ExamSubmissionService examSubmissionService;
-
+	// 시험 상태 확인 및 업데이트
 	@Scheduled(fixedDelay = 60000) // 1분마다 실행
-	public void checkAndUpdateExamStatus() {  // @Transactional 제거
+	public void checkAndUpdateExamStatus() {
 		List<Exam> expiredExams = findExpiredExams();
 
 		for (Exam exam : expiredExams) {
@@ -45,6 +47,7 @@ public class ExamStatusService {
 		}
 	}
 
+	// 새로운 트랜잭션에서 시험 종료 처리
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	protected void processExamEndWithNewTransaction(Exam exam) {
 		// 시험 상태를 먼저 IN_PROGRESS로 변경
@@ -83,6 +86,7 @@ public class ExamStatusService {
 		log.info("시험 종료 처리 완료. examId={}", exam.getId());
 	}
 
+	// 만료된 시험 조회
 	private List<Exam> findExpiredExams() {
 		LocalDateTime now = LocalDateTime.now();
 		return examRepository.findByStatusIn(Arrays.asList(ExamStatus.SCHEDULED, ExamStatus.IN_PROGRESS))
@@ -123,6 +127,7 @@ public class ExamStatusService {
 		startGradingProcess(exam);
 	}
 
+	// 채점 프로세스 시작
 	private void startGradingProcess(Exam exam) {
 		List<ExamResult> submittedResults = examResultRepository.findByExamIdAndStatus(exam.getId(),
 				ExamStatus.SUBMITTED);
@@ -146,6 +151,7 @@ public class ExamStatusService {
 		finalizeExam(exam);
 	}
 
+	// 시험 종료 처리
 	private void finalizeExam(Exam exam) {
 		exam.updateStatus(ExamStatus.COMPLETED);
 		examRepository.save(exam);

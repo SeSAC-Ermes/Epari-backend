@@ -34,9 +34,7 @@ public class GradingService {
 
 	private final ScoreCalculator scoreCalculator;
 
-	/**
-	 * 단순 채점 처리 (내부용)
-	 */
+	// 단순 채점
 	public void processGrading(ExamResult examResult) {
 		Exam exam = examResult.getExam();
 
@@ -85,9 +83,7 @@ public class GradingService {
 		return calculatedTotal == examResult.getEarnedScore();
 	}
 
-	/**
-	 * 개별 시험 결과 채점 (API용)
-	 */
+	// 개별 시험 결과 채점 (API용)
 	public void gradeExamResult(Long examResultId) {
 		ExamResult examResult = examResultRepository.findById(examResultId)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
@@ -109,24 +105,21 @@ public class GradingService {
 		log.info("Exam graded - resultId: {}, totalScore: {}", examResultId, examResult.getTotalScore());
 	}
 
-	/**
-	 * 평균 점수 계산
-	 */
+	// 평균 점수 계산
 	@Transactional(readOnly = true)
 	public double calculateAverageScore(Long examId) {
 		List<ExamResult> gradedResults = examResultRepository.findByExamIdAndStatus(examId, ExamStatus.GRADED);
 		return scoreCalculator.calculateAverageScore(gradedResults);
 	}
 
-	/**
-	 * 총점에서 최고/최저 점수 정보 조회
-	 */
+	// 총점에서 최고/최저 점수 정보 조회
 	@Transactional(readOnly = true)
 	public ScoreStatistics calculateScoreStatistics(Long examId) {
 		List<ExamResult> gradedResults = examResultRepository.findByExamIdAndStatus(examId, ExamStatus.GRADED);
 		return scoreCalculator.calculateStatistics(gradedResults);
 	}
 
+	// 개별 문제 채점
 	private int gradeAnswer(ExamScore score) {
 		String studentAnswer = score.getStudentAnswer();
 		if (score.getQuestion().validateAnswer(studentAnswer)) {
@@ -135,6 +128,7 @@ public class GradingService {
 		return 0;
 	}
 
+	// 최고/최저 점수 정보 클래스
 	@Getter
 	public static class ScoreStatistics {
 

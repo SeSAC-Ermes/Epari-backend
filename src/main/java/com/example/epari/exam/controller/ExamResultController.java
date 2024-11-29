@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 /**
  * 학생의 시험 결과를 조회하는 REST API 컨트롤러 구현
  */
-
 @RestController
 @RequestMapping("/api/courses/{courseId}/scores")
 @RequiredArgsConstructor
@@ -26,6 +25,7 @@ public class ExamResultController {
 
 	private final ExamResultService examResultService;
 
+	// 강사의 시험 결과 조회
 	@GetMapping
 	@PreAuthorize("hasRole('INSTRUCTOR')")
 	public ResponseEntity<List<ExamResultResponseDto>> getCourseExamResults(
