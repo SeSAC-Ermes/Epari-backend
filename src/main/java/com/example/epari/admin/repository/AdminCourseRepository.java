@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.epari.admin.dto.AdminCourseListResponseDto;
 import com.example.epari.admin.dto.CourseSearchResponseDTO;
+import com.example.epari.admin.dto.CurriculumDetailDto;
 import com.example.epari.course.domain.Course;
 
 /**
@@ -67,5 +68,17 @@ public interface AdminCourseRepository extends JpaRepository<Course, Long> {
 			WHERE c.id = :courseId
 			""")
 	Optional<Course> findByIdWithInstructorAndStudents(@Param("courseId") Long courseId);
+
+	/**
+	 * 특정 강의의 커리큘럼을 DTO로 직접 조회하는 쿼리 메서드
+	 */
+	@Query("""
+			SELECT new com.example.epari.admin.dto.CurriculumDetailDto(
+			    cur.id, cur.date, cur.topic, cur.description)
+			FROM Curriculum cur
+			WHERE cur.course.id = :courseId
+			ORDER BY cur.date
+			""")
+	List<CurriculumDetailDto> findCurriculumsByCourseId(@Param("courseId") Long courseId);
 
 }
