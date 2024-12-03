@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.epari.exam.domain.ExamResult;
 import com.example.epari.exam.dto.response.ExamResultResponseDto;
 import com.example.epari.exam.repository.ExamResultRepository;
+import com.example.epari.exam.util.ScoreCalculator;
 import com.example.epari.global.exception.exam.ExamResultNotFoundException;
 import com.example.epari.global.validator.CourseAccessValidator;
 
@@ -28,7 +29,6 @@ public class ExamResultService {
 	private final ExamResultRepository examResultRepository;
 
 	private final CourseAccessValidator courseAccessValidator;
-
 
 	private final ScoreCalculator scoreCalculator;
 

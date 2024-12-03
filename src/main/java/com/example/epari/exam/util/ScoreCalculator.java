@@ -1,10 +1,11 @@
-package com.example.epari.exam.service;
+package com.example.epari.exam.util;
 
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
 import com.example.epari.exam.domain.ExamResult;
+import com.example.epari.exam.service.GradingService;
 import com.example.epari.exam.service.GradingService.ScoreStatistics;
 
 /*
