@@ -14,6 +14,7 @@ import com.example.epari.exam.domain.ExamQuestion;
 import com.example.epari.exam.domain.ExamResult;
 import com.example.epari.exam.domain.ExamScore;
 import com.example.epari.exam.repository.ExamResultRepository;
+import com.example.epari.exam.util.ScoreCalculator;
 import com.example.epari.global.common.enums.ExamStatus;
 import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;

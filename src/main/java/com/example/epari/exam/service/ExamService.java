@@ -20,6 +20,7 @@ import com.example.epari.exam.dto.response.ExamResponseDto;
 import com.example.epari.exam.dto.response.ExamSummaryDto;
 import com.example.epari.exam.repository.ExamRepository;
 import com.example.epari.exam.repository.ExamResultRepository;
+import com.example.epari.exam.util.ScoreCalculator;
 import com.example.epari.global.common.enums.ExamStatus;
 import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
@@ -47,6 +48,8 @@ public class ExamService {
 	private final CourseStudentRepository courseStudentRepository;
 
 	private final ExamQuestionValidator examQuestionValidator;
+
+	private final ScoreCalculator scoreCalculator; 
 
 	// 시험 상태 일치 여부 확인
 	private boolean matchesStatus(Exam exam, ExamStatus status, LocalDateTime now) {
@@ -82,10 +85,7 @@ public class ExamService {
 				.submittedStudentCount((int)results.stream()
 						.filter(r -> r.getStatus() == ExamStatus.SUBMITTED || r.getStatus() == ExamStatus.COMPLETED)
 						.count())
-				.averageScore(results.stream()
-						.mapToInt(ExamResult::getEarnedScore)
-						.average()
-						.orElse(0.0))
+				.averageScore(scoreCalculator.calculateAverageScore(results))
 				.build();
 	}
 
