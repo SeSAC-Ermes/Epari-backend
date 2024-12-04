@@ -62,7 +62,7 @@ public class CourseService {
 	 * 강의 정보를 조회합니다.
 	 */
 	public CourseResponseDto getCourse(Long courseId) {
-		Course course = courseRepository.findById(courseId)
+		Course course = courseRepository.findByIdWithInstructor(courseId)
 				.orElseThrow(CourseNotFoundException::new);
 		return CourseResponseDto.from(course);
 	}
