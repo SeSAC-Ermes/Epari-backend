@@ -2,8 +2,10 @@ package com.example.epari.exam.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +16,7 @@ import com.example.epari.course.repository.CourseStudentRepository;
 import com.example.epari.exam.domain.Exam;
 import com.example.epari.exam.domain.ExamResult;
 import com.example.epari.exam.dto.common.ExamStatistics;
+import com.example.epari.exam.dto.common.ExamSubmissionStatusDto;
 import com.example.epari.exam.dto.request.ExamRequestDto;
 import com.example.epari.exam.dto.response.ExamListResponseDto;
 import com.example.epari.exam.dto.response.ExamResponseDto;
@@ -26,6 +29,8 @@ import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
 import com.example.epari.global.validator.CourseAccessValidator;
 import com.example.epari.global.validator.ExamQuestionValidator;
+import com.example.epari.user.domain.Student;
+import com.example.epari.user.repository.StudentRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -51,42 +56,28 @@ public class ExamService {
 
 	private final ScoreCalculator scoreCalculator; 
 
-	// 시험 상태 일치 여부 확인
-	private boolean matchesStatus(Exam exam, ExamStatus status, LocalDateTime now) {
-		return switch (status) {
-			case SCHEDULED -> exam.isBeforeExam();
-			case IN_PROGRESS -> exam.isDuringExam();
-			case SUBMITTED, GRADING, GRADED, COMPLETED -> exam.isAfterExam();
-			default -> false;
-		};
-	}
+	private final StudentRepository studentRepository;
 
-	// 시험 분류
-	private void categorizeExam(Exam exam, ExamSummaryDto summaryDto, LocalDateTime now,
-			List<ExamSummaryDto> scheduledExams,
-			List<ExamSummaryDto> inProgressExams,
-			List<ExamSummaryDto> completedExams) {
+	private final ExamStatusService examStatusService;
 
-		if (exam.isBeforeExam()) {
-			scheduledExams.add(summaryDto);
-		} else if (exam.isDuringExam()) {
-			inProgressExams.add(summaryDto);
-		} else {
-			completedExams.add(summaryDto);
-		}
-	}
+	// 시험 생성
+	@Transactional
+	public Long createExam(Long courseId, ExamRequestDto requestDto, String instructorEmail) {
+		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
 
-	// 시험 통계 계산
-	private ExamStatistics calculateExamStatistics(Exam exam) {
-		List<ExamResult> results = examResultRepository.findByExamId(exam.getId());
+		Course course = courseRepository.findById(courseId)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
 
-		return ExamStatistics.builder()
-				.totalStudentCount(courseStudentRepository.countByCourseId(exam.getCourse().getId()))
-				.submittedStudentCount((int)results.stream()
-						.filter(r -> r.getStatus() == ExamStatus.SUBMITTED || r.getStatus() == ExamStatus.COMPLETED)
-						.count())
-				.averageScore(scoreCalculator.calculateAverageScore(results))
+		Exam exam = Exam.builder()
+				.title(requestDto.getTitle())
+				.examDateTime(requestDto.getExamDateTime())
+				.duration(requestDto.getDuration())
+				.totalScore(requestDto.getTotalScore())
+				.description(requestDto.getDescription())
+				.course(course)
 				.build();
+
+		return examRepository.save(exam).getId();
 	}
 
 	// 시험 목록 조회
@@ -111,14 +102,15 @@ public class ExamService {
 		List<ExamSummaryDto> completedExams = new ArrayList<>();
 
 		for (Exam exam : exams) {
-			if (status != null && !matchesStatus(exam, status, now)) {
+			if (status != null && !examStatusService.matchesStatus(exam, status, now)) {
 				continue;  // status 필터링
 			}
 
 			if (role.contains("INSTRUCTOR")) {
-				ExamStatistics statistics = calculateExamStatistics(exam);
+				List<ExamResult> results = examResultRepository.findByExamId(exam.getId());
+				ExamStatistics statistics = scoreCalculator.calculateExamStatistics(results, exam.getCourse().getId());
 				ExamSummaryDto summaryDto = ExamSummaryDto.forInstructor(exam, statistics);
-				categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams, completedExams);
+				examStatusService.categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams, completedExams);
 			} else {
 				// 학생의 경우 ExamResult가 없으면 새로운 시험으로 처리
 				Optional<ExamResult> resultOptional = examResultRepository.findByExamIdAndStudentEmail(exam.getId(),
@@ -131,7 +123,7 @@ public class ExamService {
 					summaryDto = ExamSummaryDto.forNewExam(exam);
 				}
 
-				categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams, completedExams);
+				examStatusService.categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams, completedExams);
 			}
 		}
 
@@ -140,6 +132,27 @@ public class ExamService {
 				.inProgressExams(inProgressExams)
 				.completedExams(completedExams)
 				.build();
+	}
+
+	// 시험 응시
+	public ExamSubmissionStatusDto startExam(Long courseId, Long examId, String studentEmail) {
+		Student student = studentRepository.findByEmail(studentEmail)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.STUDENT_NOT_FOUND));
+
+		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
+
+		// 수강생 확인
+		if (!courseStudentRepository.existsByCourseIdAndStudentId(courseId, student.getId())) {
+			throw new BusinessBaseException(ErrorCode.UNAUTHORIZED_COURSE_ACCESS);
+		}
+
+		examQuestionValidator.validateExamTime(exam);
+		examQuestionValidator.validateNotAlreadyStarted(examId, studentEmail);
+
+		ExamResult examResult = ExamResult.builder().exam(exam).student(student).build();
+
+		examResultRepository.save(examResult);
+		return ExamStatusService.createExamSubmissionStatusDto(exam, examResult);
 	}
 
 	// 시험 조회
@@ -172,24 +185,16 @@ public class ExamService {
 		}
 	}
 
-	// 시험 생성
-	@Transactional
-	public Long createExam(Long courseId, ExamRequestDto requestDto, String instructorEmail) {
-		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
-
-		Course course = courseRepository.findById(courseId)
-				.orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
-
-		Exam exam = Exam.builder()
-				.title(requestDto.getTitle())
-				.examDateTime(requestDto.getExamDateTime())
-				.duration(requestDto.getDuration())
-				.totalScore(requestDto.getTotalScore())
-				.description(requestDto.getDescription())
-				.course(course)
-				.build();
-
-		return examRepository.save(exam).getId();
+	// 만료된 시험 조회
+	List<Exam> findExpiredExams() {
+		LocalDateTime now = LocalDateTime.now();
+		return examRepository.findByStatusIn(Arrays.asList(ExamStatus.SCHEDULED, ExamStatus.IN_PROGRESS))
+				.stream()
+				.filter(exam -> {
+					LocalDateTime endTime = exam.getExamDateTime().plusMinutes(exam.getDuration());
+					return now.isAfter(endTime);
+				})
+				.collect(Collectors.toList());
 	}
 
 	// 시험 수정
