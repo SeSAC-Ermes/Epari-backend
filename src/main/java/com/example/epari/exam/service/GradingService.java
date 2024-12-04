@@ -33,9 +33,7 @@ public class GradingService {
 
 	private final CourseStudentRepository courseStudentRepository;
 
-	private final ScoreCalculator scoreCalculator;
-
-	// 단순 채점
+	// 시험 결과 채점 및 미제출자 처리
 	public void processGrading(ExamResult examResult) {
 		Exam exam = examResult.getExam();
 
@@ -77,6 +75,7 @@ public class GradingService {
 		}
 	}
 
+	// 시험 결과의 총점 정합성 검증
 	@Transactional(readOnly = true)
 	public boolean verifyTotalScore(ExamResult examResult) {
 		int calculatedTotal = examResult.getScores().stream().mapToInt(ExamScore::getEarnedScore).sum();
@@ -84,7 +83,7 @@ public class GradingService {
 		return calculatedTotal == examResult.getEarnedScore();
 	}
 
-	// 개별 시험 결과 채점 (API용)
+	// 개별 시험 결과 채점
 	public void gradeExamResult(Long examResultId) {
 		ExamResult examResult = examResultRepository.findById(examResultId)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
@@ -103,24 +102,10 @@ public class GradingService {
 		examResult.updateScore();
 		examResultRepository.save(examResult);
 
-		log.info("Exam graded - resultId: {}, totalScore: {}", examResultId, examResult.getTotalScore());
+		log.info("Exam graded - resultId: {}, totalScore: {}", examResult.getId(), examResult.getEarnedScore());
 	}
 
-	// 평균 점수 계산
-	@Transactional(readOnly = true)
-	public double calculateAverageScore(Long examId) {
-		List<ExamResult> gradedResults = examResultRepository.findByExamIdAndStatus(examId, ExamStatus.GRADED);
-		return scoreCalculator.calculateAverageScore(gradedResults);
-	}
-
-	// 총점에서 최고/최저 점수 정보 조회
-	@Transactional(readOnly = true)
-	public ScoreStatistics calculateScoreStatistics(Long examId) {
-		List<ExamResult> gradedResults = examResultRepository.findByExamIdAndStatus(examId, ExamStatus.GRADED);
-		return scoreCalculator.calculateStatistics(gradedResults);
-	}
-
-	// 개별 문제 채점
+	// 개별 문제 답안 채점
 	private int gradeAnswer(ExamScore score) {
 		String studentAnswer = score.getStudentAnswer();
 		if (score.getQuestion().validateAnswer(studentAnswer)) {
@@ -129,7 +114,7 @@ public class GradingService {
 		return 0;
 	}
 
-	// 최고/최저 점수 정보 클래스
+	// 시험 점수 통계 정보
 	@Getter
 	public static class ScoreStatistics {
 
