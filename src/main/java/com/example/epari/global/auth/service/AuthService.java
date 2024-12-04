@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
@@ -11,6 +12,8 @@ import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 
 import com.example.epari.global.auth.dto.SignUpRequestDto;
 import com.example.epari.global.auth.dto.VerificationRequestDto;
+import com.example.epari.global.common.base.BaseUser;
+import com.example.epari.global.common.repository.BaseUserRepository;
 import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
 import com.example.epari.global.exception.auth.AuthUserNotFoundException;
@@ -19,6 +22,7 @@ import com.example.epari.global.exception.auth.InvalidVerificationCodeException;
 import com.example.epari.global.exception.auth.SignUpFailedException;
 import com.example.epari.global.exception.auth.UserAlreadyExistsException;
 import com.example.epari.global.exception.auth.VerificationCodeExpiredException;
+import com.example.epari.user.domain.ProfileImage;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,6 +37,8 @@ import java.util.UUID;
 public class AuthService {
 
 	private final CognitoIdentityProviderClient cognitoClient;
+
+	private final BaseUserRepository userRepository;
 
 	@Value("${aws.cognito.userpool.id}")
 	private String userPoolId;
@@ -297,6 +303,17 @@ public class AuthService {
 			log.error("Unexpected error while adding user to PENDING_ROLES group", e);
 			throw new AuthenticationException(ErrorCode.INTERNAL_SERVER_ERROR);
 		}
+	}
+
+	@Transactional
+	public void updateGoogleProfileImage(String email, String imageUrl) {
+		BaseUser user = userRepository.findByEmail(email)
+				.orElseThrow(AuthUserNotFoundException::new);
+
+		ProfileImage profileImage = ProfileImage.of(
+				null, null, imageUrl, null
+		);
+		user.updateProfileImage(profileImage);
 	}
 
 }

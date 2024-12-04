@@ -27,11 +27,15 @@ public class AttendanceStatResponseDto {
 
 		private String email;
 
+		private String profileFileUrl;
+
 		public static StudentInfo from(Student student) {
 			return StudentInfo.builder()
 					.id(student.getId())
 					.name(student.getName())
 					.email(student.getEmail())
+					.profileFileUrl(student.getProfileImage() != null ?
+							student.getProfileImage().getFileUrl() : null)  // 프로필 이미지 URL 추가
 					.build();
 		}
 

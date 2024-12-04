@@ -1,6 +1,7 @@
 package com.example.epari.course.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 	 * 학생 id를 받아 강의 id 와 학생 id 일치로 조회 강의 조회
 	 */
 	@Query("SELECT c FROM Course c "
+			+ "INNER JOIN FETCH c.instructor i "
+			+ "LEFT JOIN FETCH i.profileImage "
 			+ "INNER JOIN CourseStudent cs ON c.id = cs.course.id "
 			+ "WHERE cs.student.id = :studentId")
 	List<Course> findAllByStudentId(@Param("studentId") Long studentId);
@@ -26,6 +29,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 	 * 강사 id를 받아 강의 테이블에서 일치하는지 확인 강의 조회
 	 */
 	@Query("SELECT c FROM Course c "
+			+ "INNER JOIN FETCH c.instructor i "
+			+ "LEFT JOIN FETCH i.profileImage "
 			+ "WHERE c.instructor.id = :instructorId")
 	List<Course> findAllByInstructorId(@Param("instructorId") Long instructorId);
 
@@ -59,5 +64,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 	boolean existsByCourseIdAndStudentEmail(
 			@Param("courseId") Long courseId,
 			@Param("studentEmail") String studentEmail);
+
+	@Query("SELECT c FROM Course c " +
+			"INNER JOIN FETCH c.instructor i " +
+			"WHERE c.id = :courseId")
+	Optional<Course> findByIdWithInstructor(@Param("courseId") Long courseId);
 
 }

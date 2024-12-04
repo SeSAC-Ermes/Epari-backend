@@ -16,7 +16,8 @@ public interface CourseStudentRepository extends JpaRepository<CourseStudent, Lo
 	@Query("""
 			SELECT ls
 			FROM CourseStudent ls
-			JOIN FETCH ls.student
+			JOIN FETCH ls.student s
+			LEFT JOIN FETCH s.profileImage
 			WHERE ls.course.id = :courseId
 			""")
 	List<CourseStudent> findAllCourseStudentsByCourseId(

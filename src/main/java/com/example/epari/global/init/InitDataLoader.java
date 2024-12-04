@@ -143,6 +143,28 @@ public class InitDataLoader implements ApplicationRunner {
 			);
 			students.add(student);
 		}
+
+		// 첫 번째 학생 추가
+		Student student1 = Student.createStudent(
+				"wlsgml0053@naver.com",
+				"일반진희"
+		);
+		students.add(student1);
+
+		// 두 번째 학생 추가 (Google 계정)
+		Student student2 = Student.createStudent(
+				"wlsgml0053@gmail.com",
+				"구글진희"
+		);
+		students.add(student2);
+
+		// 세 번째 학생 추가 (Google 계정)
+		Student student3 = Student.createStudent(
+				"limiary27@gmail.com",
+				"구글진희2"
+		);
+		students.add(student3);
+
 		return studentRepository.saveAll(students);
 	}
 
