@@ -14,6 +14,7 @@ import com.example.epari.exam.exception.GradingNotPossibleException;
 import com.example.epari.exam.exception.InvalidScoreException;
 import com.example.epari.exam.service.GradingService;
 import com.example.epari.exam.service.GradingService.ScoreStatistics;
+import com.example.epari.exam.util.ScoreCalculator;
 import com.example.epari.global.annotation.CurrentUserEmail;
 import com.example.epari.global.exception.ErrorCode;
 import com.example.epari.global.exception.ErrorResponse;
@@ -31,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GradingController {
 
 	private final GradingService gradingService;
+    private final ScoreCalculator scoreCalculator; 
 
 	// 시험 결과 채점 요청
 	@PostMapping("/results/{resultId}")
@@ -55,7 +57,7 @@ public class GradingController {
 			@CurrentUserEmail String instructorEmail) {
 
 		log.info("Retrieving average score - courseId: {}, examId: {}", courseId, examId);
-		double averageScore = gradingService.calculateAverageScore(examId);
+		double averageScore = scoreCalculator.calculateExamAverageScore(examId);
 		return ResponseEntity.ok(averageScore);
 	}
 
@@ -68,7 +70,7 @@ public class GradingController {
 			@CurrentUserEmail String instructorEmail) {
 
 		log.info("Retrieving score statistics - courseId: {}, examId: {}", courseId, examId);
-		ScoreStatistics statistics = gradingService.calculateScoreStatistics(examId);
+		ScoreStatistics statistics = scoreCalculator.calculateExamStatistics(examId); 
 		return ResponseEntity.ok(statistics);
 	}
 
