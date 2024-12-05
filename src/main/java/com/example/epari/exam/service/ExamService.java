@@ -185,18 +185,6 @@ public class ExamService {
 		}
 	}
 
-	// 만료된 시험 조회
-	List<Exam> findExpiredExams() {
-		LocalDateTime now = LocalDateTime.now();
-		return examRepository.findByStatusIn(Arrays.asList(ExamStatus.SCHEDULED, ExamStatus.IN_PROGRESS))
-				.stream()
-				.filter(exam -> {
-					LocalDateTime endTime = exam.getExamDateTime().plusMinutes(exam.getDuration());
-					return now.isAfter(endTime);
-				})
-				.collect(Collectors.toList());
-	}
-
 	// 시험 수정
 	@Transactional
 	public ExamResponseDto updateExam(Long courseId, Long examId, ExamRequestDto requestDto, String instructorEmail) {

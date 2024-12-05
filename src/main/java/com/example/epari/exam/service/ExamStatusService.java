@@ -2,7 +2,9 @@ package com.example.epari.exam.service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -30,8 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class ExamStatusService {
-
-	private final ExamService examService;
 
 	private final ExamRepository examRepository;
 
@@ -114,10 +114,22 @@ public class ExamStatusService {
 		}
 	}
 
+	// 만료된 시험 조회
+	private List<Exam> findExpiredExams() {
+        LocalDateTime now = LocalDateTime.now();
+        return examRepository.findByStatusIn(Arrays.asList(ExamStatus.SCHEDULED, ExamStatus.IN_PROGRESS))
+            .stream()
+            .filter(exam -> {
+                LocalDateTime endTime = exam.getExamDateTime().plusMinutes(exam.getDuration());
+                return now.isAfter(endTime);
+            })
+            .collect(Collectors.toList());
+    }
+
 	// 만료된 시험 확인 및 상태 업데이트
 	@Scheduled(fixedDelay = 60000) // 1분마다 실행
 	public void checkAndProcessExpiredExams() {
-		List<Exam> expiredExams = examService.findExpiredExams();
+		List<Exam> expiredExams = findExpiredExams();
 
 		for (Exam exam : expiredExams) {
 			try {
