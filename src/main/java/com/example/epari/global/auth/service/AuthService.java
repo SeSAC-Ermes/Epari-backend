@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
+
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 
@@ -16,21 +17,13 @@ import com.example.epari.global.common.base.BaseUser;
 import com.example.epari.global.common.repository.BaseUserRepository;
 import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
-import com.example.epari.global.exception.auth.AuthUserNotFoundException;
-import com.example.epari.global.exception.auth.AuthenticationException;
-import com.example.epari.global.exception.auth.InvalidVerificationCodeException;
-import com.example.epari.global.exception.auth.SignUpFailedException;
-import com.example.epari.global.exception.auth.UserAlreadyExistsException;
-import com.example.epari.global.exception.auth.VerificationCodeExpiredException;
+import com.example.epari.global.exception.auth.*;
 import com.example.epari.user.domain.ProfileImage;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * 사용자 인증 관련 서비스
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -46,82 +39,60 @@ public class AuthService {
 	@Value("${aws.cognito.clientId}")
 	private String clientId;
 
+	// ===== 회원가입 관련 =====
 	public void signUp(SignUpRequestDto request) {
 		try {
 			UserType user = findUserByEmail(request.getEmail(), true);
-
-			// 비밀번호 설정
-			AdminSetUserPasswordRequest passwordRequest = AdminSetUserPasswordRequest.builder()
-					.userPoolId(userPoolId)
-					.username(user.username())
-					.password(request.getPassword())
-					.permanent(true)
-					.build();
-
-			cognitoClient.adminSetUserPassword(passwordRequest);
-
-			// 사용자 속성 업데이트
-			AdminUpdateUserAttributesRequest attributesRequest = AdminUpdateUserAttributesRequest.builder()
-					.userPoolId(userPoolId)
-					.username(user.username())
-					.userAttributes(
-							AttributeType.builder()
-									.name("name")
-									.value(request.getName())
-									.build()
-					)
-					.build();
-
-			cognitoClient.adminUpdateUserAttributes(attributesRequest);
-
-			// PENDING_ROLES 그룹에 추가
-			AdminAddUserToGroupRequest groupRequest = AdminAddUserToGroupRequest.builder()
-					.userPoolId(userPoolId)
-					.username(user.username())
-					.groupName("PENDING_ROLES")
-					.build();
-
-			cognitoClient.adminAddUserToGroup(groupRequest);
+			setUserPassword(user, request.getPassword());
+			updateUserAttributes(user, request.getName());
 			log.info("User signup completed successfully: {}", request.getEmail());
-
 		} catch (Exception e) {
 			log.error("Failed to process signup", e);
 			throw new SignUpFailedException();
 		}
 	}
 
+	private void setUserPassword(UserType user, String password) {
+		AdminSetUserPasswordRequest request = AdminSetUserPasswordRequest.builder()
+				.userPoolId(userPoolId)
+				.username(user.username())
+				.password(password)
+				.permanent(true)
+				.build();
+		cognitoClient.adminSetUserPassword(request);
+	}
+
+	private void updateUserAttributes(UserType user, String name) {
+		AdminUpdateUserAttributesRequest request = AdminUpdateUserAttributesRequest.builder()
+				.userPoolId(userPoolId)
+				.username(user.username())
+				.userAttributes(
+						AttributeType.builder()
+								.name("name")
+								.value(name)
+								.build()
+				)
+				.build();
+		cognitoClient.adminUpdateUserAttributes(request);
+	}
+
+	private void addUserToGroup(UserType user, String groupName) {
+		AdminAddUserToGroupRequest request = AdminAddUserToGroupRequest.builder()
+				.userPoolId(userPoolId)
+				.username(user.username())
+				.groupName(groupName)
+				.build();
+		cognitoClient.adminAddUserToGroup(request);
+	}
+
+	// ===== 이메일 인증 관련 =====
 	public void sendVerificationCode(String email) {
 		try {
 			UserType user = findUserByEmail(email, false);
-
 			if (user != null) {
-				// 기존 사용자인 경우
-				AdminListGroupsForUserRequest groupsRequest = AdminListGroupsForUserRequest.builder()
-						.userPoolId(userPoolId)
-						.username(user.username())
-						.build();
-
-				AdminListGroupsForUserResponse groupsResponse = cognitoClient.adminListGroupsForUser(groupsRequest);
-
-				// 그룹 체크
-				for (GroupType group : groupsResponse.groups()) {
-					if (group.groupName().equals("INSTRUCTOR") || group.groupName().equals("STUDENT")) {
-						throw new UserAlreadyExistsException();
-					}
-					if (group.groupName().equals("PENDING_ROLES")) {
-						throw new AuthenticationException(ErrorCode.PENDING_APPROVAL);
-					}
-				}
-
-				// 인증 코드 재발송
-				ResendConfirmationCodeRequest resendRequest = ResendConfirmationCodeRequest.builder()
-						.clientId(clientId)
-						.username(user.username())
-						.build();
-
-				cognitoClient.resendConfirmationCode(resendRequest);
+				validateUserGroups(user);
+				resendVerificationCode(user.username());
 			} else {
-				// 새 사용자 생성
 				createNewUser(email);
 			}
 		} catch (BusinessBaseException e) {
@@ -132,19 +103,29 @@ public class AuthService {
 		}
 	}
 
+	private void validateUserGroups(UserType user) {
+		AdminListGroupsForUserResponse groupsResponse = getUserGroups(user.username());
+		if (isActiveUser(groupsResponse)) {
+			throw new UserAlreadyExistsException();
+		}
+		if (isPendingUser(groupsResponse)) {
+			throw new AuthenticationException(ErrorCode.PENDING_APPROVAL);
+		}
+	}
+
+	public void resendVerificationCode(String username) {
+		ResendConfirmationCodeRequest request = ResendConfirmationCodeRequest.builder()
+				.clientId(clientId)
+				.username(username)
+				.build();
+		cognitoClient.resendConfirmationCode(request);
+	}
+
 	public void verifyCode(VerificationRequestDto request) {
 		try {
 			UserType user = findUserByEmail(request.getEmail(), true);
-
-			ConfirmSignUpRequest confirmRequest = ConfirmSignUpRequest.builder()
-					.clientId(clientId)
-					.username(user.username())
-					.confirmationCode(request.getCode())
-					.build();
-
-			cognitoClient.confirmSignUp(confirmRequest);
+			confirmSignUp(user.username(), request.getCode());
 			log.info("Email verified successfully: {}", request.getEmail());
-
 		} catch (CodeMismatchException e) {
 			throw new InvalidVerificationCodeException();
 		} catch (ExpiredCodeException e) {
@@ -155,50 +136,13 @@ public class AuthService {
 		}
 	}
 
-	public void resendVerificationCode(String email) {
-		try {
-			UserType user = findUserByEmail(email, true);
-
-			ResendConfirmationCodeRequest resendRequest = ResendConfirmationCodeRequest.builder()
-					.clientId(clientId)
-					.username(user.username())
-					.build();
-
-			cognitoClient.resendConfirmationCode(resendRequest);
-			log.info("Verification code resent for email: {}", email);
-
-		} catch (LimitExceededException e) {
-			throw new AuthenticationException(ErrorCode.VERIFICATION_CODE_LIMIT_EXCEEDED);
-		} catch (Exception e) {
-			log.error("Failed to resend verification code", e);
-			throw new AuthenticationException(ErrorCode.INTERNAL_SERVER_ERROR);
-		}
-	}
-
-	private UserType findUserByEmail(String email, boolean throwExceptionIfNotFound) {
-		try {
-			// 이메일 필터 조건 수정
-			ListUsersRequest listUsersRequest = ListUsersRequest.builder()
-					.userPoolId(userPoolId)
-					.filter("email = \"" + email + "\" or username = \"" + email + "\"")
-					.build();
-
-			ListUsersResponse listUsersResponse = cognitoClient.listUsers(listUsersRequest);
-
-			if (listUsersResponse.users().isEmpty()) {
-				if (throwExceptionIfNotFound) {
-					throw new AuthUserNotFoundException();
-				}
-				return null;
-			}
-
-			return listUsersResponse.users().get(0);
-		} catch (BusinessBaseException e) {
-			throw e;
-		} catch (Exception e) {
-			log.error("Failed to find user by email: {}", email, e);
-			throw new AuthenticationException(ErrorCode.INTERNAL_SERVER_ERROR);
-		}
+	private void confirmSignUp(String username, String code) {
+		ConfirmSignUpRequest request = ConfirmSignUpRequest.builder()
+				.clientId(clientId)
+				.username(username)
+				.confirmationCode(code)
+				.build();
+		cognitoClient.confirmSignUp(request);
 	}
 
 	private void createNewUser(String email) {
@@ -217,16 +161,15 @@ public class AuthService {
 							.build()
 			);
 
-			SignUpRequest signUpRequest = SignUpRequest.builder()
+			SignUpRequest request = SignUpRequest.builder()
 					.clientId(clientId)
 					.username(uuid)
 					.userAttributes(attributes)
 					.password("TempPass123!")
 					.build();
 
-			cognitoClient.signUp(signUpRequest);
+			cognitoClient.signUp(request);
 			log.info("New user created successfully with UUID: {}", uuid);
-
 		} catch (UsernameExistsException e) {
 			log.error("Username already exists");
 			throw new UserAlreadyExistsException();
@@ -236,21 +179,33 @@ public class AuthService {
 		}
 	}
 
-	public List<String> getUserGroups(String email) {
+	// ===== Google 로그인 관련 =====
+	@Transactional
+	public void updateGoogleProfileImage(String email, String imageUrl) {
 		try {
-			UserType user = findUserByEmail(email, true); // 이미 구현된 메소드 활용
+			AdminListGroupsForUserResponse groupsResponse = getUserGroups(email);
+			if (!isActiveUser(groupsResponse)) {
+				log.error("Unauthorized user attempting to update profile: {}", email);
+				throw new AuthenticationException(ErrorCode.UNAUTHORIZED);
+			}
 
-			AdminListGroupsForUserRequest groupsRequest = AdminListGroupsForUserRequest.builder()
-					.userPoolId(userPoolId)
-					.username(user.username())
-					.build();
+			BaseUser user = userRepository.findByEmail(email)
+					.orElseThrow(AuthUserNotFoundException::new);
+			user.updateProfileImage(ProfileImage.of(null, null, imageUrl, null));
+			log.info("Successfully updated Google profile image for user: {}", email);
+		} catch (Exception e) {
+			log.error("Failed to update Google profile image for user: {}", email, e);
+			throw new AuthenticationException(ErrorCode.INTERNAL_SERVER_ERROR);
+		}
+	}
 
-			AdminListGroupsForUserResponse groupsResponse = cognitoClient.adminListGroupsForUser(groupsRequest);
-
+	// ===== 그룹 관련 =====
+	public List<String> getUserGroupsList(String email) {
+		try {
+			AdminListGroupsForUserResponse groupsResponse = getUserGroups(email);
 			return groupsResponse.groups().stream()
 					.map(GroupType::groupName)
 					.toList();
-
 		} catch (UserNotFoundException e) {
 			throw new AuthUserNotFoundException();
 		} catch (Exception e) {
@@ -259,61 +214,54 @@ public class AuthService {
 		}
 	}
 
-	public void addUserToPendingRole(String email) {
+	// ===== 유틸리티 메소드 =====
+	private UserType findUserByEmail(String email, boolean throwExceptionIfNotFound) {
 		try {
-			log.info("Attempting to add user to PENDING_ROLES group: {}", email);
-
-			UserType user = findUserByEmail(email, true);
-			log.info("Found user: {}", user.username());
-
-			// 현재 사용자의 그룹 목록 확인
-			AdminListGroupsForUserRequest listGroupsRequest = AdminListGroupsForUserRequest.builder()
+			ListUsersRequest request = ListUsersRequest.builder()
 					.userPoolId(userPoolId)
-					.username(user.username())
+					.filter("email = \"" + email + "\" or username = \"" + email + "\"")
 					.build();
 
-			AdminListGroupsForUserResponse groupsResponse =
-					cognitoClient.adminListGroupsForUser(listGroupsRequest);
-
-			// 이미 PENDING_ROLES 그룹에 있는지 확인
-			boolean alreadyInPendingRole = groupsResponse.groups().stream()
-					.anyMatch(group -> "PENDING_ROLES".equals(group.groupName()));
-
-			if (!alreadyInPendingRole) {
-				// PENDING_ROLES 그룹에 추가
-				AdminAddUserToGroupRequest groupRequest = AdminAddUserToGroupRequest.builder()
-						.userPoolId(userPoolId)
-						.username(user.username())
-						.groupName("PENDING_ROLES")
-						.build();
-
-				cognitoClient.adminAddUserToGroup(groupRequest);
-				log.info("Successfully added user to PENDING_ROLES group: {}", email);
-			} else {
-				log.info("User already in PENDING_ROLES group: {}", email);
+			ListUsersResponse response = cognitoClient.listUsers(request);
+			if (response.users().isEmpty()) {
+				if (throwExceptionIfNotFound) {
+					throw new AuthUserNotFoundException();
+				}
+				return null;
 			}
-
-		} catch (UserNotFoundException e) {
-			log.error("User not found: {}", email);
-			throw new AuthUserNotFoundException();
-		} catch (CognitoIdentityProviderException e) {
-			log.error("Cognito error while adding user to group: {}", e.getMessage());
-			throw new AuthenticationException(ErrorCode.INTERNAL_SERVER_ERROR);
+			return response.users().get(0);
+		} catch (BusinessBaseException e) {
+			throw e;
 		} catch (Exception e) {
-			log.error("Unexpected error while adding user to PENDING_ROLES group", e);
+			log.error("Failed to find user by email: {}", email, e);
 			throw new AuthenticationException(ErrorCode.INTERNAL_SERVER_ERROR);
 		}
 	}
 
-	@Transactional
-	public void updateGoogleProfileImage(String email, String imageUrl) {
-		BaseUser user = userRepository.findByEmail(email)
-				.orElseThrow(AuthUserNotFoundException::new);
+	private AdminListGroupsForUserResponse getUserGroups(String email) {
+		try {
+			UserType user = findUserByEmail(email, true);
+			return cognitoClient.adminListGroupsForUser(
+					AdminListGroupsForUserRequest.builder()
+							.userPoolId(userPoolId)
+							.username(user.username())
+							.build()
+			);
+		} catch (Exception e) {
+			log.error("Failed to get user groups for email: {}", email, e);
+			throw new AuthenticationException(ErrorCode.INTERNAL_SERVER_ERROR);
+		}
+	}
 
-		ProfileImage profileImage = ProfileImage.of(
-				null, null, imageUrl, null
-		);
-		user.updateProfileImage(profileImage);
+	private boolean isActiveUser(AdminListGroupsForUserResponse groupsResponse) {
+		return groupsResponse.groups().stream()
+				.anyMatch(group -> "INSTRUCTOR".equals(group.groupName())
+						|| "STUDENT".equals(group.groupName()));
+	}
+
+	private boolean isPendingUser(AdminListGroupsForUserResponse groupsResponse) {
+		return groupsResponse.groups().stream()
+				.anyMatch(group -> "PENDING_ROLES".equals(group.groupName()));
 	}
 
 }
