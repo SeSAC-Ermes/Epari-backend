@@ -103,5 +103,5 @@ public abstract class ExamQuestion extends BaseTimeEntity {
 		this.score = score;
 		this.correctAnswer = correctAnswer;
 	}
-
+	
 }

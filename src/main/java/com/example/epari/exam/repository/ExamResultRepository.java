@@ -18,42 +18,32 @@ import com.example.epari.global.common.enums.ExamStatus;
 public interface ExamResultRepository extends JpaRepository<ExamResult, Long> {
 
 	// 특정 학생의 특정 시험 결과 조회
-	Optional<ExamResult> findByExamIdAndStudentEmail(
+	@Query("SELECT er FROM ExamResult er WHERE er.exam.id = :examId AND er.student.id = :studentId")
+	Optional<ExamResult> findByExamIdAndStudentId(
 			@Param("examId") Long examId,
-			@Param("studentEmail") String studentEmail
+			@Param("studentId") Long studentId
 	);
 
 	// 특정 시험의 모든 결과 조회
-	@Query("SELECT er FROM ExamResult er " +
-			"WHERE er.exam.id = :examId")
+	@Query("SELECT er FROM ExamResult er WHERE er.exam.id = :examId")
 	List<ExamResult> findByExamId(@Param("examId") Long examId);
 
 	//TODO: 특정 강의의 특정 학생 시험 결과 모두 조회
 	//특정 강의의 특정 학생 시험 결과 모두 조회
 	@Query("SELECT er FROM ExamResult er " +
 			"WHERE er.exam.course.id = :courseId " +
-			"AND er.student.email = :studentEmail")
-	List<ExamResult> findByCourseIdAndStudentEmail(
+			"AND er.student.id = :studentId")
+	List<ExamResult> findByCourseIdAndStudentId(
 			@Param("courseId") Long courseId,
-			@Param("studentEmail") String studentEmail
+			@Param("studentId") Long studentId
 	);
 
 	// 특정 상태의 시험 결과 조회
-	@Query("SELECT er FROM ExamResult er " +
-			"WHERE er.exam.id = :examId " +
-			"AND er.status = :status")
+	@Query("SELECT er FROM ExamResult er WHERE er.exam.id = :examId AND er.status = :status")
 	List<ExamResult> findByExamIdAndStatus(
 			@Param("examId") Long examId,
 			@Param("status") ExamStatus status
 	);
-
-	// 채점 대기중인 시험 결과 조회 (자동 채점용)
-	@Query("""
-			SELECT er FROM ExamResult er
-			WHERE er.status = 'SUBMITTED'
-			AND er.submitTime <= :baseTime
-			""")
-	List<ExamResult> findPendingGradingExams(@Param("baseTime") LocalDateTime baseTime);
 
 	// 시간 초과된 진행중 시험 조회 (자동 제출용)
 	@Query("""

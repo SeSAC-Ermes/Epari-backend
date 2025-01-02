@@ -37,8 +37,8 @@ public class AttendanceService {
 	 * 해당 날짜의 출석 데이터가 없는 경우, 수강생 전체의 출석 데이터를 새로 생성
 	 */
 	@Transactional
-	public List<AttendanceResponseDto> getAttendances(Long courseId, String instructorEmail, LocalDate date) {
-		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
+	public List<AttendanceResponseDto> getAttendances(Long courseId, Long instructorId, LocalDate date) {
+		courseAccessValidator.validateInstructorAccess(courseId, instructorId);
 
 		List<Attendance> attendances = attendanceRepository.findAllByCourseIdAndDate(courseId, date);
 
@@ -57,12 +57,12 @@ public class AttendanceService {
 	@Transactional
 	public void updateAttendances(
 			Long courseId,
-			String instructorEmail,
+			Long instructorId,
 			LocalDate date,
 			List<AttendanceUpdateDto> updates
 	) {
 		// 강사 권한 검증
-		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
+		courseAccessValidator.validateInstructorAccess(courseId, instructorId);
 
 		// 수정할 학생 ID 목록 추출
 		List<Long> studentIds = updates.stream()

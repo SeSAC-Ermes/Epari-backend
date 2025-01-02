@@ -74,29 +74,26 @@ public enum ErrorCode {
 	ASSIGNMENT_INVALID(HttpStatus.BAD_REQUEST,"ASM-007","해당 강의의 과제가 아닙니다."),
 	SUBMISSION_INVALID(HttpStatus.BAD_REQUEST,"ASM-008","해당 과제의 제출물이 아닙니다."),
 
-
-	// Question 관련 에러 코드(EXAM)
-	QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "QST-001", "문제를 찾을 수 없습니다."),
-	QUESTION_HAS_SUBMISSIONS(HttpStatus.BAD_REQUEST, "QST-002", "답안이 제출된 문제는 삭제할 수 없습니다."),
+	// Exam Question 관련 에러 코드(QST)
+	EXAM_QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "QST-001", "문제를 찾을 수 없습니다."),
+	EXAM_QUESTION_TYPE_CHANGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "QST-002", "문제 유형 변경이 허용되지 않습니다."),
+	EXAM_QUESTION_HAS_SUBMISSIONS(HttpStatus.BAD_REQUEST, "QST-003", "답안이 제출된 문제는 삭제할 수 없습니다."),
+	EXAM_NOT_ALL_QUESTIONS_ANSWERED(HttpStatus.BAD_REQUEST, "QST-004", "모든 문제에 답하지 않았습니다."),
 
 	// Exam 관련 에러 코드 (EXAM)
 	EXAM_NOT_FOUND(HttpStatus.NOT_FOUND, "EXAM-001", "시험을 찾을 수 없습니다."),
-	EXAM_QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "EXAM-002", "시험 문제를 찾을 수 없습니다."),
-	UNAUTHORIZED_EXAM_ACCESS(HttpStatus.FORBIDDEN, "EXAM-003", "시험에 대한 접근 권한이 없습니다."),
-	EXAM_QUESTION_TYPE_CHANGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "EXAM-004", "문제 유형은 변경할 수 없습니다."),
-	EXAM_NOT_STARTED(HttpStatus.BAD_REQUEST, "EXAM-005", "아직 시험 시작 시간이 아닙니다."),
-	EXAM_ALREADY_ENDED(HttpStatus.BAD_REQUEST, "EXAM-006", "이미 종료된 시험입니다."),
-	EXAM_TIME_EXPIRED(HttpStatus.BAD_REQUEST, "EXAM-007", "시험 시간이 종료되었습니다."),
-	EXAM_ALREADY_STARTED(HttpStatus.BAD_REQUEST, "EXAM-008", "이미 시작된 시험입니다."),
-	EXAM_NOT_ALL_QUESTIONS_ANSWERED(HttpStatus.BAD_REQUEST, "EXAM-009", "모든 문제에 답하지 않았습니다."),
-	EXAM_ALREADY_SUBMITTED(HttpStatus.BAD_REQUEST, "EXAM-010", "이미 제출된 시험입니다."),
+	UNAUTHORIZED_EXAM_ACCESS(HttpStatus.FORBIDDEN, "EXAM-002", "시험에 대한 접근 권한이 없습니다."),
+	EXAM_NOT_STARTED(HttpStatus.BAD_REQUEST, "EXAM-003", "아직 시험 시작 시간이 아닙니다."),
+	EXAM_ALREADY_STARTED(HttpStatus.BAD_REQUEST, "EXAM-004", "이미 시작된 시험입니다."),
+	EXAM_NOT_IN_PROGRESS(HttpStatus.BAD_REQUEST, "EXAM-005", "진행 중인 시험을 찾을 수 없습니다."),
+	EXAM_TIME_EXPIRED(HttpStatus.BAD_REQUEST, "EXAM-006", "시험 시간이 만료되었습니다."),
+	EXAM_ALREADY_ENDED(HttpStatus.BAD_REQUEST, "EXAM-007", "이미 종료된 시험입니다."),
+	EXAM_ALREADY_SUBMITTED(HttpStatus.BAD_REQUEST, "EXAM-008", "이미 제출된 시험입니다."),
+	EXAM_CANNOT_MODIFY(HttpStatus.BAD_REQUEST, "EXAM-009", "진행 중이거나 완료된 시험은 수정할 수 없습니다."),
+	EXAM_CANNOT_DELETE(HttpStatus.BAD_REQUEST, "EXAM-010", "진행 중이거나 완료된 시험은 삭제할 수 없습니다."),
 
 	// ExamResult 관련 에러 코드(RST)
 	EXAM_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "RST-001", "시험 결과를 찾을 수 없습니다."),
-	EXAM_NOT_IN_PROGRESS(HttpStatus.BAD_REQUEST, "RST-002", "진행 중인 시험을 찾을 수 없습니다."),
-	EXAM_RESULT_ALREADY_SUBMITTED(HttpStatus.BAD_REQUEST, "RST-003", "이미 제출된 시험입니다."),
-	EXAM_RESULT_INVALID_STATUS(HttpStatus.BAD_REQUEST, "RST-004", "잘못된 시험 상태입니다."),
-	EXAM_RESULT_MISSING_REQUIRED(HttpStatus.BAD_REQUEST, "RST-005", "필수 정보가 누락되었습니다."),
 
 	// Attendance 관련 에러 코드
 	ATTENDANCE_NOT_FOUND(HttpStatus.NOT_FOUND, "ATT-001", "출석 데이터를 찾을 수 없습니다."),

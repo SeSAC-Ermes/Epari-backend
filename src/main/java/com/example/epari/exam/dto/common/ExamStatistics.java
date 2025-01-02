@@ -16,4 +16,10 @@ public class ExamStatistics {
 
 	private Double averageScore;
 
+	public ExamStatistics(int totalStudentCount, int submittedStudentCount, double averageScore) {
+        this.totalStudentCount = totalStudentCount;
+        this.submittedStudentCount = submittedStudentCount;
+        this.averageScore = averageScore;
+    }
+
 }

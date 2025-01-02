@@ -9,14 +9,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.epari.exam.exception.GradingException;
-import com.example.epari.exam.exception.GradingNotPossibleException;
-import com.example.epari.exam.exception.InvalidScoreException;
-import com.example.epari.exam.service.GradingService;
-import com.example.epari.exam.service.GradingService.ScoreStatistics;
+import com.example.epari.exam.service.ExamGradingService;
+import com.example.epari.exam.service.ExamGradingService.ScoreStatistics;
+import com.example.epari.exam.util.ScoreCalculator;
 import com.example.epari.global.annotation.CurrentUserEmail;
 import com.example.epari.global.exception.ErrorCode;
 import com.example.epari.global.exception.ErrorResponse;
+import com.example.epari.global.exception.exam.ExamGradingException;
+import com.example.epari.global.exception.exam.ExamGradingNotPossibleException;
+import com.example.epari.global.exception.exam.InvalidScoreException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,9 +29,11 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/courses/{courseId}/exams/{examId}/grades")
-public class GradingController {
+public class ExamGradingController {
 
-	private final GradingService gradingService;
+	private final ExamGradingService gradingService;
+
+	private final ScoreCalculator scoreCalculator;
 
 	// 시험 결과 채점 요청
 	@PostMapping("/results/{resultId}")
@@ -55,7 +58,7 @@ public class GradingController {
 			@CurrentUserEmail String instructorEmail) {
 
 		log.info("Retrieving average score - courseId: {}, examId: {}", courseId, examId);
-		double averageScore = gradingService.calculateAverageScore(examId);
+		double averageScore = scoreCalculator.calculateExamAverageScore(examId);
 		return ResponseEntity.ok(averageScore);
 	}
 
@@ -68,20 +71,20 @@ public class GradingController {
 			@CurrentUserEmail String instructorEmail) {
 
 		log.info("Retrieving score statistics - courseId: {}, examId: {}", courseId, examId);
-		ScoreStatistics statistics = gradingService.calculateScoreStatistics(examId);
+		ScoreStatistics statistics = scoreCalculator.calculateExamStatistics(examId);
 		return ResponseEntity.ok(statistics);
 	}
 
 	// 채점 처리 중 오류 발생 시 처리
-	@ExceptionHandler(GradingException.class)
-	public ResponseEntity<ErrorResponse> handleGradingException(GradingException e) {
+	@ExceptionHandler(ExamGradingException.class)
+	public ResponseEntity<ErrorResponse> handleGradingException(ExamGradingException e) {
 		log.error("채점 처리 중 오류 발생", e);
 		return ErrorResponse.toResponseEntity(ErrorCode.GRADING_FAILED);
 	}
 
 	// 채점 불가능한 상태 예외 처리
-	@ExceptionHandler(GradingNotPossibleException.class)
-	public ResponseEntity<ErrorResponse> handleGradingNotPossibleException(GradingNotPossibleException e) {
+	@ExceptionHandler(ExamGradingNotPossibleException.class)
+	public ResponseEntity<ErrorResponse> handleGradingNotPossibleException(ExamGradingNotPossibleException e) {
 		log.error("채점 불가능한 상태", e);
 		return ErrorResponse.toResponseEntity(ErrorCode.EXAM_NOT_SUBMITTED);
 	}

@@ -35,35 +35,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 	List<Course> findAllByInstructorId(@Param("instructorId") Long instructorId);
 
 	/**
-	 * 주어진 강의 ID와 강사 이메일로 해당 강의가 해당 강사의 강의인지 확인합니다.
+	 * 강사의 강의 접근 권한 확인
 	 */
-	@Query("""
-			SELECT EXISTS (
-			    SELECT 1
-			    FROM Course c
-			    WHERE c.id = :courseId
-			    AND c.instructor.email = :instructorEmail
-			)
-			""")
-	boolean existsByCourseIdAndInstructorEmail(
-			@Param("courseId") Long courseId,
-			@Param("instructorEmail") String instructorEmail);
+	@Query("SELECT EXISTS (SELECT 1 FROM Course c WHERE c.id = :courseId AND c.instructor.id = :instructorId)")
+	boolean existsByCourseIdAndInstructorId(@Param("courseId") Long courseId, @Param("instructorId") Long instructorId);
 
 	/**
-	 * 주어진 강의 ID와 학생 이메일로 해당 강의를 수강중인 학생인지 확인합니다.
+	 * 학생의 강의 접근 권한 확인
 	 */
-	@Query("""
-			SELECT EXISTS (
-			    SELECT 1
-			    FROM Course c
-			    JOIN CourseStudent cs ON c.id = cs.course.id
-			    WHERE c.id = :courseId
-			    AND cs.student.email = :studentEmail
-			)
-			""")
-	boolean existsByCourseIdAndStudentEmail(
-			@Param("courseId") Long courseId,
-			@Param("studentEmail") String studentEmail);
+	@Query("SELECT EXISTS (SELECT 1 FROM Course c JOIN c.courseStudents cs WHERE c.id = :courseId AND cs.student.id = :studentId)")
+	boolean existsByCourseIdAndStudentId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
 
 	@Query("SELECT c FROM Course c " +
 			"INNER JOIN FETCH c.instructor i " +
