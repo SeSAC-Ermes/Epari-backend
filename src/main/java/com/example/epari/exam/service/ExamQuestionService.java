@@ -13,9 +13,11 @@ import com.example.epari.exam.dto.request.UpdateQuestionRequestDto;
 import com.example.epari.exam.dto.response.ExamQuestionResponseDto;
 import com.example.epari.exam.repository.ExamQuestionRepository;
 import com.example.epari.global.common.enums.ExamQuestionType;
-import com.example.epari.global.exception.BusinessBaseException;
-import com.example.epari.global.exception.ErrorCode;
+import com.example.epari.global.common.enums.ExamStatus;
 import com.example.epari.global.validator.ExamQuestionValidator;
+import com.example.epari.global.validator.ExamStatusValidator;
+import com.example.epari.user.domain.Instructor;
+import com.example.epari.global.validator.CourseAccessValidator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,12 +31,18 @@ public class ExamQuestionService {
 
 	private final ExamQuestionValidator examQuestionValidator;
 
+	private final ExamStatusValidator examStatusValidator;
+
 	private final ExamQuestionRepository examQuestionRepository;
+
+	private final CourseAccessValidator courseAccessValidator;
 
 	// 문제 생성
 	public Long addQuestion(Long courseId, Long examId, CreateQuestionRequestDto dto, String instructorEmail) {
-		examQuestionValidator.validateInstructorAccess(courseId, instructorEmail);
+		Instructor instructor = courseAccessValidator.validateInstructorEmail(instructorEmail);
+		examQuestionValidator.validateInstructorAccess(courseId, instructor.getId());
 		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
+		examStatusValidator.validateExamStatus(examId, ExamStatus.SCHEDULED);
 
 		ExamQuestion question = dto.toEntity(exam);
 		exam.addQuestion(question);
@@ -44,9 +52,12 @@ public class ExamQuestionService {
 	// 문제 순서 변경
 	public void reorderQuestions(Long courseId, Long examId, Long questionId, int newNumber,
 			String instructorEmail) {
-		examQuestionValidator.validateInstructorAccess(courseId, instructorEmail);
+		Instructor instructor = courseAccessValidator.validateInstructorEmail(instructorEmail);
+		examQuestionValidator.validateInstructorAccess(courseId, instructor.getId());
 		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
 		ExamQuestion question = examQuestionValidator.validateQuestionAccess(examId, questionId);
+
+		examStatusValidator.validateExamStatus(examId, ExamStatus.SCHEDULED);
 
 		exam.reorderQuestions(questionId, newNumber);
 	}
@@ -54,14 +65,13 @@ public class ExamQuestionService {
 	// 문제 수정
 	public ExamQuestionResponseDto updateQuestion(Long courseId, Long examId, Long questionId,
 			UpdateQuestionRequestDto requestDto, String instructorEmail) {
-		examQuestionValidator.validateInstructorAccess(courseId, instructorEmail);
+		Instructor instructor = courseAccessValidator.validateInstructorEmail(instructorEmail);
+		examQuestionValidator.validateInstructorAccess(courseId, instructor.getId());
 		examQuestionValidator.validateExamAccess(courseId, examId);
 		ExamQuestion question = examQuestionValidator.validateQuestionAccess(examId, questionId);
 
-		// 문제 유형이 변경되었는지 확인
-		if (!question.getType().equals(requestDto.getType())) {
-			throw new BusinessBaseException(ErrorCode.EXAM_QUESTION_TYPE_CHANGE_NOT_ALLOWED);
-		}
+		// Validator로 이동
+		examQuestionValidator.validateQuestionTypeUnchanged(question, requestDto.getType());
 
 		// 문제 유형에 따른 수정 처리
 		if (requestDto.getType() == ExamQuestionType.MULTIPLE_CHOICE) {
@@ -111,11 +121,13 @@ public class ExamQuestionService {
 
 	// 문제 삭제
 	public void deleteQuestion(Long courseId, Long examId, Long questionId, String instructorEmail) {
-		examQuestionValidator.validateInstructorAccess(courseId, instructorEmail);
+		Instructor instructor = courseAccessValidator.validateInstructorEmail(instructorEmail);
+		examQuestionValidator.validateInstructorAccess(courseId, instructor.getId());
 		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
 		ExamQuestion question = examQuestionValidator.validateQuestionAccess(examId, questionId);
 
-		validateDeletable(question);
+		examStatusValidator.validateExamStatus(examId, ExamStatus.SCHEDULED);
+		examQuestionValidator.validateQuestionDeletable(questionId);
 
 		// 삭제할 문제의 번호 저장
 		int deletedQuestionNumber = question.getExamNumber();
@@ -130,11 +142,6 @@ public class ExamQuestionService {
 		exam.getQuestions().stream()
 				.filter(q -> q.getExamNumber() > deletedQuestionNumber)
 				.forEach(q -> q.updateExamNumber(q.getExamNumber() - 1));
-	}
-
-	// TODO: 답안 제출 여부 등 검증 로직 추가 예정
-	private void validateDeletable(ExamQuestion question) {
-		return;
 	}
 
 }

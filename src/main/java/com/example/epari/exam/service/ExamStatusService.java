@@ -2,11 +2,8 @@ package com.example.epari.exam.service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +17,10 @@ import com.example.epari.exam.repository.ExamResultRepository;
 import com.example.epari.global.common.enums.ExamStatus;
 import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
+import com.example.epari.global.validator.CourseAccessValidator;
 import com.example.epari.global.validator.ExamQuestionValidator;
+import com.example.epari.global.validator.ExamTimeValidator;
+import com.example.epari.user.domain.Student;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class ExamStatusService {
 
 	private final ExamResultRepository examResultRepository;
 
-	private final GradingService gradingService;
+	private final ExamGradingService gradingService;
 
 	private final ExamResultService examResultService;
 
@@ -45,16 +45,9 @@ public class ExamStatusService {
 
 	private final ExamQuestionValidator examQuestionValidator;
 
-	// 시험 상태 확인
-	// TODO: 시험 상태 웹소켓을 통한 실시간 변경 필요
-	public boolean matchesStatus(Exam exam, ExamStatus status, LocalDateTime now) {
-		return switch (status) {
-			case SCHEDULED -> exam.isBeforeExam();
-			case IN_PROGRESS -> exam.isDuringExam();
-			case SUBMITTED, GRADING, GRADED, COMPLETED -> exam.isAfterExam();
-			default -> false;
-		};
-	}
+	private final ExamTimeValidator examTimeValidator;
+
+	private final CourseAccessValidator courseAccessValidator;
 
 	// 시험 분류
 	// TODO: 시험 상태 웹소켓을 통한 실시간 변경 필요
@@ -75,8 +68,11 @@ public class ExamStatusService {
 	// 시험 상태 조회
 	@Transactional(readOnly = true)
 	public ExamSubmissionStatusDto getSubmissionStatus(Long courseId, Long examId, String email) {
+		// email -> id 변환
+		Student student = courseAccessValidator.validateStudentEmail(email);
+
 		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
-		ExamResult examResult = examResultRepository.findByExamIdAndStudentEmail(examId, email)
+		ExamResult examResult = examResultRepository.findByExamIdAndStudentId(examId, student.getId())
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
 
 		return ExamSubmissionStatusDto.builder()
@@ -108,41 +104,19 @@ public class ExamStatusService {
 	}
 
 	// 시험 시간 유효성 검사
-	public void validateExamTimeRemaining(Exam exam) {
-		if (!exam.isDuringExam()) {
-			throw new BusinessBaseException(ErrorCode.EXAM_TIME_EXPIRED);
-		}
-	}
+	public void validateExamTimeRemaining(Long examId, String email) {
+		// email -> id 변환
+		Student student = courseAccessValidator.validateStudentEmail(email);
 
-	// 만료된 시험 조회
-	private List<Exam> findExpiredExams() {
-        LocalDateTime now = LocalDateTime.now();
-        return examRepository.findByStatusIn(Arrays.asList(ExamStatus.SCHEDULED, ExamStatus.IN_PROGRESS))
-            .stream()
-            .filter(exam -> {
-                LocalDateTime endTime = exam.getExamDateTime().plusMinutes(exam.getDuration());
-                return now.isAfter(endTime);
-            })
-            .collect(Collectors.toList());
-    }
+		ExamResult examResult = examResultRepository.findByExamIdAndStudentId(examId, student.getId())
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
 
-	// 만료된 시험 확인 및 상태 업데이트
-	@Scheduled(fixedDelay = 60000) // 1분마다 실행
-	public void checkAndProcessExpiredExams() {
-		List<Exam> expiredExams = findExpiredExams();
-
-		for (Exam exam : expiredExams) {
-			try {
-				processExamEnd(exam);
-			} catch (Exception e) {
-				log.error("시험 종료 처리 실패. examId={}", exam.getId(), e);
-			}
-		}
+		examTimeValidator.validateExamTimeRemaining(examResult.getExam());
 	}
 
 	// 시험 종료 처리
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	protected void processExamEnd(Exam exam) {
+	public void processExamEnd(Exam exam) {
 		// 시험 상태를 먼저 IN_PROGRESS로 변경
 		if (exam.getStatus() == ExamStatus.SCHEDULED) {
 			exam.updateStatus(ExamStatus.IN_PROGRESS);
@@ -211,12 +185,18 @@ public class ExamStatusService {
 	}
 
 	// 학생 시험 상태에 따라 시험 결과 제출
-	public void finishExam(Long courseId, Long examId, String studentEmail, boolean force) {
-		ExamResult examResult = examResultService.getExamResultInProgress(examId, studentEmail);
+	public void finishExam(Long courseId, Long examId, String email, boolean force) {
+		Student student = courseAccessValidator.validateStudentEmail(email);
+
+		ExamResult examResult = examResultService.getExamResultInProgress(examId, student.getId());
 		if (!force) {
 			examSubmissionService.validateAllQuestionsAnswered(examResult);
 		}
 		examResult.submit(force);
-	}	
+	}
+
+	public void validateExamInProgress(Exam exam) {
+		examTimeValidator.validateExamTime(exam.getId());
+	}
 
 }

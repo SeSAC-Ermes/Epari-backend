@@ -24,6 +24,9 @@ import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
 import com.example.epari.global.exception.exam.ExamResultNotFoundException;
 import com.example.epari.global.validator.CourseAccessValidator;
+import com.example.epari.global.validator.ExamSubmissionValidator;
+import com.example.epari.user.domain.Instructor;
+import com.example.epari.user.domain.Student;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +49,8 @@ public class ExamResultService {
 	private final ScoreCalculator scoreCalculator;
 
 	private final CourseStudentRepository courseStudentRepository;
+
+	private final ExamSubmissionValidator examSubmissionValidator;
 
 	// 시험 결과 생성 응답
 	private ExamResultResponseDto createExamResultResponse(List<ExamResult> examResults) {
@@ -70,8 +75,8 @@ public class ExamResultService {
 
 	// 모든 시험 결과 조회
 	public List<ExamResultResponseDto> getCourseExamResults(Long courseId, String instructorEmail) {
-		// 강사 권한 검증
-		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
+		Instructor instructor = courseAccessValidator.validateInstructorEmail(instructorEmail);
+		courseAccessValidator.validateInstructorAccess(courseId, instructor.getId());
 
 		// 해당 강의의 모든 시험 결과를 조회
 		List<ExamResult> examResults = examResultRepository.findAllByCourseId(courseId);
@@ -92,7 +97,10 @@ public class ExamResultService {
 
 	// 모든 시험의 학생별 결과 조회
 	@Transactional(readOnly = true)
-	public List<ExamResultSummaryDto> getExamResults(Long courseId, Long examId) {
+	public List<ExamResultSummaryDto> getExamResults(Long courseId, Long examId, String instructorEmail) {
+		Instructor instructor = courseAccessValidator.validateInstructorEmail(instructorEmail);
+		courseAccessValidator.validateInstructorAccess(courseId, instructor.getId());
+
 		// 1. 해당 코스의 모든 수강생 목록 조회
 		List<CourseStudent> courseStudents = courseStudentRepository.findAllCourseStudentsByCourseId(courseId);
 
@@ -124,7 +132,15 @@ public class ExamResultService {
 	}
 
 	// 시험 결과 상세 조회
-	public ExamResultDetailDto getStudentExamResultById(Long resultId) {
+	public ExamResultDetailDto getStudentExamResultById(Long courseId, Long resultId, String userEmail, String role) {
+		if (role.contains("ROLE_INSTRUCTOR")) {
+			Instructor instructor = courseAccessValidator.validateInstructorEmail(userEmail);
+			courseAccessValidator.validateInstructorAccess(courseId, instructor.getId());
+		} else {
+			Student student = courseAccessValidator.validateStudentEmail(userEmail);
+			courseAccessValidator.validateStudentAccess(courseId, student.getId());
+		}
+
 		// 1. 시험 결과 조회
 		ExamResult examResult = examResultRepository.findById(resultId)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
@@ -133,18 +149,23 @@ public class ExamResultService {
 		Exam exam = examRepository.findById(examResult.getExam().getId())
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_FOUND));
 
-		// 3. 문제별 답안 조회 (ExamScore 사용)
+		// 3. 코스 접근 권한 검증
+		if (!exam.getCourse().getId().equals(courseId)) {
+			throw new BusinessBaseException(ErrorCode.UNAUTHORIZED_EXAM_ACCESS);
+		}
+
+		// 4. 문제별 답안 조회 (ExamScore 사용)
 		List<QuestionResultDto> questionResults = examResult.getScores().stream().map(score -> {
 			ExamQuestion question = score.getQuestion();
 			return QuestionResultDto.builder()
 					.questionId(question.getId())
 					.questionTitle(question.getQuestionText())
 					.questionText(question.getQuestionText())
-					.type(question.getType())  // ExamQuestionType enum 사용
-					.score(question.getScore()) // 배점
-					.earnedScore(score.getEarnedScore()) // 획득 점수
-					.correctAnswer(question.getCorrectAnswer()) // 정답
-					.studentAnswer(score.getStudentAnswer()) // 학생 답안
+					.type(question.getType())
+					.score(question.getScore())
+					.earnedScore(score.getEarnedScore())
+					.correctAnswer(question.getCorrectAnswer())
+					.studentAnswer(score.getStudentAnswer())
 					.build();
 		}).collect(Collectors.toList());
 
@@ -160,10 +181,10 @@ public class ExamResultService {
 	}
 
 	// 진행중인 시험 결과 조회
-	ExamResult getExamResultInProgress(Long examId, String studentEmail) {
-		return examResultRepository.findByExamIdAndStudentEmail(examId, studentEmail)
-				.filter(result -> result.getStatus() == ExamStatus.IN_PROGRESS)
-				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_IN_PROGRESS));
+	ExamResult getExamResultInProgress(Long examId, Long studentId) {
+		examSubmissionValidator.validateSubmittable(examId, studentId);
+		return examResultRepository.findByExamIdAndStudentId(examId, studentId)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
 	}
 
 }

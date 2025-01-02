@@ -1,11 +1,7 @@
 package com.example.epari.exam.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,9 +10,10 @@ import com.example.epari.exam.domain.ExamResult;
 import com.example.epari.exam.domain.ExamScore;
 import com.example.epari.exam.dto.common.AnswerSubmissionDto;
 import com.example.epari.exam.repository.ExamQuestionRepository;
-import com.example.epari.exam.repository.ExamResultRepository;
 import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
+import com.example.epari.global.validator.ExamSubmissionValidator;
+import com.example.epari.global.validator.ExamTimeValidator;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,33 +27,28 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class ExamSubmissionService {
 
-	private final ExamResultRepository examResultRepository;
-
 	private final ExamQuestionRepository examQuestionRepository;
 
 	private final ExamResultService examResultService;
 
-	private final ExamStatusService examStatusService;
+	private final ExamTimeValidator examTimeValidator;
+
+	private final ExamSubmissionValidator examSubmissionValidator;
 
 	// 모든 문제 답안 제출 여부 검사
 	public void validateAllQuestionsAnswered(ExamResult examResult) {
-		int totalQuestions = examResult.getExam().getQuestions().size();
-		int answeredQuestions = examResult.getScores().size();
-
-		if (answeredQuestions < totalQuestions) {
-			throw new BusinessBaseException(ErrorCode.EXAM_NOT_ALL_QUESTIONS_ANSWERED);
-		}
+		examSubmissionValidator.validateAllQuestionsAnswered(examResult);
 	}
-	
+
 	// 답안 임시 저장
 	public void saveAnswerTemporarily(Long courseId, Long examId, Long questionId, AnswerSubmissionDto answerDto,
-			String studentEmail) {
-		ExamResult examResult = examResultService.getExamResultInProgress(examId, studentEmail);
-		examStatusService.validateExamTimeRemaining(examResult.getExam());
+			Long studentId) {
+		ExamResult examResult = examResultService.getExamResultInProgress(examId, studentId);
+		examTimeValidator.validateExamTimeRemaining(examResult.getExam());
 
 		// examId로 함께 검증
 		ExamQuestion question = examQuestionRepository.findByExamIdAndId(examId, questionId)
-				.orElseThrow(() -> new BusinessBaseException(ErrorCode.QUESTION_NOT_FOUND));
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_QUESTION_NOT_FOUND));
 
 		// question이 해당 시험의 문제가 맞는지 한번 더 검증
 		if (!question.getExam().getId().equals(examResult.getExam().getId())) {
@@ -86,15 +78,16 @@ public class ExamSubmissionService {
 
 	// 답안 제출
 	public void submitAnswer(Long courseId, Long examId, Long questionId, AnswerSubmissionDto answerDto,
-			String studentEmail) {
-		ExamResult examResult = examResultService.getExamResultInProgress(examId, studentEmail);
-		examStatusService.validateExamTimeRemaining(examResult.getExam());
+			Long studentId) {
+		ExamResult examResult = examResultService.getExamResultInProgress(examId, studentId);
+		examTimeValidator.validateExamTimeRemaining(examResult.getExam());
 
 		// examId로 함께 검증
-		ExamQuestion question = examQuestionRepository.findByExamIdAndId(examId, questionId).orElseThrow(() -> {
-			log.error("문제를 찾을 수 없음 - examId:{}, questionId:{}", examId, questionId);
-			return new BusinessBaseException(ErrorCode.QUESTION_NOT_FOUND);
-		});
+		ExamQuestion question = examQuestionRepository.findByExamIdAndId(examId, questionId)
+				.orElseThrow(() -> {
+					log.error("문제를 찾을 수 없음 - examId:{}, questionId:{}", examId, questionId);
+					return new BusinessBaseException(ErrorCode.EXAM_QUESTION_NOT_FOUND);
+				});
 
 		// question이 해당 시험의 문제가 맞는지 한번 더 검증
 		if (!question.getExam().getId().equals(examResult.getExam().getId())) {
@@ -125,25 +118,6 @@ public class ExamSubmissionService {
 		}
 
 		log.info("답안 제출 완료 - examId:{}, questionId:{}", examId, questionId);
-	}
-
-	// 자동 제출
-	@Value("${exam.max-duration-minutes:180}")  // application.properties에서 설정값을 가져옴
-	private Integer maxExamDurationMinutes;
-
-	// 만료된 시험 자동 제출
-	@Scheduled(fixedRate = 60000) // 1분마다 실행
-	@Transactional
-	public void autoSubmitExpiredExams() {
-		LocalDateTime baseTime = LocalDateTime.now().minusMinutes(maxExamDurationMinutes);
-		List<ExamResult> expiredExams = examResultRepository.findExpiredExams(baseTime);
-
-		expiredExams.stream().filter(result -> result.getExam().isAfterExam()).forEach(result -> {
-			result.submit(true);
-			log.info("Auto submitted exam: examId={}, studentId={}, submittedAt={}, remainingQuestions={}",
-					result.getExam().getId(), result.getStudent().getId(), result.getSubmitTime(),
-					result.getExam().getQuestions().size() - result.getSubmittedQuestionCount());
-		});
 	}
 
 }

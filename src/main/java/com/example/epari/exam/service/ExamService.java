@@ -2,17 +2,14 @@ package com.example.epari.exam.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.epari.course.domain.Course;
 import com.example.epari.course.repository.CourseRepository;
-import com.example.epari.course.repository.CourseStudentRepository;
 import com.example.epari.exam.domain.Exam;
 import com.example.epari.exam.domain.ExamResult;
 import com.example.epari.exam.dto.common.ExamStatistics;
@@ -28,14 +25,16 @@ import com.example.epari.global.common.enums.ExamStatus;
 import com.example.epari.global.exception.BusinessBaseException;
 import com.example.epari.global.exception.ErrorCode;
 import com.example.epari.global.validator.CourseAccessValidator;
-import com.example.epari.global.validator.ExamQuestionValidator;
+import com.example.epari.global.validator.ExamBaseValidator;
+import com.example.epari.global.validator.ExamStatusValidator;
+import com.example.epari.global.validator.ExamTimeValidator;
+import com.example.epari.user.domain.Instructor;
 import com.example.epari.user.domain.Student;
-import com.example.epari.user.repository.StudentRepository;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * 시험 관련 비즈니스 로직을 처리하는 Service 클래스
+ * 시험 관련 비즈니스 로직을 처리하는 서비스 클래스
  */
 @Service
 @RequiredArgsConstructor
@@ -50,21 +49,23 @@ public class ExamService {
 
 	private final CourseAccessValidator courseAccessValidator;
 
-	private final CourseStudentRepository courseStudentRepository;
+	private final ExamBaseValidator examBaseValidator;
 
-	private final ExamQuestionValidator examQuestionValidator;
+	private final ExamStatusValidator examStatusValidator;
 
-	private final ScoreCalculator scoreCalculator; 
-
-	private final StudentRepository studentRepository;
+	private final ScoreCalculator scoreCalculator;
 
 	private final ExamStatusService examStatusService;
+
+	private final ExamTimeValidator examTimeValidator;
 
 	// 시험 생성
 	@Transactional
 	public Long createExam(Long courseId, ExamRequestDto requestDto, String instructorEmail) {
-		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
+		Instructor instructor = courseAccessValidator.validateInstructorEmail(instructorEmail);
+		courseAccessValidator.validateInstructorAccess(courseId, instructor.getId());
 
+		examBaseValidator.validateExamDateTime(requestDto.getExamDateTime());
 		Course course = courseRepository.findById(courseId)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
 
@@ -86,44 +87,41 @@ public class ExamService {
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.COURSE_NOT_FOUND));
 
 		List<Exam> exams;
-
-		// 권한에 따른 시험 목록 조회
 		if (role.contains("INSTRUCTOR")) {
-			exams = examRepository.findByInstructorEmail(email);
+			Instructor instructor = courseAccessValidator.validateInstructorEmail(email);
+			exams = examRepository.findByInstructorId(instructor.getId());
 		} else {
-			exams = examRepository.findByStudentEmail(email);
+			Student student = courseAccessValidator.validateStudentEmail(email);
+			exams = examRepository.findByStudentId(student.getId());
 		}
 
 		// 현재 시점 기준으로 시험 분류
 		LocalDateTime now = LocalDateTime.now();
-
 		List<ExamSummaryDto> scheduledExams = new ArrayList<>();
 		List<ExamSummaryDto> inProgressExams = new ArrayList<>();
 		List<ExamSummaryDto> completedExams = new ArrayList<>();
 
 		for (Exam exam : exams) {
-			if (status != null && !examStatusService.matchesStatus(exam, status, now)) {
-				continue;  // status 필터링
+			if (status != null && !examStatusValidator.matchesStatus(exam, status, now)) {
+				continue;
 			}
 
 			if (role.contains("INSTRUCTOR")) {
 				List<ExamResult> results = examResultRepository.findByExamId(exam.getId());
 				ExamStatistics statistics = scoreCalculator.calculateExamStatistics(results, exam.getCourse().getId());
 				ExamSummaryDto summaryDto = ExamSummaryDto.forInstructor(exam, statistics);
-				examStatusService.categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams, completedExams);
+				examStatusService.categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams,
+						completedExams);
 			} else {
-				// 학생의 경우 ExamResult가 없으면 새로운 시험으로 처리
-				Optional<ExamResult> resultOptional = examResultRepository.findByExamIdAndStudentEmail(exam.getId(),
-						email);
-				ExamSummaryDto summaryDto;
+				Student student = courseAccessValidator.validateStudentEmail(email);
+				Optional<ExamResult> resultOptional = examResultRepository.findByExamIdAndStudentId(exam.getId(),
+						student.getId());
+				ExamSummaryDto summaryDto = resultOptional.isPresent()
+						? ExamSummaryDto.forStudent(exam, resultOptional.get())
+						: ExamSummaryDto.forNewExam(exam);
 
-				if (resultOptional.isPresent()) {
-					summaryDto = ExamSummaryDto.forStudent(exam, resultOptional.get());
-				} else {
-					summaryDto = ExamSummaryDto.forNewExam(exam);
-				}
-
-				examStatusService.categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams, completedExams);
+				examStatusService.categorizeExam(exam, summaryDto, now, scheduledExams, inProgressExams,
+						completedExams);
 			}
 		}
 
@@ -136,20 +134,19 @@ public class ExamService {
 
 	// 시험 응시
 	public ExamSubmissionStatusDto startExam(Long courseId, Long examId, String studentEmail) {
-		Student student = studentRepository.findByEmail(studentEmail)
-				.orElseThrow(() -> new BusinessBaseException(ErrorCode.STUDENT_NOT_FOUND));
+		Student student = courseAccessValidator.validateStudentEmail(studentEmail);
+		courseAccessValidator.validateStudentAccess(courseId, student.getId());
+		examBaseValidator.validateExamAccess(examId, student.getId());
+		examTimeValidator.validateExamPeriod(examId);
+		examStatusValidator.validateExamStatus(examId, ExamStatus.SCHEDULED);
 
-		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
+		Exam exam = examRepository.findById(examId)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_FOUND));
 
-		// 수강생 확인
-		if (!courseStudentRepository.existsByCourseIdAndStudentId(courseId, student.getId())) {
-			throw new BusinessBaseException(ErrorCode.UNAUTHORIZED_COURSE_ACCESS);
-		}
-
-		examQuestionValidator.validateExamTime(exam);
-		examQuestionValidator.validateNotAlreadyStarted(examId, studentEmail);
-
-		ExamResult examResult = ExamResult.builder().exam(exam).student(student).build();
+		ExamResult examResult = ExamResult.builder()
+				.exam(exam)
+				.student(student)
+				.build();
 
 		examResultRepository.save(examResult);
 		return ExamStatusService.createExamSubmissionStatusDto(exam, examResult);
@@ -158,29 +155,28 @@ public class ExamService {
 	// 시험 조회
 	@Transactional(readOnly = true)
 	public ExamResponseDto getExam(Long courseId, Long examId, String email, String role) {
-		// 접근 권한 검증
 		if (role.contains("ROLE_INSTRUCTOR")) {
-			courseAccessValidator.validateInstructorAccess(courseId, email);
+			Instructor instructor = courseAccessValidator.validateInstructorEmail(email);
+			courseAccessValidator.validateInstructorAccess(courseId, instructor.getId());
 		} else {
-			courseAccessValidator.validateStudentAccess(courseId, email);
+			Student student = courseAccessValidator.validateStudentEmail(email);
+			courseAccessValidator.validateStudentAccess(courseId, student.getId());
+			examBaseValidator.validateExamAccess(examId, student.getId());
 		}
 
 		// 시험 조회 (with fetch join questions)
 		Exam exam = examRepository.findByIdWithQuestionsAndCourse(examId)
 				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_FOUND));
 
-		// courseId 검증
-		if (!exam.getCourse().getId().equals(courseId)) {
-			throw new BusinessBaseException(ErrorCode.UNAUTHORIZED_EXAM_ACCESS);
-		}
+		examBaseValidator.validateExamCourse(courseId, examId);
 
 		// 권한별 응답 생성
 		if (role.contains("ROLE_INSTRUCTOR")) {
 			return ExamResponseDto.fromExamForInstructor(exam);
 		} else {
-			ExamResult result = examResultRepository
-					.findByExamIdAndStudentEmail(examId, email)
-					.orElse(null);
+			Student student = courseAccessValidator.validateStudentEmail(email);
+			ExamResult result = examResultRepository.findByExamIdAndStudentId(examId, student.getId())
+					.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_NOT_STARTED));
 			return ExamResponseDto.fromExamForStudent(exam, result);
 		}
 	}
@@ -188,9 +184,12 @@ public class ExamService {
 	// 시험 수정
 	@Transactional
 	public ExamResponseDto updateExam(Long courseId, Long examId, ExamRequestDto requestDto, String instructorEmail) {
-		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
+		Instructor instructor = courseAccessValidator.validateInstructorEmail(instructorEmail);
+		courseAccessValidator.validateInstructorAccess(courseId, instructor.getId());
+		Exam exam = examBaseValidator.validateExamExists(examId);
+		examBaseValidator.validateExamCourse(courseId, examId);
+		examBaseValidator.validateExamDateTime(requestDto.getExamDateTime());
 
-		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
 		exam.updateExam(
 				requestDto.getTitle(),
 				requestDto.getExamDateTime(),
@@ -205,9 +204,11 @@ public class ExamService {
 	// 시험 삭제
 	@Transactional
 	public void deleteExam(Long courseId, Long examId, String instructorEmail) {
-		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
+		Instructor instructor = courseAccessValidator.validateInstructorEmail(instructorEmail);
+		courseAccessValidator.validateInstructorAccess(courseId, instructor.getId());
+		Exam exam = examBaseValidator.validateExamExists(examId);
+		examBaseValidator.validateExamCourse(courseId, examId);
 
-		Exam exam = examQuestionValidator.validateExamAccess(courseId, examId);
 		examRepository.delete(exam);
 	}
 

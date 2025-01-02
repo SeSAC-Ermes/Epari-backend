@@ -10,31 +10,34 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.epari.course.domain.CourseStudent;
 import com.example.epari.course.repository.CourseStudentRepository;
 import com.example.epari.exam.domain.Exam;
-import com.example.epari.exam.domain.ExamQuestion;
 import com.example.epari.exam.domain.ExamResult;
 import com.example.epari.exam.domain.ExamScore;
 import com.example.epari.exam.repository.ExamResultRepository;
-import com.example.epari.exam.util.ScoreCalculator;
 import com.example.epari.global.common.enums.ExamStatus;
-import com.example.epari.global.exception.BusinessBaseException;
-import com.example.epari.global.exception.ErrorCode;
+import com.example.epari.global.validator.ExamGradingValidator;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/*
+ * 시험 채점 서비스를 담당하는 클래스
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
-public class GradingService {
+public class ExamGradingService {
 
 	private final ExamResultRepository examResultRepository;
 
 	private final CourseStudentRepository courseStudentRepository;
 
+	private final ExamGradingValidator examGradingValidator;
+
 	// 시험 결과 채점 및 미제출자 처리
 	public void processGrading(ExamResult examResult) {
+		examGradingValidator.validateExamResultForGrading(examResult.getId());
 		Exam exam = examResult.getExam();
 
 		// 1. 미제출자 처리
@@ -62,11 +65,7 @@ public class GradingService {
 		// 2. 기존 채점 로직
 		if (examResult.getStatus() == ExamStatus.SUBMITTED) {
 			for (ExamScore score : examResult.getScores()) {
-				ExamQuestion question = score.getQuestion();
-				String studentAnswer = score.getStudentAnswer();
-
-				boolean isCorrect = question.validateAnswer(studentAnswer);
-				int earnedScore = isCorrect ? question.getScore() : 0;
+				int earnedScore = gradeAnswer(score);
 				score.updateScore(earnedScore);
 			}
 
@@ -78,19 +77,15 @@ public class GradingService {
 	// 시험 결과의 총점 정합성 검증
 	@Transactional(readOnly = true)
 	public boolean verifyTotalScore(ExamResult examResult) {
-		int calculatedTotal = examResult.getScores().stream().mapToInt(ExamScore::getEarnedScore).sum();
-
+		int calculatedTotal = examResult.getScores().stream()
+				.mapToInt(ExamScore::getEarnedScore)
+				.sum();
 		return calculatedTotal == examResult.getEarnedScore();
 	}
 
 	// 개별 시험 결과 채점
 	public void gradeExamResult(Long examResultId) {
-		ExamResult examResult = examResultRepository.findById(examResultId)
-				.orElseThrow(() -> new BusinessBaseException(ErrorCode.EXAM_RESULT_NOT_FOUND));
-
-		if (examResult.getStatus() != ExamStatus.SUBMITTED) {
-			throw new BusinessBaseException(ErrorCode.EXAM_NOT_SUBMITTED);
-		}
+		ExamResult examResult = examGradingValidator.validateExamResultForGrading(examResultId);
 
 		// 각 문제별 채점
 		for (ExamScore score : examResult.getScores()) {
@@ -101,7 +96,6 @@ public class GradingService {
 		// 채점 결과 반영
 		examResult.updateScore();
 		examResultRepository.save(examResult);
-
 		log.info("Exam graded - resultId: {}, totalScore: {}", examResult.getId(), examResult.getEarnedScore());
 	}
 
