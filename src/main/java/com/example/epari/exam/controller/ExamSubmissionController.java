@@ -16,10 +16,8 @@ import com.example.epari.exam.service.ExamService;
 import com.example.epari.exam.service.ExamStatusService;
 import com.example.epari.exam.service.ExamSubmissionService;
 import com.example.epari.global.annotation.CurrentUserEmail;
-import com.example.epari.global.exception.BusinessBaseException;
-import com.example.epari.global.exception.ErrorCode;
+import com.example.epari.global.validator.CourseAccessValidator;
 import com.example.epari.user.domain.Student;
-import com.example.epari.user.repository.StudentRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,7 +35,7 @@ public class ExamSubmissionController {
 
 	private final ExamSubmissionService examSubmissionService;
 
-	private final StudentRepository studentRepository;
+	private final CourseAccessValidator courseAccessValidator;
 
 	// 시험 응시
 	@PostMapping("/start")
@@ -60,8 +58,7 @@ public class ExamSubmissionController {
 			@RequestBody AnswerSubmissionDto answerDto,
 			@CurrentUserEmail String studentEmail) {
 
-		Student student = studentRepository.findByEmail(studentEmail)
-				.orElseThrow(() -> new BusinessBaseException(ErrorCode.STUDENT_NOT_FOUND));
+		Student student = courseAccessValidator.validateStudentEmail(studentEmail);
 
 		examSubmissionService.saveAnswerTemporarily(
 				courseId, examId, questionId, answerDto, student.getId());
@@ -78,8 +75,7 @@ public class ExamSubmissionController {
 			@RequestBody AnswerSubmissionDto answerDto,
 			@CurrentUserEmail String studentEmail) {
 
-		Student student = studentRepository.findByEmail(studentEmail)
-				.orElseThrow(() -> new BusinessBaseException(ErrorCode.STUDENT_NOT_FOUND));
+		Student student = courseAccessValidator.validateStudentEmail(studentEmail);
 
 		examSubmissionService.submitAnswer(
 				courseId, examId, questionId, answerDto, student.getId());

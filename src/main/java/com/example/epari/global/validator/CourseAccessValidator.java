@@ -31,16 +31,14 @@ public class CourseAccessValidator {
 
 	// 강사의 강의 접근권한 검증
 	public void validateInstructorAccess(Long courseId, Long instructorId) {
-		List<Course> instructorCourses = courseRepository.findAllByInstructorId(instructorId);
-		if (instructorCourses.stream().noneMatch(course -> course.getId().equals(courseId))) {
+		if (!courseRepository.existsByCourseIdAndInstructorId(courseId, instructorId)) {
 			throw new CourseAccessDeniedException();
 		}
 	}
 
 	// 학생의 강의 접근권한 검증
 	public void validateStudentAccess(Long courseId, Long studentId) {
-		List<Course> studentCourses = courseRepository.findAllByStudentId(studentId);
-		if (studentCourses.stream().noneMatch(course -> course.getId().equals(courseId))) {
+		if (!courseRepository.existsByCourseIdAndStudentId(courseId, studentId)) {
 			throw new CourseAccessDeniedException();
 		}
 	}
