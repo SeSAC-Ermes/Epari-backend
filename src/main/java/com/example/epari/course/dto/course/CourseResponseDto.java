@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import com.example.epari.course.domain.Course;
 import com.example.epari.user.domain.Instructor;
+import com.example.epari.user.domain.ProfileImage;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -33,18 +34,24 @@ public class CourseResponseDto {
 	@Getter
 	@Builder
 	public static class InstructorInfo {
+
 		private Long id;
+
 		private String name;
+
 		private String email;
-		private String phoneNumber;
+
+		private ProfileImage profileImage;
 
 		public static InstructorInfo from(Instructor instructor) {
 			return InstructorInfo.builder()
 					.id(instructor.getId())
 					.name(instructor.getName())
 					.email(instructor.getEmail())
+					.profileImage(instructor.getProfileImage())
 					.build();
 		}
+
 	}
 
 	public static CourseResponseDto from(Course course) {
