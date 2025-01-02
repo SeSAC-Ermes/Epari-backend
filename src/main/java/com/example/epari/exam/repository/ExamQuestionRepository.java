@@ -24,4 +24,8 @@ public interface ExamQuestionRepository extends JpaRepository<ExamQuestion, Long
 			@Param("questionId") Long questionId
 	);
 
+	// 시험 문제에 대한 응시 제출 여부 확인
+	@Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM ExamScore s WHERE s.question.id = :questionId")
+	boolean hasSubmissions(@Param("questionId") Long questionId);
+
 }
