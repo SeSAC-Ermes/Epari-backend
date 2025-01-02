@@ -37,13 +37,12 @@ public class AttendanceStatisticsService {
 
 	private final AttendanceCalculationService attendanceCalculationService;
 
-	public List<AttendanceStatResponseDto> getStudentAttendanceStats(Long courseId, String instructorEmail) {
+	public List<AttendanceStatResponseDto> getStudentAttendanceStats(Long courseId, Long instructorId) {
 		// 강사 권한 검증
-		courseAccessValidator.validateInstructorAccess(courseId, instructorEmail);
+		courseAccessValidator.validateInstructorAccess(courseId, instructorId);
 
 		// 강의 정보 조회
-		Course course = courseRepository.findById(courseId)
-				.orElseThrow(CourseNotFoundException::new);
+		Course course = courseRepository.findById(courseId).orElseThrow(CourseNotFoundException::new);
 
 		// 날짜 유효성 검사
 		validateCourseDate(course);
@@ -59,8 +58,8 @@ public class AttendanceStatisticsService {
 	private void validateCourseDate(Course course) {
 		LocalDate today = LocalDate.now();
 		if (course.getStartDate().isAfter(today)) {
-			log.warn("Future course access attempt - courseId: {}, startDate: {}",
-					course.getId(), course.getStartDate());
+			log.warn("Future course access attempt - courseId: {}, startDate: {}", course.getId(),
+					course.getStartDate());
 			throw new AttendanceFutureCourseException();
 		}
 	}
@@ -71,27 +70,22 @@ public class AttendanceStatisticsService {
 		return today.isAfter(endDate) ? endDate : today;
 	}
 
-	private List<AttendanceStatResponseDto> createAttendanceStatistics(
-			Long courseId, LocalDate startDate, LocalDate endDate) {
+	private List<AttendanceStatResponseDto> createAttendanceStatistics(Long courseId, LocalDate startDate,
+			LocalDate endDate) {
 
 		// 출석 데이터 조회
-		List<Attendance> allAttendances = attendanceRepository.findAllByCourseIdAndDateBetween(
-				courseId, startDate, endDate);
+		List<Attendance> allAttendances = attendanceRepository.findAllByCourseIdAndDateBetween(courseId, startDate,
+				endDate);
 
 		if (allAttendances == null || allAttendances.isEmpty()) {
-			log.warn("No attendance data found - courseId: {}, period: {} ~ {}",
-					courseId, startDate, endDate);
+			log.warn("No attendance data found - courseId: {}, period: {} ~ {}", courseId, startDate, endDate);
 			throw new AttendanceNotFoundException();
 		}
 
 		// 학생별 출석 데이터 그룹화 및 통계 생성
 		return allAttendances.stream()
-				.collect(Collectors.groupingBy(
-						attendance -> attendance.getCourseStudent().getStudent(),
-						Collectors.collectingAndThen(
-								Collectors.toList(),
-								this::createStudentStatistics
-						)))
+				.collect(Collectors.groupingBy(attendance -> attendance.getCourseStudent().getStudent(),
+						Collectors.collectingAndThen(Collectors.toList(), this::createStudentStatistics)))
 				.values()
 				.stream()
 				.sorted(Comparator.comparing(dto -> dto.getStudent().getName()))
@@ -108,14 +102,9 @@ public class AttendanceStatisticsService {
 		int absentCount = (int)countByStatus(attendances, AttendanceStatus.ABSENT);
 		int totalDays = attendances.size();
 
-		// 출석률 계산을 전용 서비스에 위임
-		double attendanceRate = attendanceCalculationService.calculateAttendanceRate(
-				presentCount,
-				lateCount,
-				sickLeaveCount,
-				absentCount,
-				totalDays
-		);
+		// 출석률 계산 전용 서비스에 위임
+		double attendanceRate = attendanceCalculationService.calculateAttendanceRate(presentCount, lateCount,
+				sickLeaveCount, absentCount, totalDays);
 
 		// 저장된 변수를 사용하여 AttendanceCounts 생성
 		AttendanceStatResponseDto.AttendanceCounts counts = AttendanceStatResponseDto.AttendanceCounts.builder()
@@ -134,9 +123,7 @@ public class AttendanceStatisticsService {
 	}
 
 	private long countByStatus(List<Attendance> attendances, AttendanceStatus status) {
-		return attendances.stream()
-				.filter(attendance -> attendance.getStatus() == status)
-				.count();
+		return attendances.stream().filter(attendance -> attendance.getStatus() == status).count();
 	}
 
 }

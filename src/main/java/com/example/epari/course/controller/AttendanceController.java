@@ -17,6 +17,10 @@ import com.example.epari.course.dto.attendance.AttendanceResponseDto;
 import com.example.epari.course.dto.attendance.AttendanceUpdateDto;
 import com.example.epari.course.service.AttendanceService;
 import com.example.epari.global.annotation.CurrentUserEmail;
+import com.example.epari.global.exception.BusinessBaseException;
+import com.example.epari.global.exception.ErrorCode;
+import com.example.epari.user.domain.Instructor;
+import com.example.epari.user.repository.InstructorRepository;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,20 +36,19 @@ public class AttendanceController {
 
 	private final AttendanceService attendanceService;
 
+	private final InstructorRepository instructorRepository;
+
 	/**
 	 * 특정 강의의 특정 날짜 출석 현황을 조회
 	 */
 	@GetMapping
-	public ResponseEntity<List<AttendanceResponseDto>> getAttendances(
-			@PathVariable Long courseId,
+	public ResponseEntity<List<AttendanceResponseDto>> getAttendances(@PathVariable Long courseId,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-			@CurrentUserEmail String email
-	) {
-		List<AttendanceResponseDto> responses = attendanceService.getAttendances(
-				courseId,
-				email,
-				date
-		);
+			@CurrentUserEmail String email) {
+		Instructor instructor = instructorRepository.findByEmail(email)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.INSTRUCTOR_NOT_FOUND));
+
+		List<AttendanceResponseDto> responses = attendanceService.getAttendances(courseId, instructor.getId(), date);
 
 		return ResponseEntity.ok(responses);
 	}
@@ -54,13 +57,13 @@ public class AttendanceController {
 	 * 특정 날짜의 학생들 출석 상태를 일괄 수정
 	 */
 	@PatchMapping
-	public ResponseEntity<Void> updateAttendances(
-			@PathVariable Long courseId,
+	public ResponseEntity<Void> updateAttendances(@PathVariable Long courseId,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-			@RequestBody @Valid List<AttendanceUpdateDto> request,
-			@CurrentUserEmail String email
-	) {
-		attendanceService.updateAttendances(courseId, email, date, request);
+			@RequestBody @Valid List<AttendanceUpdateDto> request, @CurrentUserEmail String email) {
+		Instructor instructor = instructorRepository.findByEmail(email)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.INSTRUCTOR_NOT_FOUND));
+
+		attendanceService.updateAttendances(courseId, instructor.getId(), date, request);
 
 		return ResponseEntity.ok().build();
 	}
