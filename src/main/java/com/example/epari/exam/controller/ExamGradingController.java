@@ -32,11 +32,12 @@ import lombok.extern.slf4j.Slf4j;
 public class ExamGradingController {
 
 	private final ExamGradingService gradingService;
-    private final ScoreCalculator scoreCalculator; 
+
+	private final ScoreCalculator scoreCalculator;
 
 	// 시험 결과 채점 요청
 	@PostMapping("/results/{resultId}")
-	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.isInstructor(#courseId, #instructorEmail)")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<Void> gradeExam(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -50,7 +51,7 @@ public class ExamGradingController {
 
 	// 평균 점수 조회
 	@GetMapping("/average")
-	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.isInstructor(#courseId, #instructorEmail)")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<Double> getAverageScore(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -63,14 +64,14 @@ public class ExamGradingController {
 
 	// 최고/최저 점수 통계 조회
 	@GetMapping("/statistics")
-	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.isInstructor(#courseId, #instructorEmail)")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<ScoreStatistics> getScoreStatistics(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
 			@CurrentUserEmail String instructorEmail) {
 
 		log.info("Retrieving score statistics - courseId: {}, examId: {}", courseId, examId);
-		ScoreStatistics statistics = scoreCalculator.calculateExamStatistics(examId); 
+		ScoreStatistics statistics = scoreCalculator.calculateExamStatistics(examId);
 		return ResponseEntity.ok(statistics);
 	}
 

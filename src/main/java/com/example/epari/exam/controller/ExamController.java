@@ -70,7 +70,7 @@ public class ExamController {
 
 	// 시험 생성
 	@PostMapping
-	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.isInstructor(#courseId, #instructorEmail)")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<Long> createExam(
 			@PathVariable Long courseId,
 			@RequestBody ExamRequestDto examRequestDto,
@@ -81,7 +81,7 @@ public class ExamController {
 
 	// 시험 수정
 	@PutMapping("/{examId}")
-	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.isInstructor(#courseId, #instructorEmail)")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<ExamResponseDto> updateExam(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -93,7 +93,7 @@ public class ExamController {
 
 	// 시험 삭제
 	@DeleteMapping("/{examId}")
-	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.isInstructor(#courseId, #instructorEmail)")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #instructorEmail)")
 	public ResponseEntity<Void> deleteExam(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,

@@ -31,7 +31,7 @@ public class ExamResultController {
 
 	// 강의 전체 성적 조회 (강사)
 	@GetMapping("/scores")
-	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.isInstructor(#courseId, #email)")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #email)")
 	public ResponseEntity<List<ExamResultResponseDto>> getCourseExamResults(
 			@PathVariable Long courseId,
 			@CurrentUserEmail String email) {
@@ -42,7 +42,7 @@ public class ExamResultController {
 
 	// 시험별 결과 목록 조회 (강사)
 	@GetMapping("/{examId}/results")
-	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.isInstructor(#courseId, #email)")
+	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #email)")
 	public ResponseEntity<List<ExamResultSummaryDto>> getExamResults(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -64,9 +64,10 @@ public class ExamResultController {
 				.findFirst()
 				.map(GrantedAuthority::getAuthority)
 				.orElseThrow(() -> new IllegalStateException("권한 정보를 찾을 수 없습니다."));
-				
+
 		ExamResultDetailDto result = examResultService.getStudentExamResultById(
 				courseId, resultId, email, role);
 		return ResponseEntity.ok(result);
 	}
+
 }

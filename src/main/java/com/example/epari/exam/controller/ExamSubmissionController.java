@@ -41,7 +41,7 @@ public class ExamSubmissionController {
 
 	// 시험 응시
 	@PostMapping("/start")
-	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.isStudent(#courseId, #studentEmail)")
+	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.checkStudentAccess(#courseId, #studentEmail)")
 	public ResponseEntity<ExamSubmissionStatusDto> startExam(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -52,7 +52,7 @@ public class ExamSubmissionController {
 
 	// 답안 임시 저장
 	@PostMapping("/temp")
-	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.isStudent(#courseId, #studentEmail)")
+	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.checkStudentAccess(#courseId, #studentEmail)")
 	public ResponseEntity<Void> saveAnswerTemporarily(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -70,7 +70,7 @@ public class ExamSubmissionController {
 
 	// 답안 제출
 	@PostMapping
-	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.isStudent(#courseId, #studentEmail)")
+	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.checkStudentAccess(#courseId, #studentEmail)")
 	public ResponseEntity<Void> submitAnswer(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -88,7 +88,7 @@ public class ExamSubmissionController {
 
 	// 시험 최종 제출
 	@PostMapping("/finish")
-	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.isStudent(#courseId, #studentEmail)")
+	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.checkStudentAccess(#courseId, #studentEmail)")
 	public ResponseEntity<Void> finishExam(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
