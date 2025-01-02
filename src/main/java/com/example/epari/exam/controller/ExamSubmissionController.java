@@ -1,7 +1,5 @@
 package com.example.epari.exam.controller;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,14 +11,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.epari.exam.dto.common.AnswerSubmissionDto;
-import com.example.epari.exam.dto.common.ExamResultDetailDto;
-import com.example.epari.exam.dto.common.ExamResultSummaryDto;
 import com.example.epari.exam.dto.common.ExamSubmissionStatusDto;
+import com.example.epari.exam.service.ExamService;
 import com.example.epari.exam.service.ExamStatusService;
 import com.example.epari.exam.service.ExamSubmissionService;
 import com.example.epari.global.annotation.CurrentUserEmail;
-import com.example.epari.exam.service.ExamService;
-import com.example.epari.exam.service.ExamResultService;
+import com.example.epari.global.exception.BusinessBaseException;
+import com.example.epari.global.exception.ErrorCode;
+import com.example.epari.user.domain.Student;
+import com.example.epari.user.repository.StudentRepository;
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -34,14 +34,14 @@ public class ExamSubmissionController {
 	private final ExamService examService;
 
 	private final ExamStatusService examStatusService;
-	
+
 	private final ExamSubmissionService examSubmissionService;
 
-	private final ExamResultService examResultService;
+	private final StudentRepository studentRepository;
 
 	// 시험 응시
 	@PostMapping("/start")
-	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.checkStudentAccess(#courseId, #studentEmail)")
+	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.isStudent(#courseId, #studentEmail)")
 	public ResponseEntity<ExamSubmissionStatusDto> startExam(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -51,34 +51,44 @@ public class ExamSubmissionController {
 	}
 
 	// 답안 임시 저장
-	@PostMapping("/questions/{questionId}/save")
-	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.checkStudentAccess(#courseId, #studentEmail)")
+	@PostMapping("/temp")
+	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.isStudent(#courseId, #studentEmail)")
 	public ResponseEntity<Void> saveAnswerTemporarily(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
 			@PathVariable Long questionId,
 			@RequestBody AnswerSubmissionDto answerDto,
 			@CurrentUserEmail String studentEmail) {
-		examSubmissionService.saveAnswerTemporarily(courseId, examId, questionId, answerDto, studentEmail);
+
+		Student student = studentRepository.findByEmail(studentEmail)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.STUDENT_NOT_FOUND));
+
+		examSubmissionService.saveAnswerTemporarily(
+				courseId, examId, questionId, answerDto, student.getId());
 		return ResponseEntity.ok().build();
 	}
 
 	// 답안 제출
-	@PostMapping("/questions/{questionId}")
-	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.checkStudentAccess(#courseId, #studentEmail)")
+	@PostMapping
+	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.isStudent(#courseId, #studentEmail)")
 	public ResponseEntity<Void> submitAnswer(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
 			@PathVariable Long questionId,
 			@RequestBody AnswerSubmissionDto answerDto,
 			@CurrentUserEmail String studentEmail) {
-		examSubmissionService.submitAnswer(courseId, examId, questionId, answerDto, studentEmail);
+
+		Student student = studentRepository.findByEmail(studentEmail)
+				.orElseThrow(() -> new BusinessBaseException(ErrorCode.STUDENT_NOT_FOUND));
+
+		examSubmissionService.submitAnswer(
+				courseId, examId, questionId, answerDto, student.getId());
 		return ResponseEntity.ok().build();
 	}
 
 	// 시험 최종 제출
 	@PostMapping("/finish")
-	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.checkStudentAccess(#courseId, #studentEmail)")
+	@PreAuthorize("hasRole('STUDENT') and @courseSecurityChecker.isStudent(#courseId, #studentEmail)")
 	public ResponseEntity<Void> finishExam(
 			@PathVariable Long courseId,
 			@PathVariable Long examId,
@@ -98,30 +108,6 @@ public class ExamSubmissionController {
 
 		ExamSubmissionStatusDto status = examStatusService.getSubmissionStatus(courseId, examId, email);
 		return ResponseEntity.ok(status);
-	}
-
-	// 강사용 학생 시험 결과 상세 조회
-	@GetMapping("/results/{resultId}/detail")
-	public ResponseEntity<ExamResultDetailDto> getStudentExamResultByInstructor(
-			@PathVariable Long courseId,
-			@PathVariable Long examId,
-			@PathVariable Long resultId,
-			@CurrentUserEmail String instructorEmail) {
-
-		ExamResultDetailDto result = examResultService.getStudentExamResultById(resultId);
-		return ResponseEntity.ok(result);
-	}
-
-	// 시험 결과
-	@GetMapping("/results")
-	@PreAuthorize("hasRole('INSTRUCTOR') and @courseSecurityChecker.checkInstructorAccess(#courseId, #email)")
-	public ResponseEntity<List<ExamResultSummaryDto>> getExamResults(
-			@PathVariable Long courseId,
-			@PathVariable Long examId,
-			@CurrentUserEmail String email) {
-
-		List<ExamResultSummaryDto> results = examResultService.getExamResults(courseId, examId);
-		return ResponseEntity.ok(results);
 	}
 
 }
