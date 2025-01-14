@@ -1,6 +1,10 @@
     
 # Epari - 온라인 교육 플랫폼
+<br />
 
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/b534bd02-aa78-4ded-b31b-6c1499a0c718" width="100000">
+</div>
 
 ## 프로젝트 개요
 Epari는 효율적인 온라인 교육 관리를 위한 통합 교육 플랫폼 서비스입니다. 강사와 학생 간의 원활한 상호작용을 지원하며, 교육 과정의 전반적인 관리를 제공합니다.
@@ -26,10 +30,10 @@ Epari는 분산된 교육 플랫폼들을 하나로 통합하여 학습자와 �
 <br> 
 
 ## 협업 프로세스
-### 개발 방법론 - 애자일 스크럼 (일부 차용)
+### 애자일 스크럼 방법론 일부 차용
     
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/4d06cb3b-8521-46a7-92e9-c7f551a248e0/e5391147-b6d2-47c6-a2a8-39cbbf9158c1/image.png)
-    
+![image](https://github.com/user-attachments/assets/f7e0ed39-6f1e-4e7d-b224-615940cd7bbc)
+
 - **짧은 스프린트:** 2~3일 주기로 스프린트 진행
 - **일일 스크럼:** 매일 오전 10시에 진행 상황, 이슈 공유 및 조율
 - **GitHub Project 활용**
@@ -136,17 +140,22 @@ Epari는 분산된 교육 플랫폼들을 하나로 통합하여 학습자와 �
 
 ## ERD
 
-![Epari-ERD.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/4d06cb3b-8521-46a7-92e9-c7f551a248e0/4d27d72d-01fd-47a4-a36e-a8820ee85b59/Epari-ERD.png)
-    
+<details>
+<summary><strong>ERD 보기</strong></summary>
+
+![image](https://github.com/user-attachments/assets/088d43c7-2d15-4d33-8a9f-4e065b024876)<br />
 ### 특징
 사용자(BaseUser)는 강사와 학생으로 구분되며, 강의(Course)를 중심으로 커리큘럼, 강의자료, 과제, 시험, 출석 등의 교육 관리 기능이 연결됩니다. 공지사항과 Q&A 게시판을 통해 구성원 간 소통을 지원하며, 각 도메인별 독립적인 파일 관리 시스템을 통해 효율적인 파일 관리가 가능합니다.
+</details>
+
+
 
 <br>
 
 ## 프로젝트 핵심 기술
 
 <details>
-<summary> <strong>인증/인가 (RBAC)</strong> </summary>
+<summary> <strong>인증/인가 (RBAC)</strong> </summary>  <br />
 본 프로젝트는 <strong>Amazon Cognito</strong>와 <strong>Spring Security</strong>를 결합하여 안전하고 효율적인 <strong>역할 기반 접근 제어 (RBAC) 시스템</strong>을 구현했습니다. 사용자 인증 및 권한 관리는 <strong>Amazon Cognito User Pool 및 Group</strong>을 통해 처리하고, 백엔드 애플리케이션은 <strong>Spring Security</strong>를 사용하여 <strong>OAuth 2.0 Resource Server</strong>를 구축했습니다.
 
   &nbsp;
@@ -164,9 +173,12 @@ Epari는 분산된 교육 플랫폼들을 하나로 통합하여 학습자와 �
 - **Spring Security**를 활용하여 백엔드 리소스에 대한 보안을 강화하고, 개발 효율성을 향상시켰습니다.
 </details>
 <details>
-<summary> <strong>AI 챗봇 (RAG 기반)</strong> </summary>
+<summary> <strong>AI 챗봇 (RAG 기반)</strong> </summary><br />
 
-  ![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/4d06cb3b-8521-46a7-92e9-c7f551a248e0/bac03036-895c-4bad-913d-5136e7f267cc/image.png)
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/a4e18724-7084-4b0c-8947-09f5b7029f5b" width="400">
+</div>
+<br />
     
 본 프로젝트는 사용자와 자연어로 소통하며 **커뮤니티 게시글에 대한 질문에 답변을 제공**하는 **RAG(Retrieval-Augmented Generation) 기반 AI 챗봇**을 구현했습니다.  **Amazon Lex**와 **Amazon Bedrock Knowledge Bases**를 활용하여, 사용자의 질문 의도를 정확하게 파악하고, 관련 게시글 정보를 검색하여, 문맥에 맞는 답변을 생성합니다.
 
@@ -188,46 +200,47 @@ Epari는 분산된 교육 플랫폼들을 하나로 통합하여 학습자와 �
 - **커뮤니티 활성화:** 사용자가 게시글에 대한 궁금증을 빠르게 해결하고, 더 쉽게 정보에 접근할 수 있도록 돕습니다. 이를 통해 커뮤니티 참여와 활동을 촉진합니다.
 </details>
 
+<details>
+<summary> <strong>서버리스 아키텍처</strong> </summary><br />
+    본 프로젝트는 <strong>서버리스 아키텍처</strong>를 적극 활용하여 인프라 관리 부담을 줄이고 확장성과 비용 효율성을 높였습니다. 특히, <strong>Amazon ECS Fargate</strong>, <strong>Amazon Cognito</strong>, <strong>서버리스 프레임워크</strong>를 활용한 커뮤니티 기능 구현을 통해 서버리스의 이점을 극대화했습니다.
 
-- 서버리스 아키텍처
+&nbsp;
     
-    본 프로젝트는 **서버리스 아키텍처**를 적극 활용하여 인프라 관리 부담을 줄이고 확장성과 비용 효율성을 높였습니다. 특히, **Amazon ECS Fargate**, **Amazon Cognito,** **서버리스 프레임워크**를 활용한 커뮤니티 기능 구현을 통해 서버리스의 이점을 극대화했습니다.
+**주요 구현 고려사항**
+- **Amazon ECS Fargate를 활용한 컨테이너 오케스트레이션**
+    - 애플리케이션의 핵심 기능을 **Amazon ECS Fargate**를 사용하여 컨테이너 기반으로 배포했습니다.
+    - Fargate를 통해 서버 관리에 대한 부담 없이 **자동 확장(Auto-scaling)** 및 **고가용성**을 확보했습니다.
+- **Amazon Cognito를 통한 서버리스 인증/인가**
+    - **Amazon Cognito**를 사용하여 사용자 인증 및 권한 관리 시스템을 서버리스로 구축했습니다.
+    - Cognito를 통해 사용자 풀 관리, 인증, 권한 부여 등의 기능을 **완전 관리형 서비스**로 활용하여, 보안 및 운영 효율성을 높였습니다.
+- **서버리스 프레임워크를 활용한 커뮤니티 기능 구현**
+    - 커뮤니티 기능의 백엔드 로직(게시글 작성, 댓글 등록 등)을 **Serverless Framework**(Node.js)를 사용하여 구현했습니다.
+    - **AWS Lambda**에 함수 형태로 배포하여 이벤트 기반으로 코드를 실행하고 사용된 리소스에 대해서만 비용을 지불하는 **비용 최적화**를 달성했습니다.
+    - **Serverless Framework**를 통해 개발자는 인프라 관리에 대한 부담 없이 비즈니스 로직 구현에 집중할 수 있었습니다.
     
-    **주요 구현 고려사항**
-    
-    - **Amazon ECS Fargate를 활용한 컨테이너 오케스트레이션**
-        - 애플리케이션의 핵심 기능을 **Amazon ECS Fargate**를 사용하여 컨테이너 기반으로 배포했습니다.
-        - Fargate를 통해 서버 관리에 대한 부담 없이 **자동 확장(Auto-scaling)** 및 **고가용성**을 확보했습니다.
-    - **Amazon Cognito를 통한 서버리스 인증/인가**
-        - **Amazon Cognito**를 사용하여 사용자 인증 및 권한 관리 시스템을 서버리스로 구축했습니다.
-        - Cognito를 통해 사용자 풀 관리, 인증, 권한 부여 등의 기능을 **완전 관리형 서비스**로 활용하여, 보안 및 운영 효율성을 높였습니다.
-    - **서버리스 프레임워크를 활용한 커뮤니티 기능 구현**
-        - 커뮤니티 기능의 백엔드 로직(게시글 작성, 댓글 등록 등)을 **Serverless Framework**(Node.js)를 사용하여 구현했습니다.
-        - **AWS Lambda**에 함수 형태로 배포하여 이벤트 기반으로 코드를 실행하고 사용된 리소스에 대해서만 비용을 지불하는 **비용 최적화**를 달성했습니다.
-        - **Serverless Framework**를 통해 개발자는 인프라 관리에 대한 부담 없이 비즈니스 로직 구현에 집중할 수 있었습니다.
-    
-    **주요 이점**
-    
-    - **운영 효율성 향상:** 서버리스 아키텍처를 적용하여 서버 관리 및 운영에 드는 시간과 노력을 최소화했습니다.
-    - **자동 확장성:** Fargate와 Lambda를 활용하여, 트래픽 증가에 따라 자동으로 리소스를 확장하여 안정적인 서비스를 제공합니다.
-    - **비용 최적화:** 사용한 리소스에 대해서만 비용을 지불하는 서버리스 모델을 통해, 비용 효율성을 극대화했습니다.
-    - **개발 생산성 향상:** 서버리스 프레임워크를 활용하여, 개발자는 인프라 설정에 대한 부담 없이 빠르게 개발하고 배포할 수 있습니다.
+**주요 이점**
+- **운영 효율성 향상:** 서버리스 아키텍처를 적용하여 서버 관리 및 운영에 드는 시간과 노력을 최소화했습니다.
+- **자동 확장성:** Fargate와 Lambda를 활용하여, 트래픽 증가에 따라 자동으로 리소스를 확장하여 안정적인 서비스를 제공합니다.
+- **비용 최적화:** 사용한 리소스에 대해서만 비용을 지불하는 서버리스 모델을 통해, 비용 효율성을 극대화했습니다.
+- **개발 생산성 향상:** 서버리스 프레임워크를 활용하여, 개발자는 인프라 설정에 대한 부담 없이 빠르게 개발하고 배포할 수 있습니다.
+</details>
+<br />
 
 ## 트러블 슈팅
 
-1. Cognito 사용자 그룹 할당 개선
+### 1. Cognito 사용자 그룹 할당 개선
     
-### 문제 상황
+**문제 상황**
 
 - Google 계정 최초 로그인 시 Cognito 사용자 등록과 그룹 할당 과정에서 비동기 처리로 인한 그룹 할당 누락
 - API 호출 방식으로 인한 긴 처리 시간(1.22초)과 네트워크 오버헤드 발생
 
-### 해결 방안
+**해결 방안**
 
 - Cognito Post Confirmation Lambda Trigger 도입
 - 사용자 생성 직후 자동으로 그룹 할당하는 방식으로 변경
 
-### 개선 효과
+**개선 효과**
 
 - 처리 시간 65.4% 단축 (1.22초 → 421.58ms)
 - 사용자 생성과 그룹 할당의 일관성 보장
